@@ -1,5 +1,7 @@
 import sys
-sys.path.insert(0,'/usr/bin/chromedriver')
+#sys.path.insert(0,'/usr/bin/chromedriver') for colab
+GOOGLE_CHROME_PATH = '/app/.apt/usr/bin/google_chrome' #Heroku
+CHROMEDRIVER_PATH = '/app/.chromedriver/bin/chromedriver' #Heroku 
 from selenium import webdriver
 from time import sleep
 import json
@@ -77,12 +79,13 @@ class MissionaryBot:
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.add_argument('--headless')
     self.chrome_options.add_argument('--no-sandbox')
+    self.chrome_options.binary_location = GOOGLE_CHROME_PATH
     self.chrome_options.add_argument('--disable-dev-shm-usage')
     self.wd = webdriver.Chrome('chromedriver',options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
     self.wd.implicitly_wait(30)
     self.wd.set_script_timeout(30)
-
+  
     self.facebook_search_results = []
     self.area_book_results = []
     self.do_work_thread()
@@ -359,9 +362,6 @@ def process_data_frame(df):
     if column_name not in desired_column:
       columns_to_drop.append(column_name)
   df.drop(columns_to_drop, axis=1, inplace=True)
-
-def process_data_frame2(df):
-  pandas.json_normalize(data)
 
 
 app = Flask(__name__)
