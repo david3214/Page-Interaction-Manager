@@ -366,8 +366,8 @@ def process_data_frame(df):
 
 app = Flask(__name__)
 fb_key_dict = {}
-
-
+bots = {}
+"""
 # Check for previous bots
 try:
   bots = pickle.load(open('bots.pickle', 'rb'))
@@ -380,6 +380,7 @@ def exit_handler():
   pickle.dump(bots, open('bots.pickle', 'wb'))
 
 atexit.register(exit_handler)
+"""
 
 # Delete a bot
 @app.route("/delete-bot")
