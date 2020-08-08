@@ -106,6 +106,7 @@ class MissionaryBot:
   fetch all the facebook profiles
   """
   def load_facebook_profiles(self):
+    max_queue_size = 10
     self.status = "Loading Facebook Profiles"
     for item in self.area_book_results:
       try:
@@ -114,6 +115,9 @@ class MissionaryBot:
         print(e)
       cleaned = self.parse_facebook_search_page(self.wd.page_source)
       self.facebook_search_results.append(cleaned)
+      while(len(self.facebook_search_results) >= max_queue_size):
+        self.status = "Sleeping"
+        time.sleep(10)
     self.status = "Done Loading Facebook Profiles"
   
   def load_facebook_profiles_thread(self):
