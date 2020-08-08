@@ -1,7 +1,4 @@
 import sys
-#sys.path.insert(0,'/usr/bin/chromedriver') for colab
-GOOGLE_CHROME_PATH = '/app/.apt/usr/bin/google_chrome' #Heroku
-CHROMEDRIVER_PATH = '/app/.chromedriver/bin/chromedriver' #Heroku 
 from selenium import webdriver
 from time import sleep
 import json
@@ -77,11 +74,11 @@ class MissionaryBot:
     self.person_profile = f'https://areabook.churchofjesuschrist.org/services/people/{self.person_profile_id}'
 
     self.chrome_options = webdriver.ChromeOptions()
-    self.chrome_options.add_argument('--headless')
-    self.chrome_options.add_argument('--no-sandbox')
-    self.chrome_options.binary_location = GOOGLE_CHROME_PATH
-    self.chrome_options.add_argument('--disable-dev-shm-usage')
-    self.wd = webdriver.Chrome('chromedriver',options=self.chrome_options)
+    self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+    self.chrome_options.add_argument("--headless")
+    self.chrome_options.add_argument("--disable-dev-shm-usage")
+    self.chrome_options.add_argument("--no-sandbox")
+    self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=chrome_options)
     self.wd.set_window_size(1920, 1080)
     self.wd.implicitly_wait(30)
     self.wd.set_script_timeout(30)
