@@ -9,11 +9,8 @@ import time
 import threading
 import os
 
-from flask_ngrok import run_with_ngrok
 from flask import Flask, make_response, request
-from flask_caching import Cache
 from pickle import load, dump
-from google.colab.output import eval_js
 import urllib.parse
 import atexit
 import pickle
@@ -367,10 +364,7 @@ def process_data_frame2(df):
   pandas.json_normalize(data)
 
 
-cache = Cache(config={'CACHE_TYPE': 'simple'})
 app = Flask(__name__)
-run_with_ngrok(app) #starts ngrok when the app is run
-cache.init_app(app)
 fb_key_dict = {}
 
 
@@ -449,7 +443,7 @@ Add key for facebook 2 factor authentication
 def add_key():
   try:
     args = request.args
-    if args['key'] is "" or args['facebook_username'] is "":
+    if args['key'] == "" or args['facebook_username'] == "":
       raise ValueError
     else:
       key = args['key']
