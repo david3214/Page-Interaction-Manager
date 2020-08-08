@@ -78,7 +78,7 @@ class MissionaryBot:
     self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
-    self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=chrome_options)
+    self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
     self.wd.implicitly_wait(30)
     self.wd.set_script_timeout(30)
