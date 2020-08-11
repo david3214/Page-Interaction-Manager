@@ -107,8 +107,8 @@ class MissionaryBot:
   """
   def load_facebook_profiles(self):
     max_queue_size = 10
-    self.status = "Loading Facebook Profiles"
     for item in self.area_book_results:
+      self.status = "Loading Facebook Profiles"
       try:
         self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
       except Exception as e:
@@ -170,6 +170,8 @@ class MissionaryBot:
     soup = BeautifulSoup(html, "html.parser")
     element = soup.find("div", {"id": "BrowseResultsContainer"})
     content = str(element)
+    print(f"element is {sys.getsizeof(element)} bytes")
+    print(f"content is {sys.getsizeof(content)} bytes")
     return content
 
 
@@ -455,5 +457,21 @@ def add_key():
   except:
     return "❌"
 
+def parse_facebook_search_page(html):
+  soup = BeautifulSoup(html, "html.parser")
+  element = soup.find("div", {"id": "BrowseResultsContainer"})
+  pics = soup.find("img", {'class': '_1glk _6phc img'})
+  for img in pics:
+
+    print(img)
+  content = str(element)
+  print(f"element is {sys.getsizeof(element)} bytes")
+  print(f"content is {sys.getsizeof(content)} bytes")
+  print(len(element))
+  print(len(content))
+  return content
+
 if __name__ == '__main__':
-  app.run()
+  #app.run()
+  parse_facebook_search_page(open('test-data.html', 'rb'))
+  "//img[@class='_1glk _6phc img']"
