@@ -384,6 +384,10 @@ def exit_handler():
 
 atexit.register(exit_handler)
 """
+# Send help instruction
+@app.route("/help")
+def help():
+    return """Watch the video to learn how to use this program"""
 
 # Delete a bot
 @app.route("/delete-bot")
@@ -457,21 +461,5 @@ def add_key():
   except:
     return "❌"
 
-def parse_facebook_search_page(html):
-  soup = BeautifulSoup(html, "html.parser")
-  element = soup.find("div", {"id": "BrowseResultsContainer"})
-  pics = soup.find("img", {'class': '_1glk _6phc img'})
-  for img in pics:
-
-    print(img)
-  content = str(element)
-  print(f"element is {sys.getsizeof(element)} bytes")
-  print(f"content is {sys.getsizeof(content)} bytes")
-  print(len(element))
-  print(len(content))
-  return content
-
 if __name__ == '__main__':
-  #app.run()
-  parse_facebook_search_page(open('test-data.html', 'rb'))
-  "//img[@class='_1glk _6phc img']"
+  app.run()
