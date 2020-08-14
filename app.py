@@ -508,7 +508,7 @@ def parse_facebook_search_page(html):
 """
 
 if __name__ == '__main__':
-  #app.run()
-  html = open('test_data/test-data2.html', 'rb')
-  html = html.read()
-  parse_facebook_search_page(html)
+  app.run()
+  #html = open('test_data/test-data2.html', 'rb')
+  #html = html.read()
+  #parse_facebook_search_page(html)
