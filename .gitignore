@@ -2,3 +2,4 @@
 .venv
 bots.pickle
 *.pyc
+/test_data
