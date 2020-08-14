@@ -3,3 +3,4 @@
 bots.pickle
 *.pyc
 /test_data
+.temp.jpg

@@ -13,6 +13,11 @@ from pickle import load, dump
 import urllib.parse
 import atexit
 import pickle
+import PIL.Image as Image
+import requests
+from io import BytesIO
+from nsfw_detector import predict
+model = predict.load_model('./nsfw_mobilenet2.224x224.h5')
 
 selectors = json.loads("""{
   "status": "//div[contains(@class, '_5pbx')]",
@@ -163,16 +168,31 @@ class MissionaryBot:
 
   """
   Process the facebook search page 
-  TODO filter the scandelous profile pics for prezident
+  Filter the scandelous profile pics for prezident
   return the cleaned html
   """
   def parse_facebook_search_page(self, html):
-    soup = BeautifulSoup(html, "html.parser")
-    element = soup.find("div", {"id": "BrowseResultsContainer"})
-    content = str(element)
-    print(f"element is {sys.getsizeof(element)} bytes")
-    print(f"content is {sys.getsizeof(content)} bytes")
-    return content
+      soup = BeautifulSoup(html, "html.parser")
+      results_container = soup.find("div", {"id": "BrowseResultsContainer"})
+      content = str(results_container)
+      images = results_container.find_all(class_="_1glk _6phc img")
+
+      for img in images:
+        response = requests.get(img['src'])
+        image = Image.open(BytesIO(response.content))
+        image.save('temp.jpg')
+        nsfw = predict.classify(model, 'temp.jpg')
+        os.remove('temp.jpg')
+        if nsfw['temp.jpg']['porn']  >= 0.5 or nsfw['temp.jpg']['sexy'] >= 0.5 or nsfw['temp.jpg']['hentai'] >= 0.5:
+          img['style'] = 'visibility:hidden'
+          print(f'{nsfw}')
+
+      print(f"element is {sys.getsizeof(results_container)} bytes")
+      print(f"content is {sys.getsizeof(content)} bytes")
+      f = open("results.html", 'w')
+      f.write(str(results_container))
+      f.close()
+      return str(results_container)
 
 
   """
@@ -399,8 +419,9 @@ def delete_bot():
     else:
       print(f"deleting bot{args['church_username']}")
       bots.pop(args['church_username'])
+      return "Removed bot"
   except:
-    return "Missing bot name"
+    return "Missing bot name"    
 
 @app.route("/create-bot")
 def create_bot():
@@ -461,5 +482,33 @@ def add_key():
   except:
     return "❌"
 
+"""
+def parse_facebook_search_page(html):
+    soup = BeautifulSoup(html, "html.parser")
+    results_container = soup.find("div", {"id": "BrowseResultsContainer"})
+    content = str(results_container)
+    images = results_container.find_all(class_="_1glk _6phc img")
+
+    for img in images:
+      response = requests.get(img['src'])
+      image = Image.open(BytesIO(response.content))
+      image.save('temp.jpg')
+      nsfw = predict.classify(model, 'temp.jpg')
+      os.remove('temp.jpg')
+      if nsfw['temp.jpg']['porn']  >= 0.5 or nsfw['temp.jpg']['sexy'] >= 0.5 or nsfw['temp.jpg']['hentai'] >= 0.5:
+        img['style'] = 'visibility:hidden'
+        print(f'{nsfw}')
+
+    print(f"element is {sys.getsizeof(results_container)} bytes")
+    print(f"content is {sys.getsizeof(content)} bytes")
+    f = open("results.html", 'w')
+    f.write(str(results_container))
+    f.close()
+    return str(results_container)
+"""
+
 if __name__ == '__main__':
-  app.run()
+  #app.run()
+  html = open('test_data/test-data2.html', 'rb')
+  html = html.read()
+  parse_facebook_search_page(html)
