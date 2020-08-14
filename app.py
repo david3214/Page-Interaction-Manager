@@ -111,7 +111,7 @@ class MissionaryBot:
   fetch all the facebook profiles
   """
   def load_facebook_profiles(self):
-    max_queue_size = 10
+    max_queue_size = 15
     for item in self.area_book_results:
       self.status = "Loading Facebook Profiles"
       try:
