@@ -68,6 +68,7 @@ class MissionaryBot:
       self.status = "Loading Facebook Profiles"
       try:
         self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
+        time.sleep(0.5)
         cleaned = self.parse_facebook_search_page(self.wd.page_source)
       except Exception as e:
         print(e)
