@@ -341,7 +341,7 @@ bots = {}
 def help():
     return """Watch the video to learn how to use this program"""
 
-@app.route('/bot/', methods=['GET', 'POST', 'DELETE'])
+@app.route('/bot', methods=['GET', 'POST', 'DELETE'])
 def bot():
   args = request.args
   church_username = urllib.parse.unquote_plus(args['church_username'])
