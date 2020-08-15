@@ -158,13 +158,16 @@ class MissionaryBot:
 
   """
   Process the facebook search page 
-  Filter the scandelous profile pics for prezident
   return the cleaned html
   """
   def parse_facebook_search_page(self, html):
       try:
         soup = BeautifulSoup(html, "html.parser")
         results_container = soup.find("div", {"id": "BrowseResultsContainer"})
+        if results_container == None:
+          results_container = soup.find("div", {"class": "rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t d2edcug0 rj1gh0hx buofh1pr g5gj957u hpfvmrgz dp1hu0rb"})
+          for circle in results_container.find_all('circle', {'class':"mlqo0dh0 georvekb s6kb5r3f"}):
+            circle.decompose()
       except Exception as e:
         print(e)
       finally:
@@ -177,6 +180,7 @@ class MissionaryBot:
   def authenticate_with_church(self):
     self.status = 'Authenticating with church'
     # Check if already logged in
+
     self.wd.find_element_by_id("okta-signin-username").send_keys(self.church_username)
     self.wd.find_element_by_id("okta-signin-submit").click()
     self.wd.find_element_by_name("password").send_keys(self.church_password)
@@ -200,29 +204,34 @@ class MissionaryBot:
     self.status = "Authenticating with Facebook"
     self.wd.get("https://www.facebook.com/")
     #self.wd.get_screenshot_as_file("1.png")
-    try:
+    if self.facebook_username is None:
+      return "No Username"
+    elif self.facebook_password is None:
+      return "No Password"
+    try: # Loggin in
       if self.wd.find_element_by_name("email"):
         self.wd.find_element_by_name("email").send_keys(self.facebook_username)
         self.wd.find_element_by_name("pass").send_keys(self.facebook_password)
         self.wd.find_element_by_name("pass").submit()
         #self.wd.get_screenshot_as_file("2email.png")
-
-      try:
+      try: #Check if we are allowed in imediately
         self.wd.implicitly_wait(5)
-        if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
-          #self.wd.get_screenshot_as_file("search.png")
-          self.wd.implicitly_wait(30)
-          return True
-        elif self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
-          #self.wd.get_screenshot_as_file("search.png")
-          return True
-        if self.facebook_username is None:
-          return "No Username"
-        elif self.facebook_password is None:
-          return "No Password"
-      except:
-        self.wd.implicitly_wait(30)
-
+        try: #Check for facebook version 1
+          if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
+            #self.wd.get_screenshot_as_file("search.png")
+            self.wd.implicitly_wait(30)
+            return True
+        except:
+          pass
+        try:#Check for facebook version 2
+          if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
+            #self.wd.get_screenshot_as_file("search.png")
+            self.wd.implicitly_wait(30)
+            return True
+        except:
+          pass
+      except:# Error in checking for search bar
+        pass
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         #self.wd.get_screenshot_as_file("3continue.png")
@@ -289,7 +298,10 @@ class MissionaryBot:
   def scrape_area_book_for_people(self):
     self.status = "Scraping AreaBook"
     self.wd.get(self.pros_area_url)
-    self.authenticate_with_church()
+    try:
+      self.authenticate_with_church()
+    except:
+      pass
     self.wd.find_elements_by_tag_name("pre")
     pros_area_data = self.parse_church_json(self.wd.page_source)
     for missionary in pros_area_data['missionaries']:

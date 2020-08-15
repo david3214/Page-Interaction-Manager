@@ -4,6 +4,7 @@ Then it will start preloading a queue. Request the get-netx-profile to pop from 
 if you go to fast the queue will empty before you can refil it and will need to wait a few seconds
 once you are done using the bot get the delete-bot route to free up some memory
 The interface for the program is a google sheet.
+area id is the numbers of your area email
 
 Example:
 church_username->Tom
