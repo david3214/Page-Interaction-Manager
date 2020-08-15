@@ -10,44 +10,6 @@ import os
 from flask import Flask, make_response, request
 import urllib.parse
 
-selectors = json.loads("""{
-  "status": "//div[contains(@class, '_5pbx')]",
-  "sections_bar": "//*[@class='_3cz'][1]/div[2]/div[1]",
-  "status_exc": ".//div[@class='userContent']",
-  "temp": ".//div[@class='_3x-2']",
-  "title": ".//span[@class='fwb fcg']",
-  "title_exc1": ".//span[@class='fcg']",
-  "title_exc2": ".//span[@class='fwn fcg']",
-  "title_element": ".//div[@class='_1dwg _1w_m']",
-  "background_img_links": "//*[contains(@id, 'pic_')]/div/i",
-  "firefox_profile_path": "/home/zeryx/.mozilla/firefox/0n8gmjoz.bot",
-  "facebook_https_prefix": "https://",
-  "facebook_link_body": ".facebook.com/",
-  "spotlight": "spotlight",
-  "default_image": "10354686_10150004552801856_220367501106153455_n.jpg",
-  "height_script": "return document.body.scrollHeight",
-  "scroll_script": "window.scrollTo(0, document.body.scrollHeight);",
-  "title_text": "fb-timeline-cover-name",
-  "profilePicThumb": "profilePicThumb",
-  "fb_link": "https://en-gb.facebook.com/",
-  "single_post" : ".//div[contains(@class, '_5pcr')]",
-  "post_photos": ".//a[contains(@class, '_5dec') or contains(@class, '_4-eo')]",
-  "post_photo_small" : ".//img[contains(@class, '_46-i')]",
-  "post_photo_small_opt1" : ".//img[contains(@class, 'scaledImageFitWidth') or contains(@class, 'scaledImageFitHeight')]",
-  "comment_section" : ".//*[@class='commentable_item']",
-  "comment" : ".//div[@aria-label='Comment']",
-  "comment_author" : ".//a[@class='_6qw4']",
-  "comment_text" : ".//span[contains(@class,'_3l3x')]",
-  "more_comment_replies": ".//a[contains(@class,'_4sxc _42ft')]",
-  "comment_see_more_link" : ".//a[contains(@class,'_5v47 fss')]",
-  "comment_reply" : "..//..//div[@aria-label='Comment reply']"
-
-}""")
-
-firefox_profile_path = selectors.get("firefox_profile_path")
-facebook_https_prefix = selectors.get("facebook_https_prefix")
-facebook_link_body = selectors.get("facebook_link_body")
-
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
     self.church_username = church_username
@@ -140,8 +102,12 @@ class MissionaryBot:
     Remaining: {len(self.area_book_results) - self.number_of_pops}\
     Current Name: {self.area_book_results[self.number_of_pops][1] + " " + self.area_book_results[self.number_of_pops][2]}'
     except Exception as e:
-      print(e)
-      status = "Loading"
+      status = f'There are {len(self.facebook_search_results)} people in queue. \
+    Status: {self.status} \
+    Total: {len(self.area_book_results)} \
+    Completed: {self.number_of_pops} \
+    Remaining: {len(self.area_book_results) - self.number_of_pops}\
+    Current Name: ...'
     finally:
       return status
 
@@ -369,63 +335,53 @@ def process_data_frame(df):
 app = Flask(__name__)
 fb_key_dict = {}
 bots = {}
-"""
-# Check for previous bots
-try:
-  bots = pickle.load(open('bots.pickle', 'rb'))
-except (OSError, IOError) as e:
-  bots = {}
-  pickle.dump(bots, open("bots.pickle", "wb"))
 
-def exit_handler():
-  #Save the bots
-  pickle.dump(bots, open('bots.pickle', 'wb'))
-
-atexit.register(exit_handler)
-"""
 # Send help instruction
 @app.route("/help")
 def help():
     return """Watch the video to learn how to use this program"""
 
-# Delete a bot
-@app.route("/delete-bot")
-def delete_bot():
+@app.route('/bot/', methods=['GET', 'POST', 'DELETE'])
+def bot():
   args = request.args
-  try:
-    if args['church_username'] == "" or args['church_username'] not in bots.keys():
-      raise ValueError
+  church_username = urllib.parse.unquote_plus(args['church_username'])
+  if request.method == "GET":
+    # Get status
+    if church_username in bots.keys():
+      return bots[church_username].get_status()
     else:
-      print(f"deleting bot{args['church_username']}")
-      bots.pop(args['church_username'])
-      return "Removed bot"
-  except:
-    return "Missing bot name"    
+      return "No Bot with that name"
 
-@app.route("/create-bot")
-def create_bot():
-  print("Creating bot")
-  args = request.args
-  try:
-    if (args['church_username'] == None or args['church_password'] == None or args['pros_area_id'] == None or args['facebook_username'] == None or args['facebook_password'] == None):
-      raise ValueError
-    if args['church_username'] in bots.keys():
-      return "Bot already exist"
-    else:
-      bot = MissionaryBot(**args)
-      bots[args['church_username']] = bot
-      return "added bot"
-  except Exception as e:
-    return f"Exception: {e}"
+  elif request.method == "POST":
+    # Create Bot
+    print("Creating bot")
+    try:
+      if (church_username == None or args['church_password'] == None or args['pros_area_id'] == None or args['facebook_username'] == None or args['facebook_password'] == None):
+        raise ValueError
+      if church_username in bots.keys():
+        return "Bot already exist"
+      else:
+        church_password = urllib.parse.unquote_plus(args['church_password'])
+        facebook_username = urllib.parse.unquote_plus(args['facebook_username'])
+        facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
+        bot = MissionaryBot(church_username=church_username, church_password=church_password, facebook_username=facebook_username, facebook_password=facebook_password, pros_area_id=args['pros_area_id'])
+        bots[church_username] = bot
+        return "added bot"
+    except Exception as e:
+      return f"Exception: {e}"
 
-
-@app.route("/bot-status")
-def bot_status():
-  args = request.args
-  if args['church_username'] in bots.keys():
-    return bots[args['church_username']].get_status()
-  else:
-    return "No Bot with that name"
+  elif request.method == "DELETE":
+    #Remove bot
+    try:
+      if church_username == "" or church_username not in bots.keys():
+        raise ValueError
+      else:
+        print(f"deleting bot{church_username}")
+        bots.pop(church_username)
+        return "Removed bot"
+    except:
+      return "Missing bot name"  
+  return 'done'
 
 
 @app.route("/pass-data")
