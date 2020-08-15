@@ -17,7 +17,8 @@ import PIL.Image as Image
 import requests
 from io import BytesIO
 from nsfw_detector import predict
-model = predict.load_model('./nsfw_mobilenet2.224x224.h5')
+#model = predict.load_model('./nsfw_mobilenet2.224x224.h5')
+model = predict.load_model("nsfw_mobilenet_v2_140_224/mobilenet_v2_140_224/")
 
 selectors = json.loads("""{
   "status": "//div[contains(@class, '_5pbx')]",
@@ -116,9 +117,9 @@ class MissionaryBot:
       self.status = "Loading Facebook Profiles"
       try:
         self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
+        cleaned = self.parse_facebook_search_page(self.wd.page_source)
       except Exception as e:
         print(e)
-      cleaned = self.parse_facebook_search_page(self.wd.page_source)
       self.facebook_search_results.append(cleaned)
       while(len(self.facebook_search_results) >= max_queue_size):
         self.status = "Sleeping"
@@ -172,28 +173,29 @@ class MissionaryBot:
   return the cleaned html
   """
   def parse_facebook_search_page(self, html):
-      soup = BeautifulSoup(html, "html.parser")
-      results_container = soup.find("div", {"id": "BrowseResultsContainer"})
-      content = str(results_container)
-      images = results_container.find_all(class_="_1glk _6phc img")
+      try:
+        soup = BeautifulSoup(html, "html.parser")
+        results_container = soup.find("div", {"id": "BrowseResultsContainer"})
+        images = results_container.find_all(class_="_1glk _6phc img")
+        for img in images:
+          response = requests.get(img['src'])
+          image = Image.open(BytesIO(response.content))
+          image.save('temp.jpg')
+          nsfw = predict.classify(model, 'temp.jpg')
+          print(nsfw)
+          os.remove('temp.jpg')
+          if nsfw['temp.jpg']['porn']  >= 0.5 or nsfw['temp.jpg']['sexy'] >= 0.5 or nsfw['temp.jpg']['hentai'] >= 0.5:
+            img['style'] = 'visibility:hidden'
+            print(f'{nsfw}')
 
-      for img in images:
-        response = requests.get(img['src'])
-        image = Image.open(BytesIO(response.content))
-        image.save('temp.jpg')
-        nsfw = predict.classify(model, 'temp.jpg')
-        os.remove('temp.jpg')
-        if nsfw['temp.jpg']['porn']  >= 0.5 or nsfw['temp.jpg']['sexy'] >= 0.5 or nsfw['temp.jpg']['hentai'] >= 0.5:
-          img['style'] = 'visibility:hidden'
-          print(f'{nsfw}')
-
-      print(f"element is {sys.getsizeof(results_container)} bytes")
-      print(f"content is {sys.getsizeof(content)} bytes")
-      f = open("results.html", 'w')
-      f.write(str(results_container))
-      f.close()
-      return str(results_container)
-
+        #f = open("results.html", 'w')
+        #f.write(str(results_container))
+        #f.close()
+        
+      except exception as e:
+        print(e)
+      finally:
+        return str(results_container)
 
   """
   Authenticate with church
@@ -225,22 +227,22 @@ class MissionaryBot:
     print("Authenticating with Facebook")
     self.status = "Authenticating with Facebook"
     self.wd.get("https://www.facebook.com/")
-    self.wd.get_screenshot_as_file("1.png")
+    #self.wd.get_screenshot_as_file("1.png")
     try:
       if self.wd.find_element_by_name("email"):
         self.wd.find_element_by_name("email").send_keys(self.facebook_username)
         self.wd.find_element_by_name("pass").send_keys(self.facebook_password)
         self.wd.find_element_by_name("pass").submit()
-        self.wd.get_screenshot_as_file("2email.png")
+        #self.wd.get_screenshot_as_file("2email.png")
 
       try:
         self.wd.implicitly_wait(5)
         if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
-          self.wd.get_screenshot_as_file("search.png")
+          #self.wd.get_screenshot_as_file("search.png")
           self.wd.implicitly_wait(30)
           return True
         elif self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
-          self.wd.get_screenshot_as_file("search.png")
+          #self.wd.get_screenshot_as_file("search.png")
           return True
         if self.facebook_username is None:
           return "No Username"
@@ -251,26 +253,26 @@ class MissionaryBot:
 
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        self.wd.get_screenshot_as_file("3continue.png")
+        #self.wd.get_screenshot_as_file("3continue.png")
 
       if self.wd.find_element_by_id("checkpointSubmitButton"):
         self.safe_find_element_by_id("checkpointSubmitButton").click()
-        self.wd.get_screenshot_as_file("4chechpoint.png")
+        #self.wd.get_screenshot_as_file("4chechpoint.png")
 
       if self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']"):
         self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']").click()
-        self.wd.get_screenshot_as_file("5email radio.png")
+        #self.wd.get_screenshot_as_file("5email radio.png")
 
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        self.wd.get_screenshot_as_file("6continue past email radio.png")
+        #self.wd.get_screenshot_as_file("6continue past email radio.png")
       
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        self.wd.get_screenshot_as_file("7continue past email select.png")
+        #self.wd.get_screenshot_as_file("7continue past email select.png")
 
       if self.wd.find_element_by_xpath("//input[@type='text']"):
-        self.wd.get_screenshot_as_file("8email code.png")
+        #self.wd.get_screenshot_as_file("8email code.png")
         while (True):
           if self.facebook_username in fb_key_dict.keys():
             break
@@ -281,26 +283,26 @@ class MissionaryBot:
         print(fb_key_dict[self.facebook_username])
         self.wd.find_element_by_xpath("//input[@type='text']").send_keys(fb_key_dict[self.facebook_username])
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        self.wd.get_screenshot_as_file("9continue past email select.png")
+        #self.wd.get_screenshot_as_file("9continue past email select.png")
 
       while True:
         try:
           element = self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]')
           element.click()
-          self.wd.get_screenshot_as_file("10continue past email select.png")
+          #self.wd.get_screenshot_as_file("10continue past email select.png")
         except:
           break
 
       if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
-        self.wd.get_screenshot_as_file("search.png")
+        #self.wd.get_screenshot_as_file("search.png")
         return True
       elif self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
-        self.wd.get_screenshot_as_file("search.png")
+        #self.wd.get_screenshot_as_file("search.png")
         return True    
 
     except Exception as e:
         print(e)
-        self.wd.get_screenshot_as_file("exception.png")
+        #self.wd.get_screenshot_as_file("exception.png")
         file = open('out.html', 'w')
         file.write(self.wd.page_source)
         file.close()
