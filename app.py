@@ -1,6 +1,5 @@
 import sys
 from selenium import webdriver
-from time import sleep
 import json
 from bs4 import BeautifulSoup
 import pandas as pd 
@@ -9,16 +8,7 @@ import threading
 import os
 
 from flask import Flask, make_response, request
-from pickle import load, dump
 import urllib.parse
-import atexit
-import pickle
-import PIL.Image as Image
-import requests
-from io import BytesIO
-from nsfw_detector import predict
-#model = predict.load_model('./nsfw_mobilenet2.224x224.h5')
-model = predict.load_model("nsfw_mobilenet_v2_140_224/mobilenet_v2_140_224/")
 
 selectors = json.loads("""{
   "status": "//div[contains(@class, '_5pbx')]",
@@ -60,7 +50,6 @@ facebook_link_body = selectors.get("facebook_link_body")
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
-    print("Bot Init")
     self.church_username = church_username
     self.church_password = church_password
     self.pros_area_id = pros_area_id
@@ -112,7 +101,7 @@ class MissionaryBot:
   fetch all the facebook profiles
   """
   def load_facebook_profiles(self):
-    max_queue_size = 15
+    max_queue_size = 17
     for item in self.area_book_results:
       self.status = "Loading Facebook Profiles"
       try:
@@ -123,7 +112,7 @@ class MissionaryBot:
       self.facebook_search_results.append(cleaned)
       while(len(self.facebook_search_results) >= max_queue_size):
         self.status = "Sleeping"
-        time.sleep(10)
+        time.sleep(1)
     self.status = "Done Loading Facebook Profiles"
   
   def load_facebook_profiles_thread(self):
@@ -176,23 +165,7 @@ class MissionaryBot:
       try:
         soup = BeautifulSoup(html, "html.parser")
         results_container = soup.find("div", {"id": "BrowseResultsContainer"})
-        images = results_container.find_all(class_="_1glk _6phc img")
-        for img in images:
-          response = requests.get(img['src'])
-          image = Image.open(BytesIO(response.content))
-          image.save('temp.jpg')
-          nsfw = predict.classify(model, 'temp.jpg')
-          print(nsfw)
-          os.remove('temp.jpg')
-          if nsfw['temp.jpg']['porn']  >= 0.5 or nsfw['temp.jpg']['sexy'] >= 0.5 or nsfw['temp.jpg']['hentai'] >= 0.5:
-            img['style'] = 'visibility:hidden'
-            print(f'{nsfw}')
-
-        #f = open("results.html", 'w')
-        #f.write(str(results_container))
-        #f.close()
-        
-      except exception as e:
+      except Exception as e:
         print(e)
       finally:
         return str(results_container)
@@ -202,7 +175,6 @@ class MissionaryBot:
   return true if successfull 
   """
   def authenticate_with_church(self):
-    print('Authenticating with church')
     self.status = 'Authenticating with church'
     # Check if already logged in
     self.wd.find_element_by_id("okta-signin-username").send_keys(self.church_username)
@@ -216,15 +188,15 @@ class MissionaryBot:
   """
   def safe_find_element_by_id(self, elem_id):
       try:
-          return self.wd.find_element_by_id(elem_id)
-      except NoSuchElementException:
-          return None
+        return self.wd.find_element_by_id(elem_id)
+      except Exception as e:
+        print(e)
+        return None
 
   """
   Log in to face book so we can start doing searches
   """
   def authenticate_with_facebook(self):
-    print("Authenticating with Facebook")
     self.status = "Authenticating with Facebook"
     self.wd.get("https://www.facebook.com/")
     #self.wd.get_screenshot_as_file("1.png")
@@ -277,10 +249,8 @@ class MissionaryBot:
           if self.facebook_username in fb_key_dict.keys():
             break
           else:
-            print(f'waiting for key from {self.facebook_username} might have to check spam')
-            self.status = f'waiting for key from {self.facebook_username}'
+            self.status = f'waiting for key from {self.facebook_username} might have to check spam'
             time.sleep(5)
-        print(fb_key_dict[self.facebook_username])
         self.wd.find_element_by_xpath("//input[@type='text']").send_keys(fb_key_dict[self.facebook_username])
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         #self.wd.get_screenshot_as_file("9continue past email select.png")
@@ -317,7 +287,6 @@ class MissionaryBot:
   return the df
   """
   def scrape_area_book_for_people(self):
-    print("Scraping AreaBook")
     self.status = "Scraping AreaBook"
     self.wd.get(self.pros_area_url)
     self.authenticate_with_church()
@@ -343,12 +312,8 @@ def convert_html_to_data_frame(html):
   df_list = []
   soup = BeautifulSoup(html,'html.parser') 
   for i in range(len(soup.find_all("table"))):
-    # for getting the header from 
-    # the HTML file  
     list_header = []
-    # empty list 
     data = []
-     
     header = soup.find_all("table")[i].find("tr")
     for items in header: 
         try: 
@@ -484,33 +449,5 @@ def add_key():
   except:
     return "❌"
 
-"""
-def parse_facebook_search_page(html):
-    soup = BeautifulSoup(html, "html.parser")
-    results_container = soup.find("div", {"id": "BrowseResultsContainer"})
-    content = str(results_container)
-    images = results_container.find_all(class_="_1glk _6phc img")
-
-    for img in images:
-      response = requests.get(img['src'])
-      image = Image.open(BytesIO(response.content))
-      image.save('temp.jpg')
-      nsfw = predict.classify(model, 'temp.jpg')
-      os.remove('temp.jpg')
-      if nsfw['temp.jpg']['porn']  >= 0.5 or nsfw['temp.jpg']['sexy'] >= 0.5 or nsfw['temp.jpg']['hentai'] >= 0.5:
-        img['style'] = 'visibility:hidden'
-        print(f'{nsfw}')
-
-    print(f"element is {sys.getsizeof(results_container)} bytes")
-    print(f"content is {sys.getsizeof(content)} bytes")
-    f = open("results.html", 'w')
-    f.write(str(results_container))
-    f.close()
-    return str(results_container)
-"""
-
 if __name__ == '__main__':
   app.run()
-  #html = open('test_data/test-data2.html', 'rb')
-  #html = html.read()
-  #parse_facebook_search_page(html)
