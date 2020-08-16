@@ -96,18 +96,21 @@ class MissionaryBot:
   """
   def get_status(self):
     try:
+      pops = self.number_of_pops
+      if pops <= 0:
+        pops+=2 # 2 is the ammount it started with 
       status = f'There are {len(self.facebook_search_results)} people in queue. \
     Status: {self.status} \
     Total: {len(self.area_book_results)} \
-    Completed: {self.number_of_pops} \
-    Remaining: {len(self.area_book_results) - self.number_of_pops}\
-    Current Name: {self.area_book_results[self.number_of_pops][1] + " " + self.area_book_results[self.number_of_pops][2]}'
+    Completed: {pops} \
+    Remaining: {len(self.area_book_results) - pops}\
+    Current Name: {self.area_book_results[pops][1] + " " + self.area_book_results[pops][2]}'
     except Exception as e:
       status = f'There are {len(self.facebook_search_results)} people in queue. \
     Status: {self.status} \
     Total: {len(self.area_book_results)} \
-    Completed: {self.number_of_pops} \
-    Remaining: {len(self.area_book_results) - self.number_of_pops}\
+    Completed: {pops} \
+    Remaining: {len(self.area_book_results) - pops}\
     Current Name: ...'
     finally:
       return status
