@@ -94,24 +94,19 @@ class MissionaryBot:
   return the status of the bot as a string
   """
   def create_status(self, status):
-    pops = r.get(self.church_username + ":current_index")
-    area_book_results = pickle.loads(r.get(self.church_username + ':area_book_results'))
     try:
-      status = f'There are {r.scard(self.church_username + ":facebook_search_results")} people in queue. \
+      pops = int(r.get(self.church_username + ":current_index"))
+      area_book_results = pickle.loads(r.get(self.church_username + ':area_book_results'))
+      long_status = f'There are {r.llen(self.church_username + ":facebook_search_results")} people in queue. \
         Status: {status} \
         Total: {len(area_book_results)} \
         Completed: {pops} \
         Remaining: {len(area_book_results) - pops}\
         Current Name: {area_book_results[pops][1] + " " + area_book_results[pops][2]}'
-    except Exception as e:
-      status = f'There are {r.scard(self.church_username + ":facebook_search_results")} people in queue. \
-    Status: {status} \
-    Total: {len(area_book_results)} \
-    Completed: {pops} \
-    Remaining: {len(area_book_results) - pops}\
-    Current Name: ...'
-    finally:
+      return long_status
+    except:
       return status
+      
 
 
   """
