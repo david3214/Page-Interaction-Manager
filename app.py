@@ -70,8 +70,8 @@ class MissionaryBot:
   def load_facebook_profiles(self):
     area_book_results = pickle.loads(r.get(self.church_username+':area_book_results'))
     r.set(self.church_username + ":current_index", -2)
+    self.set_status("Loading Facebook Profiles")
     for item in area_book_results:
-      self.set_status("Loading Facebook Profiles")
       try:
         self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
         time.sleep(1)
@@ -87,36 +87,14 @@ class MissionaryBot:
   
   def load_facebook_profiles_thread(self):
     x = threading.Thread(target=self.load_facebook_profiles, daemon=True)
-    x.start()
-
-
-  """
-  return the status of the bot as a string
-  """
-  def create_status(self, status):
-    try:
-      pops = int(r.get(self.church_username + ":current_index"))
-      if pops <= 0:
-        pops += 2
-
-      area_book_results = pickle.loads(r.get(self.church_username + ':area_book_results'))
-      long_status = f'There are {r.llen(self.church_username + ":facebook_search_results")} people in queue. \
-        Status: {status} \
-        Total: {len(area_book_results)} \
-        Completed: {pops} \
-        Remaining: {len(area_book_results) - pops}\
-        Current Name: {area_book_results[pops][1] + " " + area_book_results[pops][2]}'
-      return long_status
-    except:
-      return status
-      
+    x.start()   
 
 
   """
   Set status of the bot
   """
   def set_status(self, status):
-    return r.set(self.church_username + ":status", self.create_status(status))
+    return r.set(self.church_username + ":status", status)
 
 
   """
@@ -256,12 +234,12 @@ class MissionaryBot:
     except Exception as e:
         print(e)
         self.wd.get_screenshot_as_file("exception.png")
+        
         #file = open('out.html', 'w')
         #file.write(self.wd.page_source)
         #file.close()
         # if self.safe_find_element_by_id("login"):
         #   self.safe_find_element_by_id("login").click()
-       
     return False
 
 
@@ -357,7 +335,18 @@ def bot():
   if request.method == "GET":
     # Get status
     if r.exists(church_username + ":status"):
-      return r.get(church_username + ":status")
+      try:
+        pops = int(r.get(church_username + ":current_index"))
+        area_book_results = pickle.loads(r.get(church_username + ':area_book_results'))
+        long_status = f'There are {r.llen(church_username + ":facebook_search_results")} people in queue. \
+          Status: {r.get(church_username + ":status").decode("utf-8")} \
+          Total: {len(area_book_results)} \
+          Completed: {pops} \
+          Remaining: {len(area_book_results) - pops}\
+          Current Name: {area_book_results[pops][1] + " " + area_book_results[pops][2]}'
+        return long_status
+      except:
+        return r.get(church_username + ":status")
     else:
       return "No Bot with that name"
 
@@ -390,7 +379,7 @@ def bot():
         r.delete(church_username + ":facebook_key")
         return f"Removed bot {church_username}"
     except:
-      return "Missing bot name"  
+      return "Missing bot name"
   return 'done'
 
 """
