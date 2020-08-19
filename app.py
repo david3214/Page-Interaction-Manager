@@ -385,10 +385,10 @@ def bot():
       if church_username == "" or not r.exists(church_username + ":status"):
         raise ValueError
       else:
-        r.delete(church_username)
         r.delete(church_username + ":current_index")
         r.delete(church_username + ":status")
         r.delete(church_username + ':area_book_results')
+        r.delete(church_username + ":facebook_search_results")
         return f"Removed bot {church_username}"
     except:
       return "Missing bot name"  
