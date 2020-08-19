@@ -13,9 +13,7 @@ import redis
 import pickle
 import gzip
 
-r = redis.Redis(
-    host='localhost',
-    port=6379)
+r = redis.from_url(os.environ.get("REDISCLOUD_URL"))
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
