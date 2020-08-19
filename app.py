@@ -9,16 +9,22 @@ import os
 
 from flask import Flask, make_response, request
 import urllib.parse
+import redis
+import pickle
+import gzip
+
+r = redis.Redis(
+    host='localhost',
+    port=6379)
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
     self.church_username = church_username
     self.church_password = church_password
-    self.pros_area_id = pros_area_id
-    self.status = 'Intializing'
     self.facebook_username = facebook_username
     self.facebook_password = facebook_password
-    self.number_of_pops = -2
+    self.pros_area_id = pros_area_id
+    self.set_status('Intializing')
 
     self.mission_id = 14440
     self.pros_area_url = f'https://areabook.churchofjesuschrist.org/services/mission/prosArea/{self.pros_area_id}'
@@ -26,7 +32,6 @@ class MissionaryBot:
     self.mission_directory_url = f'https://areabook.churchofjesuschrist.org/services/mission/{self.mission_id}'
     self.stewardCmisIds = []
     self.area_book_json = f'https://areabook.churchofjesuschrist.org/services/people/primary?stewardCmisIds={",".join(self.stewardCmisIds)}'
-
     self.person_profile_id = None
     self.person_profile = f'https://areabook.churchofjesuschrist.org/services/people/{self.person_profile_id}'
 
@@ -35,20 +40,21 @@ class MissionaryBot:
     self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
+    self.chrome_options.add_argument("--silent")
+    self.chrome_options.add_argument("--incognito")
     self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
     self.wd.implicitly_wait(30)
     self.wd.set_script_timeout(30)
   
-    self.facebook_search_results = []
-    self.area_book_results = []
     self.do_work_thread()
 
   """
   Run startup routine
   """
   def do_work(self):
-    self.area_book_results = self.scrape_area_book_for_people().values.tolist()
+    area_book_results = self.scrape_area_book_for_people().values.tolist()
+    r.set(self.church_username+':area_book_results', pickle.dumps(area_book_results))
     if self.authenticate_with_facebook():
       self.load_facebook_profiles_thread()
 
@@ -59,61 +65,62 @@ class MissionaryBot:
     y = threading.Thread(target=self.do_work, daemon=True)
     y.start()
 
+
   """
   fetch all the facebook profiles
   """
   def load_facebook_profiles(self):
-    max_queue_size = 17
-    for item in self.area_book_results:
-      self.status = "Loading Facebook Profiles"
+    area_book_results = pickle.loads(r.get(self.church_username+':area_book_results'))
+    r.set(self.church_username + ":current_index", 0)
+    for item in area_book_results:
+      self.set_status("Loading Facebook Profiles")
       try:
         self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
         time.sleep(1)
         cleaned = self.parse_facebook_search_page(self.wd.page_source)
+        if cleaned == None:
+          cleaned = ''
+        else:
+          cleaned = bytes(cleaned,'utf-8')
       except Exception as e:
         print(e)
-      self.facebook_search_results.append(cleaned)
-      while(len(self.facebook_search_results) >= max_queue_size):
-        self.status = "Sleeping"
-        time.sleep(1)
-    self.status = "Done Loading Facebook Profiles"
+      r.rpush(self.church_username + ":facebook_search_results", gzip.compress(cleaned))
+    self.set_status("Done Loading Facebook Profiles")
   
   def load_facebook_profiles_thread(self):
     x = threading.Thread(target=self.load_facebook_profiles, daemon=True)
     x.start()
 
-  def get_next_profile(self):
-    try:
-      results = self.facebook_search_results.pop(0)
-      self.number_of_pops += 1
-    except:
-      results = "No people ready"
-    finally:
-      return results
 
   """
   return the status of the bot as a string
   """
   def get_status(self):
+    pops = r.get(self.church_username + ":current_index")
+    area_book_results = pickle.loads(r.get(self.church_username + ':area_book_results'))
     try:
-      pops = self.number_of_pops
-      if pops <= 0:
-        pops+=2 # 2 is the ammount it started with 
-      status = f'There are {len(self.facebook_search_results)} people in queue. \
-    Status: {self.status} \
-    Total: {len(self.area_book_results)} \
-    Completed: {pops} \
-    Remaining: {len(self.area_book_results) - pops}\
-    Current Name: {self.area_book_results[pops][1] + " " + self.area_book_results[pops][2]}'
+      status = f'There are {r.scard(self.church_username + ":facebook_search_results")} people in queue. \
+        Status: {self.get_status()} \
+        Total: {len(area_book_results)} \
+        Completed: {pops} \
+        Remaining: {len(area_book_results) - pops}\
+        Current Name: {area_book_results[pops][1] + " " + area_book_results[pops][2]}'
     except Exception as e:
-      status = f'There are {len(self.facebook_search_results)} people in queue. \
-    Status: {self.status} \
-    Total: {len(self.area_book_results)} \
+      status = f'There are {r.scard(self.church_username + ":facebook_search_results")} people in queue. \
+    Status: {self.get_status()} \
+    Total: {len(area_book_results)} \
     Completed: {pops} \
-    Remaining: {len(self.area_book_results) - pops}\
+    Remaining: {len(area_book_results) - pops}\
     Current Name: ...'
     finally:
       return status
+
+
+  """
+  Set status of the bot
+  """
+  def set_status(self, status):
+    return r.set(self.church_username + ":status", status)
 
 
   """
@@ -143,14 +150,14 @@ class MissionaryBot:
       finally:
         return str(results_container)
 
+
   """
   Authenticate with church
   return true if successfull 
   """
   def authenticate_with_church(self):
-    self.status = 'Authenticating with church'
+    self.set_status('Authenticating with church')
     # Check if already logged in
-
     self.wd.find_element_by_id("okta-signin-username").send_keys(self.church_username)
     self.wd.find_element_by_id("okta-signin-submit").click()
     self.wd.find_element_by_name("password").send_keys(self.church_password)
@@ -167,11 +174,12 @@ class MissionaryBot:
         print(e)
         return None
 
+
   """
   Log in to face book so we can start doing searches
   """
   def authenticate_with_facebook(self):
-    self.status = "Authenticating with Facebook"
+    self.set_status("Authenticating with Facebook")
     self.wd.get("https://www.facebook.com/")
     #self.wd.get_screenshot_as_file("1.png")
     if self.facebook_username is None:
@@ -225,12 +233,12 @@ class MissionaryBot:
       if self.wd.find_element_by_xpath("//input[@type='text']"):
         #self.wd.get_screenshot_as_file("8email code.png")
         while (True):
-          if self.facebook_username in fb_key_dict.keys():
+          if r.exists("facebook_key:" + self.facebook_username):
             break
           else:
-            self.status = f'waiting for key from {self.facebook_username} might have to check spam'
+            self.set_status(f'waiting for key from {self.facebook_username} might have to check spam')
             time.sleep(5)
-        self.wd.find_element_by_xpath("//input[@type='text']").send_keys(fb_key_dict[self.facebook_username])
+        self.wd.find_element_by_xpath("//input[@type='text']").send_keys(r.get("facebook_key:" + self.facebook_username))
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         #self.wd.get_screenshot_as_file("9continue past email select.png")
 
@@ -251,10 +259,10 @@ class MissionaryBot:
 
     except Exception as e:
         print(e)
-        #self.wd.get_screenshot_as_file("exception.png")
-        file = open('out.html', 'w')
-        file.write(self.wd.page_source)
-        file.close()
+        self.wd.get_screenshot_as_file("exception.png")
+        #file = open('out.html', 'w')
+        #file.write(self.wd.page_source)
+        #file.close()
         # if self.safe_find_element_by_id("login"):
         #   self.safe_find_element_by_id("login").click()
        
@@ -266,7 +274,7 @@ class MissionaryBot:
   return the df
   """
   def scrape_area_book_for_people(self):
-    self.status = "Scraping AreaBook"
+    self.set_status("Scraping AreaBook")
     self.wd.get(self.pros_area_url)
     try:
       self.authenticate_with_church()
@@ -286,6 +294,7 @@ class MissionaryBot:
     self.wd.get(url)
     self.wd.find_element_by_tag_name('input')
     return self.wd.page_source
+
 
 """
 Returns a list of data frames of tables in the html page
@@ -337,70 +346,79 @@ def process_data_frame(df):
 
 
 app = Flask(__name__)
-fb_key_dict = {}
-bots = {}
 
 # Send help instruction
 @app.route("/help")
 def help():
     return """Watch the video to learn how to use this program"""
 
+
 @app.route('/bot', methods=['GET', 'POST', 'DELETE'])
 def bot():
   args = request.args
   church_username = urllib.parse.unquote_plus(args['church_username'])
+
   if request.method == "GET":
     # Get status
-    if church_username in bots.keys():
-      return bots[church_username].get_status()
+    if r.exists(church_username + ":status"):
+      return r.get(church_username + ":status")
     else:
       return "No Bot with that name"
 
   elif request.method == "POST":
     # Create Bot
-    print("Creating bot")
     try:
       if (church_username == None or args['church_password'] == None or args['pros_area_id'] == None or args['facebook_username'] == None or args['facebook_password'] == None):
         raise ValueError
-      if church_username in bots.keys():
+      if r.exists(church_username + ":status"):
         return "Bot already exist"
       else:
         church_password = urllib.parse.unquote_plus(args['church_password'])
         facebook_username = urllib.parse.unquote_plus(args['facebook_username'])
         facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
-        bot = MissionaryBot(church_username=church_username, church_password=church_password, facebook_username=facebook_username, facebook_password=facebook_password, pros_area_id=args['pros_area_id'])
-        bots[church_username] = bot
-        return "added bot"
+        MissionaryBot(church_username=church_username, church_password=church_password, facebook_username=facebook_username, facebook_password=facebook_password, pros_area_id=args['pros_area_id'])
+        return f"added bot {church_username}"
     except Exception as e:
       return f"Exception: {e}"
 
   elif request.method == "DELETE":
     #Remove bot
     try:
-      if church_username == "" or church_username not in bots.keys():
+      if church_username == "" or not r.exists(church_username + ":status"):
         raise ValueError
       else:
-        print(f"deleting bot{church_username}")
-        bots.pop(church_username)
-        return "Removed bot"
+        r.delete(church_username)
+        r.delete(church_username + ":current_index")
+        r.delete(church_username + ":status")
+        r.delete(church_username + ':area_book_results')
+        return f"Removed bot {church_username}"
     except:
       return "Missing bot name"  
   return 'done'
 
-
+"""
 @app.route("/pass-data")
 def pass_data_view():
   args = request.args
   url = args['url']
   bot = MissionaryBot()
   return bot.pass_data(url)
+"""
 
 
 @app.route("/get-next-profile")
 def get_next_profile():
   args = request.args
-  if args['church_username'] in bots.keys():
-      return bots[args['church_username']].get_next_profile()
+  church_username = urllib.parse.unquote_plus(args['church_username'])
+  if r.exists(church_username + ":status"):
+    try:
+      results = r.lpop(church_username + ":facebook_search_results")
+      results = gzip.decompress(results)
+      r.incr(church_username + ":current_index")
+    except:
+      results = "No people ready"
+    finally:
+      return results
   else:
     return "No bots with that name"
 
@@ -416,10 +434,11 @@ def add_key():
     else:
       key = args['key']
       facebook_username = args['facebook_username']
-      fb_key_dict[facebook_username] = key
+      r.set("facebook_key:" + facebook_username, key)
       return "✅"
   except:
     return "❌"
+
 
 if __name__ == '__main__':
   app.run()

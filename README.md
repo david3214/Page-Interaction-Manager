@@ -6,6 +6,11 @@ once you are done using the bot get the delete-bot route to free up some memory
 The interface for the program is a google sheet.
 area id is the numbers of your area email
 
+Wierd bugs:
+If you are logged into multiple google accounts there is a change it might break.
+To fix it sign out of all accounts except for the one the sheet was shared with or run the 
+program in a private window. 
+
 Example:
 church_username->Tom
 church_password->Riddle
