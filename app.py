@@ -231,12 +231,12 @@ class MissionaryBot:
       if self.wd.find_element_by_xpath("//input[@type='text']"):
         #self.wd.get_screenshot_as_file("8email code.png")
         while (True):
-          if r.exists("facebook_key:" + self.facebook_username):
+          if r.exists(self.church_username + ":facebook_key"):
             break
           else:
-            self.set_status(f'waiting for key from {self.facebook_username} might have to check spam')
+            self.set_status(f'waiting for key from {self.church_username} might have to check spam')
             time.sleep(5)
-        self.wd.find_element_by_xpath("//input[@type='text']").send_keys(r.get("facebook_key:" + self.facebook_username))
+        self.wd.find_element_by_xpath("//input[@type='text']").send_keys(r.get(self.church_username + ":facebook_key"))
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         #self.wd.get_screenshot_as_file("9continue past email select.png")
 
@@ -389,6 +389,7 @@ def bot():
         r.delete(church_username + ":status")
         r.delete(church_username + ':area_book_results')
         r.delete(church_username + ":facebook_search_results")
+        r.delete(church_username + ":facebook_key")
         return f"Removed bot {church_username}"
     except:
       return "Missing bot name"  
@@ -427,12 +428,12 @@ Add key for facebook 2 factor authentication
 def add_key():
   try:
     args = request.args
-    if args['key'] == "" or args['facebook_username'] == "":
+    if args['key'] == "" or args['church_username'] == "":
       raise ValueError
     else:
       key = args['key']
-      facebook_username = args['facebook_username']
-      r.set("facebook_key:" + facebook_username, key)
+      church_username = args['church_username']
+      r.set(church_username + ":facebook_key", key)
       return "✅"
   except:
     return "❌"
