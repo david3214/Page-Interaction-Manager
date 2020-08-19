@@ -69,7 +69,7 @@ class MissionaryBot:
   """
   def load_facebook_profiles(self):
     area_book_results = pickle.loads(r.get(self.church_username+':area_book_results'))
-    r.set(self.church_username + ":current_index", 0)
+    r.set(self.church_username + ":current_index", -2)
     for item in area_book_results:
       self.set_status("Loading Facebook Profiles")
       try:
@@ -96,6 +96,9 @@ class MissionaryBot:
   def create_status(self, status):
     try:
       pops = int(r.get(self.church_username + ":current_index"))
+      if pops <= 0:
+        pops += 2
+
       area_book_results = pickle.loads(r.get(self.church_username + ':area_book_results'))
       long_status = f'There are {r.llen(self.church_username + ":facebook_search_results")} people in queue. \
         Status: {status} \
