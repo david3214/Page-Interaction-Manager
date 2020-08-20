@@ -72,6 +72,9 @@ class MissionaryBot:
     r.set(self.church_username + ":current_index", -2)
     self.set_status("Loading Facebook Profiles")
     for item in area_book_results:
+      if not r.exists(self.church_username + ":status"):
+        r.delete(self.church_username + ":facebook_search_results")
+        sys.exit()
       try:
         self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
         time.sleep(1)
@@ -372,11 +375,11 @@ def bot():
       if church_username == "" or not r.exists(church_username + ":status"):
         raise ValueError
       else:
-        r.delete(church_username + ":current_index")
         r.delete(church_username + ":status")
+        r.delete(church_username + ":current_index")
         r.delete(church_username + ':area_book_results')
-        r.delete(church_username + ":facebook_search_results")
         r.delete(church_username + ":facebook_key")
+        r.delete(church_username + ":facebook_search_results")
         return f"Removed bot {church_username}"
     except:
       return "Missing bot name"
@@ -399,8 +402,11 @@ def get_next_profile():
   if r.exists(church_username + ":status"):
     try:
       results = r.lpop(church_username + ":facebook_search_results")
-      results = gzip.decompress(results)
-      r.incr(church_username + ":current_index")
+      if results:
+        results = gzip.decompress(results)
+        r.incr(church_username + ":current_index")
+      else:
+        raise Exception
     except:
       results = "No people ready"
     finally:
