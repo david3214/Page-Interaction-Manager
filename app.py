@@ -8,12 +8,19 @@ import threading
 import os
 
 from flask import Flask, make_response, request
+from flask_caching import Cache
 import urllib.parse
 import redis
 import pickle
 import gzip
 
 r = redis.from_url(os.environ.get("REDISCLOUD_URL"))
+
+config = {
+    "DEBUG": True,          # some Flask specific configs
+    "CACHE_TYPE": "simple", # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+}
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
@@ -44,8 +51,7 @@ class MissionaryBot:
     self.wd.set_window_size(1920, 1080)
     self.wd.implicitly_wait(30)
     self.wd.set_script_timeout(30)
-  
-    self.do_work_thread()
+
 
   """
   Run startup routine
@@ -364,7 +370,7 @@ def bot():
         church_password = urllib.parse.unquote_plus(args['church_password'])
         facebook_username = urllib.parse.unquote_plus(args['facebook_username'])
         facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
-        MissionaryBot(church_username=church_username, church_password=church_password, facebook_username=facebook_username, facebook_password=facebook_password, pros_area_id=args['pros_area_id'])
+        MissionaryBot(church_username=church_username, church_password=church_password, facebook_username=facebook_username, facebook_password=facebook_password, pros_area_id=args['pros_area_id']).do_work_thread()
         return f"added bot {church_username}"
     except Exception as e:
       return f"Exception: {e}"
@@ -385,14 +391,26 @@ def bot():
       return "Missing bot name"
   return 'done'
 
-"""
-@app.route("/pass-data")
-def pass_data_view():
+
+@app.route("/proxy-data/<site>")
+@cache.memoize(timeout=3600)
+def pass_data_view(site):
   args = request.args
-  url = args['url']
-  bot = MissionaryBot()
+  url = urllib.parse.unquote_plus(args['url'])
+  if site == "facebook":
+    facebook_username = urllib.parse.unquote_plus(args['facebook_username'])
+    facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
+    bot = MissionaryBot(church_username="proxy", facebook_username=facebook_username, facebook_password=facebook_password)
+    bot.authenticate_with_facebook()
+    
+  elif site == "church":
+    church_username = urllib.parse.unquote_plus(args['church_username'])
+    church_password = urllib.parse.unquote_plus(args['church_password'])
+    bot = MissionaryBot(church_username=church_username, church_password=church_password)
+    bot.authenticate_with_church()
+
   return bot.pass_data(url)
-"""
+
 
 
 @app.route("/get-next-profile")
@@ -433,4 +451,7 @@ def add_key():
 
 
 if __name__ == '__main__':
+  app.config.from_mapping(config)
+  cache = Cache(app)
   app.run()
+  
