@@ -16,11 +16,6 @@ import gzip
 
 r = redis.from_url(os.environ.get("REDISCLOUD_URL"))
 
-config = {
-    "DEBUG": True,          # some Flask specific configs
-    "CACHE_TYPE": "simple", # Flask-Caching related configs
-    "CACHE_DEFAULT_TIMEOUT": 300
-}
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
@@ -223,6 +218,7 @@ class MissionaryBot:
             time.sleep(5)
         self.wd.find_element_by_xpath("//input[@type='text']").send_keys(r.get(self.church_username + ":facebook_key"))
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
+        self.set_status('entering key')
         #self.wd.get_screenshot_as_file("9continue past email select.png")
 
       while True:
@@ -235,9 +231,11 @@ class MissionaryBot:
 
       if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
         #self.wd.get_screenshot_as_file("search.png")
+        self.set_status('Done authentication with Facebook version 1')
         return True
       elif self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
         #self.wd.get_screenshot_as_file("search.png")
+        self.set_status('Done authentication with Facebook version 2')
         return True    
 
     except Exception as e:
@@ -329,6 +327,15 @@ def process_data_frame(df):
 
 
 app = Flask(__name__)
+config = {
+    "DEBUG": True,          # some Flask specific configs
+    "CACHE_TYPE": "simple", # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+}
+app.config.from_mapping(config)
+cache = Cache(app)
+
+
 
 # Send help instruction
 @app.route("/help")
@@ -393,7 +400,7 @@ def bot():
 
 
 @app.route("/proxy-data/<site>")
-@cache.memoize(timeout=3600)
+@cache.cached(timeout=3600)
 def pass_data_view(site):
   args = request.args
   url = urllib.parse.unquote_plus(args['url'])
@@ -402,7 +409,7 @@ def pass_data_view(site):
     facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
     bot = MissionaryBot(church_username="proxy", facebook_username=facebook_username, facebook_password=facebook_password)
     bot.authenticate_with_facebook()
-    
+    # Scroll to botom to get all the data
   elif site == "church":
     church_username = urllib.parse.unquote_plus(args['church_username'])
     church_password = urllib.parse.unquote_plus(args['church_password'])
@@ -451,7 +458,5 @@ def add_key():
 
 
 if __name__ == '__main__':
-  app.config.from_mapping(config)
-  cache = Cache(app)
   app.run()
   
