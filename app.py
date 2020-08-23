@@ -460,6 +460,9 @@ def add_key():
 def privacy():
   return "All data is temporary and not stored anywhere"
 
+@app.route("/")
+def privacy():
+  return "Welcome to the app"
 
 @app.route("/terms-of-service")
 def terms_of_service():
