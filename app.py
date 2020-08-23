@@ -456,6 +456,14 @@ def add_key():
   except:
     return "❌"
 
+@app.route("/privacy")
+def privacy():
+  return "All data is temporary and not stored anywhere"
+
+
+@app.route("/terms-of-service")
+def terms_of_service():
+  return "Sorry if it isn't working"
 
 if __name__ == '__main__':
   app.run()
