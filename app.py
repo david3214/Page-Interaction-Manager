@@ -461,7 +461,7 @@ def privacy():
   return "All data is temporary and not stored anywhere"
 
 @app.route("/")
-def privacy():
+def main():
   return "Welcome to the app"
 
 @app.route("/terms-of-service")
