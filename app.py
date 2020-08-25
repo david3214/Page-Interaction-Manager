@@ -464,6 +464,16 @@ def privacy():
 def main():
   return "Welcome to the app"
 
+
+@app.route("/support")
+def support():
+  return "Email me at ***REMOVED***"
+
+@app.route("/post-install-tip")
+def post_install_tip():
+  return "Click the run addon button"
+
+
 @app.route("/terms-of-service")
 def terms_of_service():
   return "Sorry if it isn't working"
