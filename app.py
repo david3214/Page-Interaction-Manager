@@ -369,9 +369,8 @@ def help():
 @app.route('/bot', methods=['GET', 'POST', 'DELETE'])
 def bot():
   args = request.args
-  church_username = urllib.parse.unquote_plus(args['church_username'])
-
   if request.method == "GET":
+    church_username = urllib.parse.unquote_plus(args['church_username'])
     # Get status
     if r.exists(church_username + ":status"):
       try:
@@ -391,22 +390,25 @@ def bot():
 
   elif request.method == "POST":
     # Create Bot
+    church_username = request.form['church_username']
+    church_password = request.form['church_password']
+    facebook_username = request.form['facebook_username']
+    facebook_password = request.form['facebook_password']
+    pros_area_id = request.form['pros_area_id']
     try:
-      if (church_username == None or args['church_password'] == None or args['pros_area_id'] == None or args['facebook_username'] == None or args['facebook_password'] == None):
+      if (church_username == None or church_password == None or facebook_username == None or facebook_password == None or pros_area_id == None):
         raise ValueError
       if r.exists(church_username + ":status"):
         return "Bot already exist"
       else:
-        church_password = urllib.parse.unquote_plus(args['church_password'])
-        facebook_username = urllib.parse.unquote_plus(args['facebook_username'])
-        facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
-        MissionaryBot(church_username=church_username, church_password=church_password, facebook_username=facebook_username, facebook_password=facebook_password, pros_area_id=args['pros_area_id']).do_work_thread()
+        MissionaryBot(church_username=church_username, church_password=church_password, facebook_username=facebook_username, facebook_password=facebook_password, pros_area_id=pros_area_id).do_work_thread()
         return f"added bot {church_username}"
     except Exception as e:
       return f"Exception: {e}"
 
   elif request.method == "DELETE":
     #Remove bot
+    church_username = urllib.parse.unquote_plus(args['church_username'])
     try:
       if church_username == "" or not r.exists(church_username + ":status"):
         raise ValueError
@@ -514,5 +516,3 @@ def google_verification():
 
 if __name__ == '__main__':
   app.run()
-
-  
