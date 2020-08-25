@@ -508,7 +508,7 @@ def get_missionary_emails():
   bot = MissionaryBot(church_username=church_username, church_password=church_password)
   return bot.get_missionary_emails()
 
-@app.route('/google46b0d5ef2ffda0c5')
+@app.route('/google46b0d5ef2ffda0c5.html')
 def google_verification():
   return render_template('google46b0d5ef2ffda0c5.html')
 
