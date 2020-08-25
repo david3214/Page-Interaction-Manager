@@ -276,6 +276,29 @@ class MissionaryBot:
     self.wd.find_element_by_tag_name('input')
     return self.wd.page_source
 
+  def get_missionary_emails(self):
+    self.wd.get('https://areabook.churchofjesuschrist.org/services/config?lang=en')
+    try:
+      self.authenticate_with_church()
+    except:
+      pass
+    self.wd.find_elements_by_tag_name("pre")
+    lang_data = self.parse_church_json(self.wd.page_source)
+    url_list = []
+    for mission in lang_data['missions']:
+      url_list.append({'url':f'https://areabook.churchofjesuschrist.org/services/mission/{mission["id"]}', 'id':mission["id"]})
+    #f = open('urls.txt', 'w')
+    #for item in url_list:
+    #  f.write("%s\n" % item)
+    #f.close()
+    import json 
+    for item in url_list:
+      self.wd.get(item["url"])
+      self.wd.find_elements_by_tag_name("pre")
+      ff = open(f'data/{item["id"]}', 'w+')
+      ff.write(json.dumps(self.parse_church_json(self.wd.page_source)))
+      ff.close()
+    return f'found {len(url_list)}'
 
 """
 Returns a list of data frames of tables in the html page
@@ -419,7 +442,6 @@ def pass_data_view(site):
   return bot.pass_data(url)
 
 
-
 @app.route("/get-next-profile")
 def get_next_profile():
   args = request.args
@@ -478,6 +500,13 @@ def post_install_tip():
 def terms_of_service():
   return "Sorry if it isn't working"
 
+@app.route('/get-missionary-emails')
+def get_missionary_emails():
+  args = request.args
+  church_username = urllib.parse.unquote_plus(args['church_username'])
+  church_password = urllib.parse.unquote_plus(args['church_password'])
+  bot = MissionaryBot(church_username=church_username, church_password=church_password)
+  return bot.get_missionary_emails()
+
 if __name__ == '__main__':
   app.run()
-  

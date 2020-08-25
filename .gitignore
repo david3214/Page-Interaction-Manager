@@ -5,3 +5,4 @@ bots.pickle
 /test_data
 .temp.jpg
 /__pycache__
+/data
