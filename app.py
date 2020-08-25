@@ -7,7 +7,7 @@ import time
 import threading
 import os
 
-from flask import Flask, make_response, request
+from flask import Flask, make_response, request, render_template
 from flask_caching import Cache
 import urllib.parse
 import redis
@@ -480,7 +480,7 @@ def add_key():
 
 @app.route("/privacy")
 def privacy():
-  return "All data is temporary and not stored anywhere"
+  return render_template('privacy.html')
 
 @app.route("/")
 def main():
@@ -498,7 +498,7 @@ def post_install_tip():
 
 @app.route("/terms-of-service")
 def terms_of_service():
-  return "Sorry if it isn't working"
+  return render_template('terms_of_service.html')
 
 @app.route('/get-missionary-emails')
 def get_missionary_emails():
@@ -508,5 +508,11 @@ def get_missionary_emails():
   bot = MissionaryBot(church_username=church_username, church_password=church_password)
   return bot.get_missionary_emails()
 
+@app.route('/google46b0d5ef2ffda0c5')
+def google_verification():
+  return render_template('google46b0d5ef2ffda0c5.html')
+
 if __name__ == '__main__':
   app.run()
+
+  
