@@ -214,7 +214,7 @@ class MissionaryBot:
           self.set_status(f'waiting for key from {self.church_username} might have to check spam')
           print(r.exists(self.church_username + ":facebook_key"))
           time.sleep(5)
-        self.wd.find_element_by_xpath("//input[@type='text']").send_keys(r.get(self.church_username + ":facebook_key"))
+        self.wd.find_element_by_xpath("//input[@type='text']").send_keys(str(r.get(self.church_username + ":facebook_key")))
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         self.set_status('entering key')
         #self.wd.get_screenshot_as_file("9continue past email select.png")
