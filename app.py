@@ -226,15 +226,20 @@ class MissionaryBot:
           #self.wd.get_screenshot_as_file("10continue past email select.png")
         except:
           break
-
-      if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
-        #self.wd.get_screenshot_as_file("search.png")
-        self.set_status('Done authentication with Facebook version 1')
-        return True
-      elif self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
-        #self.wd.get_screenshot_as_file("search.png")
-        self.set_status('Done authentication with Facebook version 2')
-        return True    
+      try:
+        if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
+          #self.wd.get_screenshot_as_file("search.png")
+          self.set_status('Done authentication with Facebook version 1')
+          return True
+      except Exception as e:
+        print(e)
+      try:
+        if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
+          #self.wd.get_screenshot_as_file("search.png")
+          self.set_status('Done authentication with Facebook version 2')
+          return True
+      except Exception as e:
+        print(e)
 
     except Exception as e:
         print(e)
