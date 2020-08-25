@@ -390,6 +390,11 @@ def bot():
 
   elif request.method == "POST":
     # Create Bot
+    print(request.form)
+    print('\n\n\n')
+    print(request.content_type)
+    print('\n\n\n')
+    print(request.mimetype)
     church_username = request.form['church_username']
     church_password = request.form['church_password']
     facebook_username = request.form['facebook_username']
@@ -410,9 +415,7 @@ def bot():
     #Remove bot
     church_username = urllib.parse.unquote_plus(args['church_username'])
     try:
-      if church_username == "" or not r.exists(church_username + ":status"):
-        raise ValueError
-      else:
+      if r.exists(church_username + ":status"):
         r.delete(church_username + ":status")
         r.delete(church_username + ":current_index")
         r.delete(church_username + ':area_book_results')
@@ -516,3 +519,5 @@ def google_verification():
 
 if __name__ == '__main__':
   app.run()
+
+  
