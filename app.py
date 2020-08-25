@@ -210,12 +210,10 @@ class MissionaryBot:
 
       if self.wd.find_element_by_xpath("//input[@type='text']"):
         #self.wd.get_screenshot_as_file("8email code.png")
-        while (True):
-          if r.exists(self.church_username + ":facebook_key"):
-            break
-          else:
-            self.set_status(f'waiting for key from {self.church_username} might have to check spam')
-            time.sleep(5)
+        while (not r.exists(self.church_username + ":facebook_key")):
+          self.set_status(f'waiting for key from {self.church_username} might have to check spam')
+          print(r.exists(self.church_username + ":facebook_key"))
+          time.sleep(5)
         self.wd.find_element_by_xpath("//input[@type='text']").send_keys(r.get(self.church_username + ":facebook_key"))
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         self.set_status('entering key')
@@ -390,11 +388,6 @@ def bot():
 
   elif request.method == "POST":
     # Create Bot
-    print(request.form)
-    print('\n\n\n')
-    print(request.content_type)
-    print('\n\n\n')
-    print(request.mimetype)
     church_username = request.form['church_username']
     church_password = request.form['church_password']
     facebook_username = request.form['facebook_username']
@@ -519,5 +512,3 @@ def google_verification():
 
 if __name__ == '__main__':
   app.run()
-
-  
