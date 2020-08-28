@@ -490,7 +490,7 @@ def privacy():
 
 @app.route("/")
 def main():
-  return "Welcome to the app"
+  return render_template('index.html')
 
 
 @app.route("/support")
@@ -517,6 +517,10 @@ def get_missionary_emails():
 @app.route('/google46b0d5ef2ffda0c5.html')
 def google_verification():
   return render_template('google46b0d5ef2ffda0c5.html')
+
+@app.route('/assets/<path:path>')
+def send_assets(path):
+    return send_from_directory('assets', path)
 
 if __name__ == '__main__':
   app.run()
