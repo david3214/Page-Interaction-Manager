@@ -37,7 +37,7 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    self.chrome_options.add_argument("--headless")
+    #self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
     self.chrome_options.add_argument("--silent")
@@ -120,7 +120,7 @@ class MissionaryBot:
         soup = BeautifulSoup(html, "html.parser")
         results_container = soup.find("div", {"id": "BrowseResultsContainer"})
         if results_container == None:
-          results_container = soup.find("div", {"class": "rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t d2edcug0 rj1gh0hx buofh1pr g5gj957u hpfvmrgz dp1hu0rb"})
+          results_container = soup.find("div", {"aria-label": "Preview of a Search Result"})
           for circle in results_container.find_all('circle', {'class':"mlqo0dh0 georvekb s6kb5r3f"}):
             circle.decompose()
       except Exception as e:
@@ -173,14 +173,14 @@ class MissionaryBot:
       try: #Check if we are allowed in imediately
         self.wd.implicitly_wait(5)
         try: #Check for facebook version 1
-          if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
+          if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
             #self.wd.get_screenshot_as_file("search.png")
             self.wd.implicitly_wait(30)
             return True
         except:
           pass
         try:#Check for facebook version 2
-          if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
+          if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
             #self.wd.get_screenshot_as_file("search.png")
             self.wd.implicitly_wait(30)
             return True
@@ -475,6 +475,8 @@ def add_key():
       else:
         key = request.form['key']
         church_username = request.form['church_username']
+        print(key)
+        print(church_username)
         r.set(church_username + ":facebook_key", key)
         return "✅"
     else:
