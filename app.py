@@ -212,7 +212,6 @@ class MissionaryBot:
         #self.wd.get_screenshot_as_file("8email code.png")
         while (not r.exists(self.church_username + ":facebook_key")):
           self.set_status(f'waiting for key from {self.church_username} might have to check spam')
-          print(r.exists(self.church_username + ":facebook_key"))
           time.sleep(5)
         self.wd.find_element_by_xpath("//input[@type='text']").send_keys(str(r.get(self.church_username + ":facebook_key")))
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
@@ -467,19 +466,23 @@ def get_next_profile():
 """
 Add key for facebook 2 factor authentication
 """
-@app.route("/add-key")
+@app.route("/add-key", methods=['POST'])
 def add_key():
   try:
-    args = request.args
-    if args['key'] == "" or args['church_username'] == "":
-      raise ValueError
+    if request.method == "POST":
+      if request.form['key'] == "" or request.form['church_username'] == "":
+        raise ValueError
+      else:
+        key = request.form['key']
+        church_username = request.form['church_username']
+        r.set(church_username + ":facebook_key", key)
+        return "✅"
     else:
-      key = args['key']
-      church_username = args['church_username']
-      r.set(church_username + ":facebook_key", key)
-      return "✅"
-  except:
+      return "❌"
+  except Exception as e:
+    print(e)
     return "❌"
+    
 
 @app.route("/privacy")
 def privacy():
