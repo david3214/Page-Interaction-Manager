@@ -37,7 +37,7 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    #self.chrome_options.add_argument("--headless")
+    self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
     self.chrome_options.add_argument("--silent")
@@ -475,8 +475,6 @@ def add_key():
       else:
         key = request.form['key']
         church_username = request.form['church_username']
-        print(key)
-        print(church_username)
         r.set(church_username + ":facebook_key", key)
         return "✅"
     else:
