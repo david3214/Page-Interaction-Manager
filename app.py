@@ -186,6 +186,11 @@ class MissionaryBot:
             return True
         except:
           pass
+        try: #Check if it is asking about the new location
+          if self.wd.find_element_by_xpath('//button[contains(text(), "Yes")]'):
+            self.wd.find_element_by_xpath('//button[contains(text(), "Yes")]').click()
+        except:
+          pass
       except:# Error in checking for search bar
         pass
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
