@@ -1,11 +1,6 @@
 FROM tiangolo/meinheld-gunicorn-flask:python3.7
-COPY ./app /app
-WORKDIR /app
-
-RUN pip install --no-cache-dir -r requirements.txt
-ENV REDISCLOUD_URL=***REMOVED***
-
 # Install Chrome for Selenium
+WORKDIR /app
 ARG CHROME_VERSION="google-chrome-stable"
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
   && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
@@ -29,4 +24,6 @@ RUN CD_VERSION=$(if [ ${CHROME_DRIVER_VERSION:-latest} = "latest" ]; then echo $
   && ln -fs /opt/selenium/chromedriver-$CD_VERSION /usr/bin/chromedriver
 
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
-
+ENV REDISCLOUD_URL=***REMOVED***
+COPY ./app /app
+RUN pip install --no-cache-dir -r requirements.txt
