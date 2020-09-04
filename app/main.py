@@ -44,7 +44,6 @@ class MissionaryBot:
     self.chrome_options.add_argument("--silent")
     self.chrome_options.add_argument("--incognito")
     self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
-    self.wd = webdriver.Chrome(chrome_options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
     self.wd.implicitly_wait(30)
     self.wd.set_script_timeout(30)
@@ -77,6 +76,7 @@ class MissionaryBot:
     for item in area_book_results:
       if not r.exists(self.church_username + ":status"):
         r.delete(self.church_username + ":facebook_search_results")
+        self.wd.quit()
         sys.exit()
       try:
         self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
