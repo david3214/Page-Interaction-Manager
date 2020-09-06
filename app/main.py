@@ -405,6 +405,7 @@ def bot():
     facebook_username = request.form['facebook_username']
     facebook_password = request.form['facebook_password']
     pros_area_id = request.form['pros_area_id']
+    print(church_username, church_password, facebook_username, facebook_password, pros_area_id)
     try:
       if (church_username == None or church_password == None or facebook_username == None or facebook_password == None or pros_area_id == None):
         raise ValueError
