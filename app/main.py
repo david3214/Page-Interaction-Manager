@@ -380,6 +380,7 @@ def help():
 def bot():
   args = request.args
   print(args)
+  print('asdf', sys.stderr)
   if request.method == "GET":
     church_username = urllib.parse.unquote_plus(args['church_username'])
     # Get status
