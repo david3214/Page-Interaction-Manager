@@ -1,4 +1,5 @@
 FROM tiangolo/meinheld-gunicorn-flask:python3.7
+
 # Install Chrome for Selenium
 WORKDIR /app
 ARG CHROME_VERSION="google-chrome-stable"
@@ -25,5 +26,6 @@ RUN CD_VERSION=$(if [ ${CHROME_DRIVER_VERSION:-latest} = "latest" ]; then echo $
 
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 ENV REDISCLOUD_URL=***REMOVED***
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/eighth-vehicle-287322-c5a504a48ad3.json
 COPY ./app /app
 RUN pip install --no-cache-dir -r requirements.txt
