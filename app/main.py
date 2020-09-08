@@ -147,7 +147,7 @@ class MissionaryBot:
     self.wd.find_element_by_id("okta-signin-submit").click()
     self.wd.find_element_by_name("password").send_keys(self.church_password)
     self.wd.find_element_by_name("password").submit()
-
+    logging.warning(self.wd.page_source)
 
   """
   Function for not raising an error when an element doesn't exist
