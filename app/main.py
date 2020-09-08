@@ -6,6 +6,7 @@ import pandas as pd
 import time
 import threading
 import os
+import logging
 
 from flask import Flask, make_response, request, render_template, send_from_directory
 from flask_caching import Cache
@@ -13,10 +14,13 @@ import urllib.parse
 import redis
 import pickle
 import gzip
+import google.cloud.logging
 
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
 r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
-
+client = google.cloud.logging.Client()
+client.get_default_handler()
+client.setup_logging()
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
@@ -379,8 +383,6 @@ def help():
 @app.route('/bot', methods=['GET', 'POST', 'DELETE'])
 def bot():
   args = request.args
-  print(args)
-  print('asdf', sys.stderr)
   if request.method == "GET":
     church_username = urllib.parse.unquote_plus(args['church_username'])
     # Get status
@@ -407,8 +409,7 @@ def bot():
     facebook_username = request.form['facebook_username']
     facebook_password = request.form['facebook_password']
     pros_area_id = request.form['pros_area_id']
-    print(church_username, church_password, facebook_username, facebook_password, pros_area_id)
-    print(church_username, church_password, facebook_username, facebook_password, pros_area_id, sys.stderr)
+    logging.warning((church_username, church_password, facebook_username, facebook_password, pros_area_id))
     try:
       if (church_username == None or church_password == None or facebook_username == None or facebook_password == None or pros_area_id == None):
         raise ValueError
