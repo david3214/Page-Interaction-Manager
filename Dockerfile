@@ -25,5 +25,5 @@ RUN CD_VERSION=$(if [ ${CHROME_DRIVER_VERSION:-latest} = "latest" ]; then echo $
 
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 ENV REDISCLOUD_URL=***REMOVED***
+RUN pip install --no-cache-dir -r ./app/requirements.txt
 COPY ./app /app
-RUN pip install --no-cache-dir -r requirements.txt

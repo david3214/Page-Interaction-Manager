@@ -379,6 +379,7 @@ def help():
 @app.route('/bot', methods=['GET', 'POST', 'DELETE'])
 def bot():
   args = request.args
+  print(args)
   if request.method == "GET":
     church_username = urllib.parse.unquote_plus(args['church_username'])
     # Get status
