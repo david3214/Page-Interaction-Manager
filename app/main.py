@@ -6,7 +6,6 @@ import pandas as pd
 import time
 import threading
 import os
-import logging
 
 from flask import Flask, make_response, request, render_template, send_from_directory
 from flask_caching import Cache
@@ -14,13 +13,9 @@ import urllib.parse
 import redis
 import pickle
 import gzip
-import google.cloud.logging
 
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
 r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
-client = google.cloud.logging.Client()
-client.get_default_handler()
-client.setup_logging()
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
