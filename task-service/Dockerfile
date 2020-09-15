@@ -36,4 +36,4 @@ ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 ENV REDISCLOUD_URL=***REMOVED***
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/eighth-vehicle-287322-c5a504a48ad3.json
-CMD gunicorn -b :$PORT main:app
+CMD gunicorn -b :$PORT main:app --timeout 3600
