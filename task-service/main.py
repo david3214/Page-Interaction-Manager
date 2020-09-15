@@ -1,4 +1,5 @@
 """Cloud Task workers"""
+import json
 from flask import Flask, request
 
 from missionary_bot import MissionaryBot
@@ -8,9 +9,9 @@ app = Flask(__name__)
 @app.route('/find_member_profiles', methods=['POST'])
 def find_member_profiles():
     """Log the request payload."""
-    payload = request.get_data(as_text=True) or '(empty payload)'
+    payload = request.get_data(parse_form_data=True) or '(empty payload)'
     print('Received task with payload: {}'.format(payload))
-    MissionaryBot(**request.form).do_work_thread()
+    MissionaryBot(**json.loads(payload)).do_work_thread()
     return "Added data to queue"
 # [END cloud_tasks_appengine_quickstart]
 
