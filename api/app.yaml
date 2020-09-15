@@ -1,0 +1,7 @@
+runtime: python38
+service: api
+instance_class: F1
+env_variables:
+  PROJECT: "eighth-vehicle-287322"
+  LOCATION: "us-central1"
+  QUEUE: "my-queue"
