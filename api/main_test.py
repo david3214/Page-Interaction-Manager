@@ -2,7 +2,8 @@ import pytest
 
 
 @pytest.fixture
-def app():
+def app(monkeypatch):
+    monkeypatch.setenv('REDISCLOUD_URL', '***REMOVED***')
     import main
     main.app.testing = True
     return main.app.test_client()
