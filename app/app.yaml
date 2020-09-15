@@ -1,0 +1,9 @@
+runtime: python38
+instance_class: F1
+env_variables:
+  REDISCLOUD_URL: "***REMOVED***"
+service: default
+
+handlers:
+  - url: /assets
+    static_dir: assets

@@ -1,0 +1,6 @@
+runtime: custom
+env: flex
+service: task-service
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 2
