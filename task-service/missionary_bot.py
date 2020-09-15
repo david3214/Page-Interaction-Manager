@@ -65,6 +65,7 @@ class MissionaryBot:
   def do_work_thread(self):
     y = threading.Thread(target=self.do_work, daemon=True)
     y.start()
+    y.join()
 
   """
   fetch all the facebook profiles
