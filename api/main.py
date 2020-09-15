@@ -78,24 +78,24 @@ def bot():
   return 'done'
 
 
-@app.route("/proxy-data/<site>")
-#@cache.cached(timeout=3600)
-def pass_data_view(site):
-  args = request.args
-  url = urllib.parse.unquote_plus(args['url'])
-  if site == "facebook":
-    facebook_username = urllib.parse.unquote_plus(args['facebook_username'])
-    facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
-    bot = MissionaryBot(church_username="proxy", facebook_username=facebook_username, facebook_password=facebook_password)
-    bot.authenticate_with_facebook()
-    # Scroll to botom to get all the data
-  elif site == "church":
-    church_username = urllib.parse.unquote_plus(args['church_username'])
-    church_password = urllib.parse.unquote_plus(args['church_password'])
-    bot = MissionaryBot(church_username=church_username, church_password=church_password)
-    bot.authenticate_with_church()
-
-  return bot.pass_data(url)
+#@app.route("/proxy-data/<site>")
+##@cache.cached(timeout=3600)
+#def pass_data_view(site):
+#  args = request.args
+#  url = urllib.parse.unquote_plus(args['url'])
+#  if site == "facebook":
+#    facebook_username = urllib.parse.unquote_plus(args['facebook_username'])
+#    facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
+#    bot = MissionaryBot(church_username="proxy", facebook_username=facebook_username, facebook_password=facebook_password)
+#    bot.authenticate_with_facebook()
+#    # Scroll to botom to get all the data
+#  elif site == "church":
+#    church_username = urllib.parse.unquote_plus(args['church_username'])
+#    church_password = urllib.parse.unquote_plus(args['church_password'])
+#    bot = MissionaryBot(church_username=church_username, church_password=church_password)
+#    bot.authenticate_with_church()
+#
+#  return bot.pass_data(url)
 
 
 @app.route("/get-next-profile")
