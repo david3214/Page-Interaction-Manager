@@ -53,7 +53,7 @@ def bot():
     try:
       if (church_username == None or church_password == None or facebook_username == None or facebook_password == None or pros_area_id == None):
         raise ValueError
-      if False:#r.exists(church_username + ":status"):
+      if r.exists(church_username + ":status"):
         return "Bot already exist"
       else:
         data = request.form
