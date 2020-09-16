@@ -71,7 +71,7 @@ class MissionaryBot:
       if not r.exists(self.church_username + ":status"):
         r.delete(self.church_username + ":facebook_search_results")
         self.wd.quit()
-        sys.exit()
+        break
       try:
         self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
         time.sleep(1)
@@ -116,7 +116,8 @@ class MissionaryBot:
           for circle in results_container.find_all('circle', {'class':"mlqo0dh0 georvekb s6kb5r3f"}):
             circle.decompose()
       except Exception as e:
-        print(e)
+        #print(e)
+        pass
       finally:
         return str(results_container)
 
