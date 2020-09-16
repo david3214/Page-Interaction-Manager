@@ -11,9 +11,8 @@ def find_member_profiles():
     """Log the request payload."""
     payload = request.get_data(as_text=True) or '(empty payload)'
     print('Received task with payload: {}'.format(payload))
-    MissionaryBot(**json.loads(payload)).do_work_thread()
-    return "Added data to queue"
-# [END cloud_tasks_appengine_quickstart]
+    MissionaryBot(**json.loads(payload)).do_work()
+    return "Completed loading Facebook Profile information"
 
 
 @app.route('/')
