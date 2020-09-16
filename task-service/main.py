@@ -11,14 +11,26 @@ def find_member_profiles():
     """Log the request payload."""
     payload = request.get_data(as_text=True) or '(empty payload)'
     print('Received task with payload: {}'.format(payload))
-    MissionaryBot(**json.loads(payload)).do_work()
-    return "Completed loading Facebook Profile information"
+    try:
+        MissionaryBot(**json.loads(payload)).do_work()
+    except Exception as e:
+        return f"{e} Didn't completed loading Facebook profile information"
+    return "Completed loading Facebook profile information"
 
 
 @app.route('/')
 def hello():
     """Basic index to verify app is serving."""
     return 'Hello World!'
+
+
+@app.route('/liveness_check')
+def liveness_check():
+    return "OK"
+
+@app.route('/readiness_check')
+def readiness_check():
+    return "OK"
 
 
 if __name__ == '__main__':

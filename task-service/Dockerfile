@@ -1,16 +1,5 @@
 FROM gcr.io/google_appengine/python
 
-# Copy local code to the container image.
-RUN virtualenv /env -p python3.7
-ENV VIRTUAL_ENV /env
-ENV PATH /env/bin:$PATH
-
-ADD requirements.txt /app/
-RUN pip install -r requirements.txt
-RUN pip install gunicorn
-
-ADD . /app/
-
 # Install Chrome for Selenium
 ARG CHROME_VERSION="google-chrome-stable"
 RUN apt-get update && apt-get install unzip
@@ -36,4 +25,15 @@ ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 ENV REDISCLOUD_URL=***REMOVED***
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/eighth-vehicle-287322-c5a504a48ad3.json
-CMD gunicorn -b :$PORT main:app --timeout 3600
+# Copy local code to the container image.
+RUN virtualenv /env -p python3.7
+
+ENV VIRTUAL_ENV /env
+ENV PATH /env/bin:$PATH
+
+ADD requirements.txt /app/
+RUN pip install gunicorn[eventlet]
+RUN pip install -r requirements.txt
+
+ADD . /app/
+CMD gunicorn -b :$PORT main:app --worker-class eventlet --workers 3
