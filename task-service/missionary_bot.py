@@ -57,15 +57,8 @@ class MissionaryBot:
     area_book_results = self.scrape_area_book_for_people().values.tolist()
     r.set(self.church_username+':area_book_results', pickle.dumps(area_book_results))
     if self.authenticate_with_facebook():
-      self.load_facebook_profiles_thread()
+      self.load_facebook_profiles()
 
-  """
-  Thread to initialize all the values
-  """
-  def do_work_thread(self):
-    y = threading.Thread(target=self.do_work, daemon=True)
-    y.start()
-    y.join()
 
   """
   fetch all the facebook profiles
@@ -91,10 +84,6 @@ class MissionaryBot:
         print(e)
       r.rpush(self.church_username + ":facebook_search_results", gzip.compress(cleaned))
     self.set_status("Done Loading Facebook Profiles")
-  
-  def load_facebook_profiles_thread(self):
-    x = threading.Thread(target=self.load_facebook_profiles, daemon=True)
-    x.start()   
 
 
   """
