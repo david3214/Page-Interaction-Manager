@@ -1,16 +1,20 @@
 """Cloud Task workers"""
 import json
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
+
+import google.cloud.logging
 
 from missionary_bot import MissionaryBot
 
 app = Flask(__name__)
+client = google.cloud.logging.Client()
+client.get_default_handler()
+client.setup_logging()
 
 @app.route('/find_member_profiles', methods=['POST'])
 def find_member_profiles():
     """Log the request payload."""
     payload = request.get_data(as_text=True) or '(empty payload)'
-    print('Received task with payload: {}'.format(payload))
     try:
         MissionaryBot(**json.loads(payload)).do_work()
     except Exception as e:
@@ -32,6 +36,9 @@ def liveness_check():
 def readiness_check():
     return "OK"
 
+@app.route('/debug/<path:path>')
+def send_assets(path):
+    return send_from_directory('debug', path)
 
 if __name__ == '__main__':
     # This is used when running locally. Gunicorn is used to run the

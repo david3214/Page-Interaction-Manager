@@ -4,7 +4,9 @@ bots.pickle
 *.pyc
 /test_data
 .temp.jpg
+__pycache__
 */__pycache__
 /data
 */env
+.pytest_cache
 */.pytest_cache
