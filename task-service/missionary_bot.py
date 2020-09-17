@@ -7,6 +7,8 @@ import os
 import gzip
 import urllib.parse
 import pickle
+import logging
+import uuid
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -20,12 +22,12 @@ r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
+    self.set_status('Intializing')
     self.church_username = church_username
     self.church_password = church_password
     self.facebook_username = facebook_username
     self.facebook_password = facebook_password
     self.pros_area_id = pros_area_id
-    self.set_status('Intializing')
 
     self.mission_id = 14440
     self.pros_area_url = f'https://areabook.churchofjesuschrist.org/services/mission/prosArea/{self.pros_area_id}'
@@ -44,6 +46,7 @@ class MissionaryBot:
     self.chrome_options.add_argument("--no-sandbox")
     self.chrome_options.add_argument("--silent")
     self.chrome_options.add_argument("--incognito")
+    self.chrome_options.add_argument("--log-level=3")
     self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
     self.wd.implicitly_wait(30)
@@ -54,19 +57,21 @@ class MissionaryBot:
   Run startup routine
   """
   def do_work(self):
+    self.set_status('Doing work')
     area_book_results = self.scrape_area_book_for_people().values.tolist()
     r.set(self.church_username+':area_book_results', pickle.dumps(area_book_results))
     if self.authenticate_with_facebook():
       self.load_facebook_profiles()
+    self.set_status('Done working')
 
 
   """
   fetch all the facebook profiles
   """
   def load_facebook_profiles(self):
+    self.set_status("Loading Facebook Profiles")
     area_book_results = pickle.loads(r.get(self.church_username+':area_book_results'))
     r.set(self.church_username + ":current_index", -2)
-    self.set_status("Loading Facebook Profiles")
     for item in area_book_results:
       if not r.exists(self.church_username + ":status"):
         r.delete(self.church_username + ":facebook_search_results")
@@ -90,7 +95,11 @@ class MissionaryBot:
   Set status of the bot
   """
   def set_status(self, status):
-    return r.set(self.church_username + ":status", status)
+    try:
+      logging.info(f'{self.church_username}: {status}')
+      return r.set(self.church_username + ":status", status)
+    except:
+       logging.info(f'{status}')
 
 
   """
@@ -108,18 +117,18 @@ class MissionaryBot:
   return the cleaned html
   """
   def parse_facebook_search_page(self, html):
-      try:
-        soup = BeautifulSoup(html, "html.parser")
-        results_container = soup.find("div", {"id": "BrowseResultsContainer"})
-        if results_container == None:
-          results_container = soup.find("div", {"aria-label": "Preview of a Search Result"})
-          for circle in results_container.find_all('circle', {'class':"mlqo0dh0 georvekb s6kb5r3f"}):
-            circle.decompose()
-      except Exception as e:
-        #print(e)
-        pass
-      finally:
-        return str(results_container)
+    try:
+      soup = BeautifulSoup(html, "html.parser")
+      results_container = soup.find("div", {"id": "BrowseResultsContainer"})
+      if results_container == None:
+        results_container = soup.find("div", {"aria-label": "Preview of a Search Result"})
+        for circle in results_container.find_all('circle', {'class':"mlqo0dh0 georvekb s6kb5r3f"}):
+          circle.decompose()
+    except:
+      #print(e)
+      pass
+    finally:
+      return str(results_container)
 
 
   """
@@ -133,6 +142,7 @@ class MissionaryBot:
     self.wd.find_element_by_id("okta-signin-submit").click()
     self.wd.find_element_by_name("password").send_keys(self.church_password)
     self.wd.find_element_by_name("password").submit()
+    self.set_status('Done authenticating with church')
 
   """
   Function for not raising an error when an element doesn't exist
@@ -164,20 +174,20 @@ class MissionaryBot:
         #self.wd.get_screenshot_as_file("2email.png")
       try: #Check if we are allowed in imediately
         self.wd.implicitly_wait(5)
-        try: #Check for facebook version 1
+        try: #Check for facebook version 2
           if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
             #self.wd.get_screenshot_as_file("search.png")
             self.wd.implicitly_wait(30)
             return True
         except:
-          pass
-        try:#Check for facebook version 2
+          self.set_status("Not on version 2")
+        try:#Check for facebook version 1
           if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
             #self.wd.get_screenshot_as_file("search.png")
             self.wd.implicitly_wait(30)
             return True
         except:
-          pass
+          self.set_status("Not on version 1")
         try: #Check if it is asking about the new location
           if self.wd.find_element_by_xpath('//button[contains(text(), "Yes")]'):
             self.wd.find_element_by_xpath('//button[contains(text(), "Yes")]').click()
@@ -238,12 +248,13 @@ class MissionaryBot:
         print(e)
 
     except Exception as e:
-        print(e)
-        self.wd.get_screenshot_as_file("exception.png")
-        
-        #file = open('out.html', 'w')
-        #file.write(self.wd.page_source)
-        #file.close()
+        logging.error(f'{self.church_username} : {e}')
+        file_id = uuid.uuid4()
+        self.wd.get_screenshot_as_file(f"debug/{file_id}.png")
+        file = open(f'debug/{file_id}.html', 'w')
+        file.write(self.wd.page_source)
+        file.close()
+        logging.debug(f'debug/{file_id}.png\ndebug/{file_id}.html')
         # if self.safe_find_element_by_id("login"):
         #   self.safe_find_element_by_id("login").click()
     return False
@@ -254,7 +265,7 @@ class MissionaryBot:
   return the df
   """
   def scrape_area_book_for_people(self):
-    self.set_status("Scraping AreaBook")
+    self.set_status("Scraping areabook")
     self.wd.get(self.pros_area_url)
     try:
       self.authenticate_with_church()
@@ -268,6 +279,7 @@ class MissionaryBot:
     self.wd.find_elements_by_tag_name("pre")
     area_book_data = self.parse_church_json(self.wd.page_source)
     df = pd.json_normalize(area_book_data['persons'])
+    self.set_status("Done scraping areabook.")
     return df
 
   def pass_data(self, url):
