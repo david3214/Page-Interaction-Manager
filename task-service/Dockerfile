@@ -25,6 +25,8 @@ ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 ENV REDISCLOUD_URL=***REMOVED***
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/eighth-vehicle-287322-c5a504a48ad3.json
+ENV PROJECT_ID=eighth-vehicle-287322
+ENV BUCKET_NAME=eighth-vehicle-287322.appspot.com
 # Copy local code to the container image.
 RUN virtualenv /env -p python3.7
 

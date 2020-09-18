@@ -14,8 +14,9 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 import pandas as pd
 import redis
+from google.cloud import storage
 
-
+# Redis
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
 r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
 
@@ -102,11 +103,11 @@ class MissionaryBot:
        logging.info(f'{status}')
 
 
-  """
-  Parse church html page json
-  return json object
-  """
   def parse_church_json(self, html):
+    """
+    Parse church html page json
+    return json object
+    """
     soup = BeautifulSoup(html, "html.parser")
     element = soup.find("pre").contents[0]
     return json.loads(element)
@@ -278,6 +279,7 @@ class MissionaryBot:
     self.wd.get(self.area_book_json)
     self.wd.find_elements_by_tag_name("pre")
     area_book_data = self.parse_church_json(self.wd.page_source)
+    upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps(area_book_data), f'areabooks/{self.pros_area_id}.json')
     df = pd.json_normalize(area_book_data['persons'])
     self.set_status("Done scraping areabook.")
     return df
@@ -360,3 +362,14 @@ def process_data_frame(df):
       columns_to_drop.append(column_name)
   df.drop(columns_to_drop, axis=1, inplace=True)
 
+def upload_blob_from_string(bucket_name, string, destination_blob_name):
+  """Uploads a file to the bucket."""
+  # bucket_name = "your-bucket-name"
+  # source_file_name = "local/path/to/file"
+  # destination_blob_name = "storage-object-name"
+  logging.info("Starting file upload")
+  storage_client = storage.Client()
+  bucket = storage_client.bucket(bucket_name)
+  blob = bucket.blob(destination_blob_name)
+  blob.upload_from_string(string)
+  logging.info("File {} uploaded to {}.".format(string[0:10], destination_blob_name))
