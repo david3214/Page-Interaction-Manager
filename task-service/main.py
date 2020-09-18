@@ -1,7 +1,8 @@
 """Cloud Task workers"""
 import json
-from flask import Flask, request, send_from_directory
+import logging
 
+from flask import Flask, request, send_from_directory
 import google.cloud.logging
 
 from missionary_bot import MissionaryBot
@@ -18,6 +19,7 @@ def find_member_profiles():
     try:
         MissionaryBot(**json.loads(payload)).do_work()
     except Exception as e:
+        logging.error(e)        
         return f"{e} Didn't completed loading Facebook profile information"
     return "Completed loading Facebook profile information"
 
