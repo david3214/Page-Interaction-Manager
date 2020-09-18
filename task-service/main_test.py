@@ -5,6 +5,8 @@ import pytest
 def app(monkeypatch):
     monkeypatch.setenv('CHROMEDRIVER_PATH', 'C:\\chromedriver.exe')
     monkeypatch.setenv('GOOGLE_CHROME_BIN', 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe')
+    monkeypatch.setenv('PROJECT_ID', 'eighth-vehicle-287322')
+    monkeypatch.setenv('BUCKET_NAME', 'eighth-vehicle-287322.appspot.com')
     import main
     main.app.testing = True
     return main.app.test_client()
