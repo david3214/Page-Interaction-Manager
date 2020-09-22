@@ -79,16 +79,18 @@ class MissionaryBot:
         self.wd.quit()
         break
       try:
-        self.wd.get(f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}')
+        facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}'
+        self.wd.get(facebook_search_url)
         time.sleep(1)
-        cleaned = self.parse_facebook_search_page(self.wd.page_source)
-        if cleaned == None:
-          cleaned = ''
-        else:
-          cleaned = bytes(cleaned,'utf-8')
+        content = self.parse_facebook_search_page(self.wd.page_source)
+        if content == None or content == "None":
+          content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{item[1]+ " " +item[2]}</a> on Facebook by hand?<br>'
       except Exception as e:
         print(e)
-      r.rpush(self.church_username + ":facebook_search_results", gzip.compress(cleaned))
+      about = f'Name: {item[1]+ " " +item[2]}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
+      combined = {'about': about, 'content':content}
+      combined = bytes(json.dumps(combined), 'utf-8')
+      r.rpush(self.church_username + ":facebook_search_results", gzip.compress(combined))
     self.set_status("Done Loading Facebook Profiles")
 
 
@@ -373,3 +375,19 @@ def upload_blob_from_string(bucket_name, string, destination_blob_name):
   blob = bucket.blob(destination_blob_name)
   blob.upload_from_string(string)
   logging.info("File {} uploaded to {}.".format(string[0:10], destination_blob_name))
+
+# Convert the keys to usable string
+age_map = {
+  10:"Child 0–8",
+  15:"Youth Primary 9–11",
+  20:"Youth YMYW 12–17",
+  30:"Young Adult 18–30",
+  40:"Middle Age Adult 31–45",
+  50:"Mature Adult 46–59",
+  60:"Senior Adult 60+"
+}
+
+gender_map = {
+  'M': "Male",
+  'F': "Female"
+}
