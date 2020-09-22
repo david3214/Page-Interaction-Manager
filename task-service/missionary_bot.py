@@ -87,7 +87,7 @@ class MissionaryBot:
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{item[1]+ " " +item[2]}</a> on Facebook by hand?<br>'
       except Exception as e:
         print(e)
-      about = f'Name: {item[1]+ " " +item[2]}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
+      about = f'Name: {str(item[1])+ " " +str(item[2])}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
       combined = {'about': about, 'content':content}
       combined = bytes(json.dumps(combined), 'utf-8')
       r.rpush(self.church_username + ":facebook_search_results", gzip.compress(combined))
