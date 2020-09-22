@@ -31,11 +31,11 @@ def bot():
       try:
         pops = int(r.get(church_username + ":current_index"))
         area_book_results = pickle.loads(r.get(church_username + ':area_book_results'))
-        long_status = f'<p>There are {r.llen(church_username + ":facebook_search_results")} people in queue.<br>\
-          Status: {r.get(church_username + ":status").decode("utf-8")}<br>\
-          Total: {len(area_book_results)}<br>\
-          Completed: {pops}<br>\
-          Remaining: {len(area_book_results) - pops}<br>'
+        long_status = f'There are {r.llen(church_username + ":facebook_search_results")} people in queue.\
+          Status: {r.get(church_username + ":status").decode("utf-8")}\
+          Total: {len(area_book_results)}\
+          Completed: {pops}\
+          Remaining: {len(area_book_results) - pops}'
         return long_status
       except:
         return r.get(church_username + ":status")
