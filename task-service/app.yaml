@@ -3,7 +3,7 @@ runtime: custom
 env: flex
 resources:
   cpu: 2
-  memory_gb: 2.3
+  memory_gb: 1.4
   disk_size_gb: 10
   volumes:
   - name: ramdisk1
@@ -14,8 +14,8 @@ automatic_scaling:
   max_num_instances: 2
   cool_down_period_sec: 180
   cpu_utilization:
-    target_utilization: 0.6
-  target_concurrent_requests: 5
+    target_utilization: 0.9
+  target_concurrent_requests: 2
 liveness_check:
   path: "/liveness_check"
   check_interval_sec: 30
