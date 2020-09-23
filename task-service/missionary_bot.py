@@ -83,18 +83,21 @@ class MissionaryBot:
         item[2] = str(item[2] or '')
         if item[4] != item[4]:
           item[4] = 0
+        combined = {}
         facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " + item[2])}'
         self.wd.get(facebook_search_url)
         time.sleep(1)
         content = self.parse_facebook_search_page(self.wd.page_source)
         if content == None or content == "None":
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{item[1]+ " " +item[2]}</a> on Facebook by hand?<br>'
+        combined['content'] = content
+        combined['about'] = f'Name: {str(item[1]) + " " +str(item[2])}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
+        combined = bytes(json.dumps(combined), 'utf-8')
       except Exception as e:
-        print(e)
-      about = f'Name: {str(item[1]) + " " +str(item[2])}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
-      combined = {'about': about, 'content':content}
-      combined = bytes(json.dumps(combined), 'utf-8')
-      r.rpush(self.church_username + ":facebook_search_results", gzip.compress(combined))
+        logging.error(e)
+        logging.debug(item)
+      finally:
+        r.rpush(self.church_username + ":facebook_search_results", gzip.compress(combined))
     self.set_status("Done Loading Facebook Profiles")
 
 
