@@ -92,12 +92,17 @@ class MissionaryBot:
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{item[1]+ " " +item[2]}</a> on Facebook by hand?<br>'
         combined['content'] = content
         combined['about'] = f'Name: {str(item[1]) + " " +str(item[2])}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
-        combined = bytes(json.dumps(combined), 'utf-8')
       except Exception as e:
-        logging.error(e)
         logging.debug(item)
+        logging.error(e)
       finally:
-        r.rpush(self.church_username + ":facebook_search_results", gzip.compress(combined))
+        try:
+          combined = bytes(json.dumps(combined), 'utf-8')
+          r.rpush(self.church_username + ":facebook_search_results", gzip.compress(combined))
+        except:
+          combined = bytes(json.dumps({'about':'Something Broke', 'content':'Something Broke'}), 'utf-8')
+          r.rpush(self.church_username + ":facebook_search_results", gzip.compress(combined))
+
     self.set_status("Done Loading Facebook Profiles")
 
 
