@@ -79,7 +79,11 @@ class MissionaryBot:
         self.wd.quit()
         break
       try:
-        facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " +item[2])}'
+        item[1] = str(item[1] or '')
+        item[2] = str(item[2] or '')
+        if item[4] != item[4]:
+          item[4] = 0
+        facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " + item[2])}'
         self.wd.get(facebook_search_url)
         time.sleep(1)
         content = self.parse_facebook_search_page(self.wd.page_source)
@@ -87,7 +91,7 @@ class MissionaryBot:
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{item[1]+ " " +item[2]}</a> on Facebook by hand?<br>'
       except Exception as e:
         print(e)
-      about = f'Name: {str(item[1])+ " " +str(item[2])}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
+      about = f'Name: {str(item[1]) + " " +str(item[2])}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
       combined = {'about': about, 'content':content}
       combined = bytes(json.dumps(combined), 'utf-8')
       r.rpush(self.church_username + ":facebook_search_results", gzip.compress(combined))
@@ -378,13 +382,14 @@ def upload_blob_from_string(bucket_name, string, destination_blob_name):
 
 # Convert the keys to usable string
 age_map = {
-  10:"Child 0–8",
-  15:"Youth Primary 9–11",
-  20:"Youth YMYW 12–17",
-  30:"Young Adult 18–30",
-  40:"Middle Age Adult 31–45",
-  50:"Mature Adult 46–59",
-  60:"Senior Adult 60+"
+  0 : "Unknown ?",
+  10: "Child 0–8",
+  15: "Youth Primary 9–11",
+  20: "Youth YMYW 12–17",
+  30: "Young Adult 18–30",
+  40: "Middle Age Adult 31–45",
+  50: "Mature Adult 46–59",
+  60: "Senior Adult 60+"
 }
 
 gender_map = {
