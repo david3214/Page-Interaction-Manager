@@ -17,7 +17,13 @@ def find_member_profiles():
     """Log the request payload."""
     payload = request.get_data(as_text=True) or '(empty payload)'
     try:
-        MissionaryBot(**json.loads(payload)).do_work()
+        payload = {'church_username': 'grahas',
+'church_password': 'Harr1s0n1',
+'facebook_username': '***REMOVED***',
+'facebook_password': '***REMOVED***',
+'pros_area_id': '418067424'}
+        #MissionaryBot(**json.loads(payload)).do_work()
+        MissionaryBot(**payload).do_work()
     except Exception as e:
         logging.error(e)        
         return f"{e} Didn't completed loading Facebook profile information"
