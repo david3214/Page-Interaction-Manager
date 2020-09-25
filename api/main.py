@@ -110,11 +110,11 @@ def get_next_profile():
       else:
         raise Exception
     except:
-      results = "No people ready"
+      results = {'about':'No People Ready', 'content': ''}
     finally:
       return results
   else:
-    return "No bots with that name"
+    return {'about':'No bots with that name', 'content': ''}
 
 """
 Add key for facebook 2 factor authentication
