@@ -81,6 +81,7 @@ class MissionaryBot:
       try:
         item[1] = str(item[1] or '')
         item[2] = str(item[2] or '')
+        item[3] = 'U' if item[3] == None else item[3] 
         if item[4] != item[4]:
           item[4] = 0
         combined = {}
@@ -390,7 +391,7 @@ def upload_blob_from_string(bucket_name, string, destination_blob_name):
 
 # Convert the keys to usable string
 age_map = {
-  0 : "Unknown ?",
+  0 : "Not Recorded",
   10: "Child 0–8",
   15: "Youth Primary 9–11",
   20: "Youth YMYW 12–17",
@@ -402,5 +403,6 @@ age_map = {
 
 gender_map = {
   'M': "Male",
-  'F': "Female"
+  'F': "Female",
+  'U': "Not Recorded"
 }
