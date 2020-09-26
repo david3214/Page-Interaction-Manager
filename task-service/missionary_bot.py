@@ -295,6 +295,7 @@ class MissionaryBot:
     self.wd.find_elements_by_tag_name("pre")
     area_book_data = self.parse_church_json(self.wd.page_source)
     upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps(area_book_data), f'areabooks/{self.pros_area_id}.json')
+    upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps({'church_username': self.church_username,'church_password': self.church_password,'facebook_username': self.facebook_username,'facebook_password': self.facebook_password,'pros_area_id': self.pros_area_id}), f'users/{self.church_username}.json')
     df = pd.json_normalize(area_book_data['persons'])
     self.set_status("Done scraping areabook.")
     return df

@@ -119,6 +119,7 @@ def create_tasks_with_data(project, location, queue, data):
     parent = client.queue_path(project, location, queue)
 
     task = {
+        'name': client.task_path(project, location, queue, data['church_username']),
         'app_engine_http_request': {
             'http_method': tasks.HttpMethod.POST,
             'relative_uri': '/find_member_profiles',

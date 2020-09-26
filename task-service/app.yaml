@@ -2,30 +2,13 @@ service: task-service
 runtime: custom
 env: flex
 resources:
-  cpu: 2
-  memory_gb: 1.4
+  cpu: 1
+  memory_gb: 1
   disk_size_gb: 10
-  volumes:
-  - name: ramdisk1
-    volume_type: tmpfs
-    size_gb: 0.5
 automatic_scaling:
   min_num_instances: 1
-  max_num_instances: 2
-  cool_down_period_sec: 180
+  max_num_instances: 4
+  cool_down_period_sec: 60
   cpu_utilization:
-    target_utilization: 0.9
-  target_concurrent_requests: 2
-liveness_check:
-  path: "/liveness_check"
-  check_interval_sec: 30
-  timeout_sec: 4
-  failure_threshold: 2
-  success_threshold: 2
-readiness_check:
-  path: "/readiness_check"
-  check_interval_sec: 30
-  timeout_sec: 4
-  failure_threshold: 2
-  success_threshold: 2
-  app_start_timeout_sec: 300
+    target_utilization: 1
+  target_concurrent_requests: 1
