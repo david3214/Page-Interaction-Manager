@@ -5,4 +5,4 @@ env_variables:
   REDISCLOUD_URL: "***REMOVED***"
   PROJECT: "eighth-vehicle-287322"
   LOCATION: "us-central1"
-  QUEUE: "my-queue"
+  QUEUE: "load-profile"
