@@ -40,7 +40,7 @@ def bot():
       except:
         return r.get(church_username + ":status")
     else:
-      return "No Bot with that name"
+      return "Bot not created yet"
 
   elif request.method == "POST":
     # Create Bot

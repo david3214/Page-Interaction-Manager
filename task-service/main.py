@@ -1,6 +1,7 @@
 """Cloud Task workers"""
 import json
 import logging
+from multiprocessing import Process
 
 from flask import Flask, request, send_from_directory
 import google.cloud.logging
@@ -12,23 +13,39 @@ client = google.cloud.logging.Client()
 client.get_default_handler()
 client.setup_logging()
 
+def do_work(kwargs):
+    MissionaryBot(**kwargs).do_work()
+
 @app.route('/find_member_profiles', methods=['POST'])
 def find_member_profiles():
     """Log the request payload."""
     payload = request.get_data(as_text=True) or '(empty payload)'
     try:
-        payload = {'church_username': 'grahas',
-'church_password': 'Harr1s0n1',
-'facebook_username': '***REMOVED***',
-'facebook_password': '***REMOVED***',
-'pros_area_id': '418067424'}
-        #MissionaryBot(**json.loads(payload)).do_work()
-        MissionaryBot(**payload).do_work()
+        p = Process(target=do_work, args=(json.loads(payload),))
+        p.start()
+        p.join()
     except Exception as e:
         logging.error(e)        
         return f"{e} Didn't completed loading Facebook profile information"
     return "Completed loading Facebook profile information"
 
+@app.route('/test_find_member_profiles', methods=['POST'])
+def test_find_member_profiles():
+    """Log the request payload."""
+    payload = request.get_data(as_text=True) or '(empty payload)'
+    try:
+        payload = {'church_username': 'grahas',
+                   'church_password': 'Harr1s0n1',
+                   'facebook_username': '***REMOVED***',
+                   'facebook_password': '***REMOVED***',
+                   'pros_area_id': '418067424'}
+        p = Process(target=do_work, args=(payload,))
+        p.start()
+        p.join()
+    except Exception as e:
+        logging.error(e)        
+        return f"{e} Didn't completed loading Facebook profile information"
+    return "Completed loading Facebook profile information"
 
 @app.route('/')
 def hello():
