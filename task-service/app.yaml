@@ -10,5 +10,5 @@ automatic_scaling:
   max_num_instances: 4
   cool_down_period_sec: 60
   cpu_utilization:
-    target_utilization: 1
+    target_utilization: 0.6
   target_concurrent_requests: 1
