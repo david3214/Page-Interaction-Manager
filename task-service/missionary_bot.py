@@ -41,7 +41,7 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    self.chrome_options.add_argument("--headless")
+    #self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-gpu")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
@@ -172,12 +172,14 @@ class MissionaryBot:
 
 
   """
-  Log in to face book so we can start doing searches
+  Log in to Facebook so we can start doing searches
   """
   def authenticate_with_facebook(self):
+    self.wd.implicitly_wait(10)
     self.set_status("Authenticating with Facebook")
     self.wd.get("https://www.facebook.com/")
-    #self.wd.get_screenshot_as_file("1.png")
+    picture_log = {}
+    picture_log['1'] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
     if self.facebook_username is None:
       return "No Username"
     elif self.facebook_password is None:
@@ -187,77 +189,76 @@ class MissionaryBot:
         self.wd.find_element_by_name("email").send_keys(self.facebook_username)
         self.wd.find_element_by_name("pass").send_keys(self.facebook_password)
         self.wd.find_element_by_name("pass").submit()
-        #self.wd.get_screenshot_as_file("2email.png")
-      try: #Check if we are allowed in imediately
-        self.wd.implicitly_wait(5)
-        try: #Check for facebook version 2
+        picture_log["2-email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+      try: # Check if we are allowed in imediately
+        try: # Check for facebook version 2
           if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
-            #self.wd.get_screenshot_as_file("search.png")
-            self.wd.implicitly_wait(30)
+            picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             return True
         except:
           self.set_status("Not on version 2")
-        try:#Check for facebook version 1
+        try: # Check for facebook version 1
           if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
-            #self.wd.get_screenshot_as_file("search.png")
-            self.wd.implicitly_wait(30)
+            picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             return True
         except:
           self.set_status("Not on version 1")
-        try: #Check if it is asking about the new location
+        try: # Check if it is asking about the new location
           if self.wd.find_element_by_xpath('//button[contains(text(), "Yes")]'):
             self.wd.find_element_by_xpath('//button[contains(text(), "Yes")]').click()
         except:
           pass
-      except:# Error in checking for search bar
+      except: # Error in checking for search bar
         pass
+
+      # Navigate the authenitication routine V1
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        #self.wd.get_screenshot_as_file("3continue.png")
+        picture_log["3-continue"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
 
       if self.wd.find_element_by_id("checkpointSubmitButton"):
         self.safe_find_element_by_id("checkpointSubmitButton").click()
-        #self.wd.get_screenshot_as_file("4chechpoint.png")
+        picture_log["4-chechpoint"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
 
       if self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']"):
         self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']").click()
-        #self.wd.get_screenshot_as_file("5email radio.png")
+        picture_log["5-email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
 
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        #self.wd.get_screenshot_as_file("6continue past email radio.png")
+        picture_log["6-continue past email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
       
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        #self.wd.get_screenshot_as_file("7continue past email select.png")
+        picture_log["7-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
 
       if self.wd.find_element_by_xpath("//input[@type='text']"):
-        #self.wd.get_screenshot_as_file("8email code.png")
+        picture_log["8-email code"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         while (not r.exists(self.church_username + ":facebook_key")):
           self.set_status(f'waiting for key from {self.church_username} might have to check spam')
           time.sleep(5)
         self.wd.find_element_by_xpath("//input[@type='text']").send_keys(str(r.get(self.church_username + ":facebook_key")))
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         self.set_status('entering key')
-        #self.wd.get_screenshot_as_file("9continue past email select.png")
+        picture_log["9-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
 
       while True:
         try:
           element = self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]')
           element.click()
-          #self.wd.get_screenshot_as_file("10continue past email select.png")
+          picture_log["10-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         except:
           break
       try:
         if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
-          #self.wd.get_screenshot_as_file("search.png")
+          picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           self.set_status('Done authentication with Facebook version 1')
           return True
       except Exception as e:
         print(e)
       try:
         if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
-          #self.wd.get_screenshot_as_file("search.png")
+          picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           self.set_status('Done authentication with Facebook version 2')
           return True
       except Exception as e:
@@ -265,14 +266,11 @@ class MissionaryBot:
 
     except Exception as e:
         logging.error(f'{self.church_username} : {e}')
-        file_id = uuid.uuid4()
-        self.wd.get_screenshot_as_file(f"debug/{file_id}.png")
-        file = open(f'debug/{file_id}.html', 'w')
-        file.write(self.wd.page_source)
-        file.close()
-        logging.debug(f'debug/{file_id}.png\ndebug/{file_id}.html')
-        # if self.safe_find_element_by_id("login"):
-        #   self.safe_find_element_by_id("login").click()
+        for key in picture_log.keys():
+          file_name = f"debug/{self.church_username}/{key}"
+          upload_blob_from_png(os.environ.get('BUCKET_NAME'), picture_log[key]['screen_shot'], file_name + '.png')
+          upload_blob_from_html(os.environ.get('BUCKET_NAME'), picture_log[key]['html'], file_name + '.html')
+
     return False
 
 
@@ -389,6 +387,30 @@ def upload_blob_from_string(bucket_name, string, destination_blob_name):
   blob = bucket.blob(destination_blob_name)
   blob.upload_from_string(string)
   logging.info("File {} uploaded to {}.".format(string[0:10], destination_blob_name))
+
+def upload_blob_from_html(bucket_name, html, destination_blob_name):
+  """Uploads a file to the bucket."""
+  # bucket_name = "your-bucket-name"
+  # source_file_name = "local/path/to/file"
+  # destination_blob_name = "storage-object-name"
+  logging.info("Starting file upload")
+  storage_client = storage.Client()
+  bucket = storage_client.bucket(bucket_name)
+  blob = bucket.blob(destination_blob_name)
+  blob.upload_from_string(html, content_type='text/html')
+  logging.info("File {} uploaded to {}.".format(html[0:10], destination_blob_name))
+
+def upload_blob_from_png(bucket_name, png, destination_blob_name):
+  """Uploads a file to the bucket."""
+  # bucket_name = "your-bucket-name"
+  # source_file_name = "local/path/to/file"
+  # destination_blob_name = "storage-object-name"
+  logging.info("Starting file upload")
+  storage_client = storage.Client()
+  bucket = storage_client.bucket(bucket_name)
+  blob = bucket.blob(destination_blob_name)
+  blob.upload_from_string(png, content_type='image/png')
+  logging.info("File {} uploaded to {}.".format(png[0:10], destination_blob_name))
 
 # Convert the keys to usable string
 age_map = {
