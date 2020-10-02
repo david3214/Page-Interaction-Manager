@@ -87,7 +87,7 @@ def create_task(project, location, queue):
     amount = 10
 
     parent = client.queue_path(project, location, queue)
-    create_tasks_with_data(project, location, queue)
+    
     task = {
         'app_engine_http_request': {
             'http_method': tasks.HttpMethod.POST,
