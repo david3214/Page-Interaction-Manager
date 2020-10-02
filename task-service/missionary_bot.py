@@ -230,7 +230,7 @@ class MissionaryBot:
           self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
           picture_log["7-pick an email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           if len(self.wd.find_elements_by_xpath('//div[contains(text(), "An error occurred while sending the message")]')) >= 1:
-            self.set_status(f'error sending to {choice.email}')
+            self.set_status(f'error sending to {email}')
             picture_log["7.5-pick an email-warning"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             self.wd.find_element_by_xpath('//button[contains(text(), "Back")]').click()
           else:
