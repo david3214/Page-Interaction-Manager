@@ -41,12 +41,13 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    #self.chrome_options.add_argument("--headless")
+    self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-gpu")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
     self.chrome_options.add_argument("--silent")
     self.chrome_options.add_argument("--incognito")
+    #self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
     self.chrome_options.add_argument("--log-level=3")
     self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
@@ -61,8 +62,8 @@ class MissionaryBot:
     self.set_status('Doing work')
     area_book_results = self.scrape_area_book_for_people().values.tolist()
     r.set(self.church_username+':area_book_results', pickle.dumps(area_book_results))
-    if self.authenticate_with_facebook():
-      self.load_facebook_profiles()
+    self.authenticate_with_facebook()
+    self.load_facebook_profiles()
     self.set_status('Done working')
 
 
@@ -107,15 +108,15 @@ class MissionaryBot:
     self.set_status("Done Loading Facebook Profiles")
 
 
-  """
-  Set status of the bot
-  """
   def set_status(self, status):
+    """
+    Set status of the bot
+    """
     try:
       logging.info(f'{self.church_username}: {status}')
       return r.set(self.church_username + ":status", status)
     except:
-       logging.info(f'{status}')
+        logging.info(f'{status}')
 
 
   def parse_church_json(self, html):
@@ -128,11 +129,11 @@ class MissionaryBot:
     return json.loads(element)
 
 
-  """
-  Process the facebook search page 
-  return the cleaned html
-  """
   def parse_facebook_search_page(self, html):
+    """
+    Process the facebook search page 
+    return the cleaned html
+    """
     try:
       soup = BeautifulSoup(html, "html.parser")
       results_container = soup.find("div", {"id": "BrowseResultsContainer"})
@@ -147,11 +148,11 @@ class MissionaryBot:
       return str(results_container)
 
 
-  """
-  Authenticate with church
-  return true if successfull 
-  """
   def authenticate_with_church(self):
+    """
+    Authenticate with church
+    return true if successfull 
+    """
     self.set_status('Authenticating with church')
     # Check if already logged in
     self.wd.find_element_by_id("okta-signin-username").send_keys(self.church_username)
@@ -160,22 +161,23 @@ class MissionaryBot:
     self.wd.find_element_by_name("password").submit()
     self.set_status('Done authenticating with church')
 
-  """
-  Function for not raising an error when an element doesn't exist
-  """
+
   def safe_find_element_by_id(self, elem_id):
-      try:
-        return self.wd.find_element_by_id(elem_id)
-      except Exception as e:
-        print(e)
-        return None
+    """
+    Function for not raising an error when an element doesn't exist
+    """
+    try:
+      return self.wd.find_element_by_id(elem_id)
+    except Exception as e:
+      print(e)
+      return None
 
 
-  """
-  Log in to Facebook so we can start doing searches
-  """
   def authenticate_with_facebook(self):
-    self.wd.implicitly_wait(10)
+    """
+    Log in to Facebook so we can start doing searches
+    """
+    self.wd.implicitly_wait(5)
     self.set_status("Authenticating with Facebook")
     self.wd.get("https://www.facebook.com/")
     picture_log = {}
@@ -194,13 +196,13 @@ class MissionaryBot:
         try: # Check for facebook version 2
           if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
             picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-            return True
+            return
         except:
           self.set_status("Not on version 2")
         try: # Check for facebook version 1
           if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
             picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-            return True
+            return
         except:
           self.set_status("Not on version 1")
         try: # Check if it is asking about the new location
@@ -211,32 +213,40 @@ class MissionaryBot:
       except: # Error in checking for search bar
         pass
 
-      # Navigate the authenitication routine V1
+      # Navigate the authenitication routine V1 Please Confirm Your Identity
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         picture_log["3-continue"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
 
-      if self.wd.find_element_by_id("checkpointSubmitButton"):
-        self.safe_find_element_by_id("checkpointSubmitButton").click()
-        picture_log["4-chechpoint"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-
       if self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']"):
         self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']").click()
         picture_log["5-email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-
-      if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         picture_log["6-continue past email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-      
-      if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
-        self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        picture_log["7-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+        
+        for choice in self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix"):
+          choice.find_element_by_tag_name('span').click()
+          email = choice.text
+          self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
+          picture_log["7-pick an email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          if len(self.wd.find_elements_by_xpath('//div[contains(text(), "An error occurred while sending the message")]')) >= 1:
+            self.set_status(f'error sending to {choice.email}')
+            picture_log["7.5-pick an email-warning"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+            self.wd.find_element_by_xpath('//button[contains(text(), "Back")]').click()
+          else:
+            break
 
       if self.wd.find_element_by_xpath("//input[@type='text']"):
         picture_log["8-email code"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+        start_time = time.time()
+        time_to_wait = 10 * 60
+        check_frequency = 5
         while (not r.exists(self.church_username + ":facebook_key")):
-          self.set_status(f'waiting for key from {self.church_username} might have to check spam')
-          time.sleep(5)
+          self.set_status(f'waiting for key from {self.church_username} at {email} might have to check spam. {(time.time() - start_time) / 60} mins remaining')
+          time.sleep(check_frequency)
+          if time.time() - start_time > time_to_wait:
+            self.set_status("Did not recieve a key")
+            raise ValueError
         self.wd.find_element_by_xpath("//input[@type='text']").send_keys(str(r.get(self.church_username + ":facebook_key")))
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         self.set_status('entering key')
@@ -253,38 +263,38 @@ class MissionaryBot:
         if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
           picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           self.set_status('Done authentication with Facebook version 1')
-          return True
+          return
       except Exception as e:
         print(e)
       try:
         if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
           picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           self.set_status('Done authentication with Facebook version 2')
-          return True
+          return
       except Exception as e:
         print(e)
 
     except Exception as e:
         logging.error(f'{self.church_username} : {e}')
+        picture_log["exception"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         for key in picture_log.keys():
           file_name = f"debug/{self.church_username}/{key}"
           upload_blob_from_png(os.environ.get('BUCKET_NAME'), picture_log[key]['screen_shot'], file_name + '.png')
           upload_blob_from_html(os.environ.get('BUCKET_NAME'), picture_log[key]['html'], file_name + '.html')
+        raise Exception
 
-    return False
 
-
-  """
-  Connect to areabook web and scrape the data
-  return the df
-  """
   def scrape_area_book_for_people(self):
-    self.set_status("Scraping areabook")
+    """
+    Connect to areabook web and scrape the data
+    return the df
+    """
+    self.set_status("Scraping Areabook")
     self.wd.get(self.pros_area_url)
     try:
       self.authenticate_with_church()
     except:
-      pass
+      self.set_status("Failed to login to church")
     self.wd.find_elements_by_tag_name("pre")
     pros_area_data = self.parse_church_json(self.wd.page_source)
     for missionary in pros_area_data['missionaries']:
@@ -327,10 +337,11 @@ class MissionaryBot:
       ff.close()
     return f'found {len(url_list)}'
 
-"""
-Returns a list of data frames of tables in the html page
-"""
+
 def convert_html_to_data_frame(html):
+  """
+  Returns a list of data frames of tables in the html page
+  """
   df_list = []
   soup = BeautifulSoup(html,'html.parser') 
   for i in range(len(soup.find_all("table"))):
@@ -363,11 +374,11 @@ def convert_html_to_data_frame(html):
   return df_list
 
 
-"""
-Processing to do to a individual data frame
-Remove unwanted columns
-"""
 def process_data_frame(df):
+  """
+  Processing to do to a individual data frame
+  Remove unwanted columns
+  """
   desired_column = ["firstName", "lastName", "gender", "ageCategoryId",
                     "address", "phone", "phoneHome", "phoneMobile" ]
   columns_to_drop = []
