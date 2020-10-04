@@ -1,0 +1,37 @@
+<html>
+<body>
+
+<p><a href="#" onClick="logInWithFacebook()">Log In with the JavaScript SDK</a></p>
+<p id="data"></p>
+
+<script>
+  logInWithFacebook = function() {
+    FB.login(function(response) {
+        console.log(response);
+      if (response.authResponse) {
+        alert('You are logged in & cookie set!');
+        document.getElementById('data').innerHTML =JSON.stringify(response.authResponse);
+      } else {
+        alert('User cancelled login or did not fully authorize.');
+      }
+    });
+    return false;
+  };
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId: '270162507603350',
+      cookie: true, // This is important, it's not enabled by default
+      version: 'v2.10'
+    });
+  };
+
+  (function(d, s, id){
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) {return;}
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/sdk.js";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+</body>
+</html>
