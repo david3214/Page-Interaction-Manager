@@ -25,7 +25,7 @@ def find_member_profiles():
         p.start()
         p.join()
     except Exception as e:
-        logging.error(e)        
+        logging.error(e)
         return f"{e} Didn't completed loading Facebook profile information"
     return "Completed loading Facebook profile information"
 
@@ -43,7 +43,7 @@ def test_find_member_profiles():
         p.start()
         p.join()
     except Exception as e:
-        logging.error(e)        
+        logging.error(e)
         return f"{e} Didn't completed loading Facebook profile information"
     return "Completed loading Facebook profile information"
 
