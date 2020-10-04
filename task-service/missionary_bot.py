@@ -177,7 +177,7 @@ class MissionaryBot:
     """
     Log in to Facebook so we can start doing searches
     """
-    self.wd.implicitly_wait(5)
+    self.wd.implicitly_wait(3)
     self.set_status("Authenticating with Facebook")
     self.wd.get("https://www.facebook.com/")
     picture_log = {}
@@ -194,13 +194,13 @@ class MissionaryBot:
         picture_log["2-email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
       try: # Check if we are allowed in imediately
         try: # Check for facebook version 2
-          if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
+          if self.wd.find_element_by_xpath('//a[@aria-label="Home"]'):
             picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             return
         except:
           self.set_status("Not on version 2")
         try: # Check for facebook version 1
-          if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
+          if self.wd.find_element_by_xpath('//div[@data-click="home_icon"]'):
             picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             return
         except:
@@ -217,13 +217,22 @@ class MissionaryBot:
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         picture_log["3-continue"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-
-      if self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']"):
+      # Choices of how to autheniticate account
+      # Authenticate with logged in device
+      if len(self.wd.find_elements_by_xpath("//span[text()='Approve your login on another phone or computer']")) >= 1:
+        self.set_status('Authenticating with other logged in device')
+        self.wd.find_elements_by_xpath("//span[text()='Approve your login on another phone or computer']")[0].click()
+        self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
+        #Approve login screen
+        time.sleep(30)
+        self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
+      # Get code sent to email
+      elif self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']"):
+        self.set_status('Authenticating with email code')
         self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']").click()
         picture_log["5-email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         picture_log["6-continue past email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-        
         for choice in self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix"):
           choice.find_element_by_tag_name('span').click()
           email = choice.text
@@ -235,47 +244,48 @@ class MissionaryBot:
             self.wd.find_element_by_xpath('//button[contains(text(), "Back")]').click()
           else:
             break
+        if self.wd.find_element_by_xpath("//input[@type='text']"):
+          picture_log["8-email code"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          start_time = time.time()
+          time_to_wait = 10 * 60
+          check_frequency = 5
+          while (not r.exists(self.church_username + ":facebook_key")):
+            self.set_status(f'waiting for key from {self.church_username} at {email} might have to check spam. {(time.time() - start_time) / 60} mins remaining')
+            time.sleep(check_frequency)
+            if time.time() - start_time > time_to_wait:
+              self.set_status("Did not recieve a key")
+              raise ValueError
+          self.wd.find_element_by_xpath("//input[@type='text']").send_keys(str(r.get(self.church_username + ":facebook_key")))
+          self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
+          self.set_status('entering key')
+          picture_log["9-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
 
-      if self.wd.find_element_by_xpath("//input[@type='text']"):
-        picture_log["8-email code"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-        start_time = time.time()
-        time_to_wait = 10 * 60
-        check_frequency = 5
-        while (not r.exists(self.church_username + ":facebook_key")):
-          self.set_status(f'waiting for key from {self.church_username} at {email} might have to check spam. {(time.time() - start_time) / 60} mins remaining')
-          time.sleep(check_frequency)
-          if time.time() - start_time > time_to_wait:
-            self.set_status("Did not recieve a key")
-            raise ValueError
-        self.wd.find_element_by_xpath("//input[@type='text']").send_keys(str(r.get(self.church_username + ":facebook_key")))
-        self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        self.set_status('entering key')
-        picture_log["9-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-
-      while True:
-        try:
-          element = self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]')
-          element.click()
-          picture_log["10-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-        except:
-          break
+        while True:
+          try:
+            element = self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]')
+            element.click()
+            picture_log["10-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          except:
+            break
+      # Check if successfully logged in
       try:
-        if self.wd.find_element_by_xpath('//input[@placeholder="Search"]'):
-          picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-          self.set_status('Done authentication with Facebook version 1')
+        if self.wd.find_element_by_xpath('//a[@aria-label="Home"]'):
+          picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          self.set_status('Done authentication with Facebook version 2')
           return
       except Exception as e:
         print(e)
       try:
-        if self.wd.find_element_by_xpath('//input[@placeholder="Search Facebook"]'):
-          picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-          self.set_status('Done authentication with Facebook version 2')
+        if self.wd.find_element_by_xpath('//div[@data-click="home_icon"]'):
+          picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          self.set_status('Done authentication with Facebook version 1')
           return
       except Exception as e:
         print(e)
 
     except Exception as e:
         logging.error(f'{self.church_username} : {e}')
+        logging.error(f'{self.church_username} : {e}') 
         picture_log["exception"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         for key in picture_log.keys():
           file_name = f"debug/{self.church_username}/{key}"
@@ -313,29 +323,29 @@ class MissionaryBot:
     self.wd.find_element_by_tag_name('input')
     return self.wd.page_source
 
-  def get_missionary_emails(self):
-    self.wd.get('https://areabook.churchofjesuschrist.org/services/config?lang=en')
-    try:
-      self.authenticate_with_church()
-    except:
-      pass
-    self.wd.find_elements_by_tag_name("pre")
-    lang_data = self.parse_church_json(self.wd.page_source)
-    url_list = []
-    for mission in lang_data['missions']:
-      url_list.append({'url':f'https://areabook.churchofjesuschrist.org/services/mission/{mission["id"]}', 'id':mission["id"]})
-    #f = open('urls.txt', 'w')
-    #for item in url_list:
-    #  f.write("%s\n" % item)
-    #f.close()
-    import json 
-    for item in url_list:
-      self.wd.get(item["url"])
-      self.wd.find_elements_by_tag_name("pre")
-      ff = open(f'data/{item["id"]}', 'w+')
-      ff.write(json.dumps(self.parse_church_json(self.wd.page_source)))
-      ff.close()
-    return f'found {len(url_list)}'
+# def get_missionary_emails(self):
+#   self.wd.get('https://areabook.churchofjesuschrist.org/services/config?lang=en')
+#   try:
+#     self.authenticate_with_church()
+#   except:
+#     pass
+#   self.wd.find_elements_by_tag_name("pre")
+#   lang_data = self.parse_church_json(self.wd.page_source)
+#   url_list = []
+#   for mission in lang_data['missions']:
+#     url_list.append({'url':f'https://areabook.churchofjesuschrist.org/services/mission/{mission["id"]}', 'id':mission["id"]})
+#   #f = open('urls.txt', 'w')
+#   #for item in url_list:
+#   #  f.write("%s\n" % item)
+#   #f.close()
+#   import json 
+#   for item in url_list:
+#     self.wd.get(item["url"])
+#     self.wd.find_elements_by_tag_name("pre")
+#     ff = open(f'data/{item["id"]}', 'w+')
+#     ff.write(json.dumps(self.parse_church_json(self.wd.page_source)))
+#     ff.close()
+#   return f'found {len(url_list)}'
 
 
 def convert_html_to_data_frame(html):
