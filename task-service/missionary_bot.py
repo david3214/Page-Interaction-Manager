@@ -88,7 +88,7 @@ class MissionaryBot:
         combined = {}
         facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " + item[2])}'
         self.wd.get(facebook_search_url)
-        time.sleep(1)
+        #time.sleep(1)
         content = self.parse_facebook_search_page(self.wd.page_source)
         if content == None or content == "None":
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{item[1]+ " " +item[2]}</a> on Facebook by hand?<br>'
