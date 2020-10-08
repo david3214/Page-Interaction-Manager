@@ -3,8 +3,8 @@ import json
 import logging
 from multiprocessing import Process
 
-from flask import Flask, request, send_from_directory
 import google.cloud.logging
+from flask import Flask, request, send_from_directory
 
 from missionary_bot import MissionaryBot
 
@@ -23,7 +23,8 @@ def find_member_profiles():
     try:
         p = Process(target=do_work, args=(json.loads(payload),))
         p.start()
-        p.join()
+        if p.join() != True:
+            raise Exception
     except Exception as e:
         logging.error(e)
         return f"{e} Didn't completed loading Facebook profile information"
@@ -41,7 +42,8 @@ def test_find_member_profiles():
                    'pros_area_id': '418067424'}
         p = Process(target=do_work, args=(payload,))
         p.start()
-        p.join()
+        if p.join() != True:
+            raise Exception
     except Exception as e:
         logging.error(e)
         return f"{e} Didn't completed loading Facebook profile information"
