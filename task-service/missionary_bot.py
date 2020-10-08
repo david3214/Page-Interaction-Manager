@@ -1,20 +1,21 @@
 """ Worker class for automating missionary work online. """
-import sys
-import json
-import time
-import threading
-import os
 import gzip
-import urllib.parse
-import pickle
+import json
 import logging
+import os
+import pickle
+import sys
+import threading
+import time
+import urllib.parse
 import uuid
 
-from bs4 import BeautifulSoup
-from selenium import webdriver
 import pandas as pd
 import redis
+import requests
+from bs4 import BeautifulSoup
 from google.cloud import storage
+from selenium import webdriver
 
 # Redis
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
@@ -59,12 +60,16 @@ class MissionaryBot:
   Run startup routine
   """
   def do_work(self):
-    self.set_status('Doing work')
-    area_book_results = self.scrape_area_book_for_people().values.tolist()
-    r.set(self.church_username+':area_book_results', pickle.dumps(area_book_results))
-    self.authenticate_with_facebook()
-    self.load_facebook_profiles()
-    self.set_status('Done working')
+    try:
+      self.set_status('Doing work')
+      area_book_results = self.scrape_area_book_for_people().values.tolist()
+      r.set(self.church_username+':area_book_results', pickle.dumps(area_book_results))
+      self.authenticate_with_facebook()
+      self.load_facebook_profiles()
+      self.set_status('Done working')
+      return True
+    except:
+      self.delete()
 
 
   """
@@ -88,7 +93,6 @@ class MissionaryBot:
         combined = {}
         facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " + item[2])}'
         self.wd.get(facebook_search_url)
-        #time.sleep(1)
         content = self.parse_facebook_search_page(self.wd.page_source)
         if content == None or content == "None":
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{item[1]+ " " +item[2]}</a> on Facebook by hand?<br>'
@@ -136,9 +140,10 @@ class MissionaryBot:
     """
     try:
       soup = BeautifulSoup(html, "html.parser")
-      results_container = soup.find("div", {"id": "BrowseResultsContainer"})
+      results_container = soup.find("div", {"aria-label": "Preview of a Search Result"})
       if results_container == None:
-        results_container = soup.find("div", {"aria-label": "Preview of a Search Result"})
+        results_container = soup.find("div", {"id": "BrowseResultsContainer"})
+      else:
         for circle in results_container.find_all('circle', {'class':"mlqo0dh0 georvekb s6kb5r3f"}):
           circle.decompose()
     except:
@@ -322,6 +327,17 @@ class MissionaryBot:
     self.wd.get(url)
     self.wd.find_element_by_tag_name('input')
     return self.wd.page_source
+
+
+  def delete(self):
+    """Delete the instance of the bot in case of failure"""
+    self.set_status('Started Deleting Self')
+    url = f"https://api-dot-eighth-vehicle-287322.uc.r.appspot.com/bot?church_username={self.church_username}"
+    payload = {}
+    headers= {}
+    response = requests.request("DELETE", url, headers=headers, data = payload)
+    self.set_status(response.text)
+
 
 # def get_missionary_emails(self):
 #   self.wd.get('https://areabook.churchofjesuschrist.org/services/config?lang=en')
