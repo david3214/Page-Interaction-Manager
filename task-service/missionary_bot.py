@@ -11,6 +11,7 @@ import urllib.parse
 import uuid
 
 import pandas as pd
+import pyarrow as pa
 import redis
 import requests
 from bs4 import BeautifulSoup
@@ -20,7 +21,7 @@ from selenium import webdriver
 # Redis
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
 r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
-
+context = pa.default_serialization_context()
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
@@ -62,8 +63,8 @@ class MissionaryBot:
   def do_work(self):
     try:
       self.set_status('Doing work')
-      area_book_results = self.scrape_area_book_for_people().values.tolist()
-      r.set(self.church_username+':area_book_results', pickle.dumps(area_book_results))
+      area_book_results = self.scrape_area_book_for_people()
+      r.set(self.church_username+':area_book_results', context.serialize(area_book_results).to_buffer().to_pybytes())
       self.authenticate_with_facebook()
       self.load_facebook_profiles()
       self.set_status('Done working')
@@ -77,29 +78,31 @@ class MissionaryBot:
   """
   def load_facebook_profiles(self):
     self.set_status("Loading Facebook Profiles")
-    area_book_results = pickle.loads(r.get(self.church_username+':area_book_results'))
+    area_book_results = context.deserialize(r.get(self.church_username+':area_book_results'))
     r.set(self.church_username + ":current_index", -2)
-    for item in area_book_results:
+    count_row = area_book_results.shape[0] 
+    for index, row in area_book_results.iterrows():
       if not r.exists(self.church_username + ":status"):
         r.delete(self.church_username + ":facebook_search_results")
         self.wd.quit()
         break
       try:
-        item[1] = str(item[1] or '')
-        item[2] = str(item[2] or '')
-        item[3] = 'U' if item[3] == None else item[3] 
-        if item[4] != item[4]:
-          item[4] = 0
+        row['firstName'] = str(row['firstName'] or '')
+        row['lastName'] = str(row['lastName'] or '')
+        row['gender'] = 'U' if row['gender'] == None else row['gender'] 
+        if row['ageCategoryId'] != row['ageCategoryId']:
+          row['ageCategoryId'] = 0
         combined = {}
-        facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(item[1]+ " " + item[2])}'
+        facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(row["firstName"]+ " " + row["lastName"])}'
         self.wd.get(facebook_search_url)
         content = self.parse_facebook_search_page(self.wd.page_source)
         if content == None or content == "None":
-          content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{item[1]+ " " +item[2]}</a> on Facebook by hand?<br>'
+          content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{row["firstName"]+ " " +row["lastName"]}</a> on Facebook by hand?<br>'
         combined['content'] = content
-        combined['about'] = f'Name: {str(item[1]) + " " +str(item[2])}<br>Age: {age_map[item[4]]}<br>Gender: {gender_map[item[3]]}'
+        combined['about'] = f'Name: {str(row["firstName"]) + " " +str(row["lastName"])}<br>Age: {age_map[row["ageCategoryId"]]}<br>Gender: {gender_map[row["gender"]]}'
+        logging.info(f"{row['firstName']} {row['lastName']} {index} / {count_row} ... {round(((index / count_row) * 100), 2)}% done")
       except Exception as e:
-        logging.debug(item)
+        logging.debug(row)
         logging.error(e)
       finally:
         try:
@@ -183,30 +186,27 @@ class MissionaryBot:
     Log in to Facebook so we can start doing searches
     """
     self.wd.implicitly_wait(3)
-    self.set_status("Authenticating with Facebook")
-    self.wd.get("https://www.facebook.com/")
-    picture_log = {}
-    picture_log['1'] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-    if self.facebook_username is None:
-      return "No Username"
-    elif self.facebook_password is None:
-      return "No Password"
+    # Try 3 times to login
     try: # Loggin in
+      self.set_status(f"Authenticating with Facebook")
+      self.wd.get("https://www.facebook.com/")
+      picture_log = {}
+      picture_log[f"1"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
       if self.wd.find_element_by_name("email"):
         self.wd.find_element_by_name("email").send_keys(self.facebook_username)
         self.wd.find_element_by_name("pass").send_keys(self.facebook_password)
         self.wd.find_element_by_name("pass").submit()
-        picture_log["2-email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+        picture_log[f"2-email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
       try: # Check if we are allowed in imediately
         try: # Check for facebook version 2
           if self.wd.find_element_by_xpath('//a[@aria-label="Home"]'):
-            picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+            picture_log[f"v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             return
         except:
           self.set_status("Not on version 2")
         try: # Check for facebook version 1
           if self.wd.find_element_by_xpath('//div[@data-click="home_icon"]'):
-            picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+            picture_log[f"v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             return
         except:
           self.set_status("Not on version 1")
@@ -221,82 +221,89 @@ class MissionaryBot:
       # Navigate the authenitication routine V1 Please Confirm Your Identity
       if self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]'):
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        picture_log["3-continue"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+        picture_log[f"3-continue"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
       # Choices of how to autheniticate account
       # Authenticate with logged in device
+      """
       if len(self.wd.find_elements_by_xpath("//span[text()='Approve your login on another phone or computer']")) >= 1:
-        self.set_status('Authenticating with other logged in device')
+        self.set_status('Authenticating with other logged in device, approve the login from another device ie phone or computer, you have 60 seconds')
         self.wd.find_elements_by_xpath("//span[text()='Approve your login on another phone or computer']")[0].click()
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        #Approve login screen
-        time.sleep(30)
+        time.sleep(60)
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
+        while(self.wd.find_elements_by_xpath("//div[text()='Login was not approved']")[0] != []):
+          logging.info('trying to confirm)
+          time.sleep(10)
+          self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
+        continue
+        #Approve login screen
+      """
       # Get code sent to email
-      elif self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']"):
+      if self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']"):
         self.set_status('Authenticating with email code')
         self.wd.find_element_by_xpath("//span[text()='Get a code sent to your email']").click()
-        picture_log["5-email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+        picture_log[f"5-email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-        picture_log["6-continue past email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+        picture_log[f"6-continue past email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         for choice in self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix"):
           choice.find_element_by_tag_name('span').click()
           email = choice.text
           self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
-          picture_log["7-pick an email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          picture_log[f"7-pick an email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           if len(self.wd.find_elements_by_xpath('//div[contains(text(), "An error occurred while sending the message")]')) >= 1:
             self.set_status(f'error sending to {email}')
-            picture_log["7.5-pick an email-warning"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+            picture_log[f"7.5-pick an email-warning"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             self.wd.find_element_by_xpath('//button[contains(text(), "Back")]').click()
           else:
             break
         if self.wd.find_element_by_xpath("//input[@type='text']"):
-          picture_log["8-email code"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          picture_log[f"8-email code"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           start_time = time.time()
           time_to_wait = 10 * 60
           check_frequency = 5
           while (not r.exists(self.church_username + ":facebook_key")):
-            self.set_status(f'waiting for key from {self.church_username} at {email} might have to check spam. {(time.time() - start_time) / 60} mins remaining')
+            self.set_status(f'waiting for key from {self.church_username} at {email} might have to check spam. {round(((start_time - time.time() + time_to_wait) / 60), 2)} mins remaining')
             time.sleep(check_frequency)
             if time.time() - start_time > time_to_wait:
-              self.set_status("Did not recieve a key")
+              self.set_status(f"Did not recieve a key within {time_to_wait} seconds")
               raise ValueError
           self.wd.find_element_by_xpath("//input[@type='text']").send_keys(str(r.get(self.church_username + ":facebook_key")))
           self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
           self.set_status('entering key')
-          picture_log["9-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          picture_log[f"9-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
 
         while True:
           try:
             element = self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]')
             element.click()
-            picture_log["10-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+            picture_log[f"10-continue past email select"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           except:
             break
       # Check if successfully logged in
       try:
         if self.wd.find_element_by_xpath('//a[@aria-label="Home"]'):
-          picture_log["v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          picture_log[f"v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           self.set_status('Done authentication with Facebook version 2')
           return
       except Exception as e:
         print(e)
       try:
         if self.wd.find_element_by_xpath('//div[@data-click="home_icon"]'):
-          picture_log["v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+          picture_log[f"v1-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           self.set_status('Done authentication with Facebook version 1')
           return
       except Exception as e:
         print(e)
 
     except Exception as e:
-        logging.error(f'{self.church_username} : {e}')
-        logging.error(f'{self.church_username} : {e}') 
-        picture_log["exception"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-        for key in picture_log.keys():
-          file_name = f"debug/{self.church_username}/{key}"
-          upload_blob_from_png(os.environ.get('BUCKET_NAME'), picture_log[key]['screen_shot'], file_name + '.png')
-          upload_blob_from_html(os.environ.get('BUCKET_NAME'), picture_log[key]['html'], file_name + '.html')
-        raise Exception
+      logging.error(f'{self.church_username} : {e}') 
+      picture_log[f"exception"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
+      raise Exception
+    finally:
+      for key in picture_log.keys():
+        file_name = f"debug/{self.church_username}/{key}"
+        upload_blob_from_png(os.environ.get('BUCKET_NAME'), picture_log[key]['screen_shot'], file_name + '.png')
+        upload_blob_from_html(os.environ.get('BUCKET_NAME'), picture_log[key]['html'], file_name + '.html')
 
 
   def scrape_area_book_for_people(self):
@@ -335,8 +342,7 @@ class MissionaryBot:
     url = f"https://api-dot-eighth-vehicle-287322.uc.r.appspot.com/bot?church_username={self.church_username}"
     payload = {}
     headers= {}
-    response = requests.request("DELETE", url, headers=headers, data = payload)
-    self.set_status(response.text)
+    requests.request("DELETE", url, headers=headers, data = payload)
 
 
 # def get_missionary_emails(self):

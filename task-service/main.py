@@ -35,12 +35,7 @@ def test_find_member_profiles():
     """Log the request payload."""
     payload = request.get_data(as_text=True) or '(empty payload)'
     try:
-        payload = {'church_username': 'grahas',
-                   'church_password': 'Harr1s0n1',
-                   'facebook_username': '***REMOVED***',
-                   'facebook_password': '***REMOVED***',
-                   'pros_area_id': '418067424'}
-        p = Process(target=do_work, args=(payload,))
+        p = Process(target=do_work, args=(json.loads(payload),))
         p.start()
         if p.join() != True:
             raise Exception
