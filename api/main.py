@@ -3,6 +3,8 @@ import os
 import pickle
 import gzip
 import urllib.parse
+import pandas as pd
+import pyarrow as pa
 
 from flask import Flask, request
 import redis
@@ -15,6 +17,7 @@ app = Flask(__name__)
 project = os.environ.get("PROJECT")
 location = os.environ.get("LOCATION")
 queue = os.environ.get("QUEUE")
+context = pa.default_serialization_context()
 
 @app.route('/')
 def hello():
@@ -30,14 +33,15 @@ def bot():
     if r.exists(church_username + ":status"):
       try:
         pops = int(r.get(church_username + ":current_index"))
-        area_book_results = pickle.loads(r.get(church_username + ':area_book_results'))
+        area_book_results = context.deserialize(r.get(church_username+':area_book_results'))
         long_status = f'There are {r.llen(church_username + ":facebook_search_results")} people in queue.\
           Status: {r.get(church_username + ":status").decode("utf-8")}\
-          Total: {len(area_book_results)}\
+          Total: {len(area_book_results.index)}\
           Completed: {pops}\
-          Remaining: {len(area_book_results) - pops}'
+          Remaining: {len(area_book_results.index) - pops}'
         return long_status
-      except:
+      except Exception as e:
+        print(e)
         return r.get(church_username + ":status")
     else:
       return "Bot not created yet"
