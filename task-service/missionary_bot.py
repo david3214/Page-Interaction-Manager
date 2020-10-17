@@ -186,7 +186,7 @@ class MissionaryBot:
     """
     Log in to Facebook so we can start doing searches
     """
-    self.wd.implicitly_wait(3)
+    self.wd.implicitly_wait(5)
     # Try 3 times to login
     try: # Loggin in
       self.set_status(f"Authenticating with Facebook")
