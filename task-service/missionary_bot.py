@@ -49,6 +49,7 @@ class MissionaryBot:
     self.chrome_options.add_argument("--no-sandbox")
     self.chrome_options.add_argument("--silent")
     self.chrome_options.add_argument("--incognito")
+    self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
     #self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
     self.chrome_options.add_argument("--log-level=3")
     self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
