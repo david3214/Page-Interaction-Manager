@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, redirect
 
 app = Flask(__name__)
 
@@ -40,6 +40,14 @@ def google_verification():
 @app.route('/assets/<path:path>')
 def send_assets(path):
     return send_from_directory('assets', path)
+
+@app.route('/<path:text>', methods=['GET', 'POST'])
+def all_routes(text):
+  if text.startswith('api'):
+    
+    return redirect("https://api-dot-eighth-vehicle-287322.uc.r.appspot.com/" + text[len('/api'):], code=302)
+  else:
+    return ""
 
 
 if __name__ == '__main__':

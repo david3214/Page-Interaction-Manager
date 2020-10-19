@@ -50,7 +50,7 @@ class MissionaryBot:
     self.chrome_options.add_argument("--silent")
     self.chrome_options.add_argument("--incognito")
     self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
-    #self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
+    # self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
     self.chrome_options.add_argument("--log-level=3")
     self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
@@ -247,7 +247,7 @@ class MissionaryBot:
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         picture_log[f"6-continue past email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         for choice in self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix"):
-          choice.find_element_by_tag_name('span').click()
+          choice.find_elements_by_css_selector('span').click()
           email = choice.text
           self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
           picture_log[f"7-pick an email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
@@ -257,6 +257,7 @@ class MissionaryBot:
             self.wd.find_element_by_xpath('//button[contains(text(), "Back")]').click()
           else:
             break
+        picture_log[f"7.8-email code"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         if self.wd.find_element_by_xpath("//input[@type='text']"):
           picture_log[f"8-email code"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           start_time = time.time()
