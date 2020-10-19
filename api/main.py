@@ -3,11 +3,15 @@ import os
 import pickle
 import gzip
 import urllib.parse
+from io import BytesIO
+from pathlib import Path
+
 import pandas as pd
 import pyarrow as pa
-
-from flask import Flask, request
+from flask import Flask, request, send_file
 import redis
+from PIL import Image
+import qrcode
 
 from snippets import create_tasks_with_data
 
@@ -147,6 +151,42 @@ def add_key():
 #  church_password = urllib.parse.unquote_plus(args['church_password'])
 #  bot = MissionaryBot(church_username=church_username, church_password=church_password)
 #  return bot.get_missionary_emails()
+
+def serve_pil_image(pil_img):
+    img_io = BytesIO()
+    pil_img.save(img_io, 'PNG', quality=95)
+    img_io.seek(0)
+    return send_file(img_io, mimetype='image/png')
+
+@app.route('/pass_along_cards', methods=['GET'])
+def pass_along_cards():
+  """
+  Take a string and encode onto a jesus background with qr code
+  """
+  try:
+    assert request.args.get('text') is not None
+    # Open the template
+    img_bg = Image.open(Path("jesus_template.png"))
+
+    # Make the qr code
+    qr = qrcode.QRCode(box_size=2, border=0)
+    qr.add_data(request.args.get('text'))
+    qr.make()
+    img_qr = qr.make_image(fit=True)
+    img_qr = img_qr.resize((int(img_bg.size[0] * 0.53), int(img_bg.size[0] * 0.53)))
+    # Paste the qr code onto the image
+    pos = (int(img_bg.size[0] * 0.23), int(img_bg.size[1] * 0.65))
+    img_bg.paste(img_qr, pos)
+    
+
+  #except Exception as e:
+  #  print(e)
+  #  results = e
+  #  return results
+  finally:
+    return serve_pil_image(img_bg)
+
+
 
 if __name__ == '__main__':
   app.run(host='127.0.0.1', port=8080, debug=True)
