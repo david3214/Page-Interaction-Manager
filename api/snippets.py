@@ -12,281 +12,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from google.cloud import tasks
+from google.cloud import tasks_v2
+from google.protobuf import timestamp_pb2
+import datetime
+import json
+import requests
 
-
-def create_queue(project, location, queue_blue_name, queue_red_name):
-    # [START taskqueues_using_yaml]
-    client = tasks.CloudTasksClient()
-
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue_blue_name = 'queue-blue'
-    # queue_red_name = 'queue-red'
-
-    parent = f"projects/{project}/locations/{location}"
-
-    queue_blue = {
-        'name': client.queue_path(project, location, queue_blue_name),
-        'rate_limits': {
-            'max_dispatches_per_second': 5
-        },
-        'app_engine_routing_override': {
-            'version': 'v2',
-            'service': 'task-module'
-        }
-    }
-
-    queue_red = {
-        'name': client.queue_path(project, location, queue_red_name),
-        'rate_limits': {
-            'max_dispatches_per_second': 1
-        }
-    }
-
-    queues = [queue_blue, queue_red]
-    for queue in queues:
-        response = client.create_queue(parent=parent, queue=queue)
-        print(response)
-    # [END taskqueues_using_yaml]
-    return response
-
-
-def update_queue(project, location, queue):
-    # [START taskqueues_processing_rate]
-    client = tasks.CloudTasksClient()
+def create_tasks_with_data(project, location, queue, url, payload):
+    # Create a client.
+    client = tasks_v2.CloudTasksClient()
 
     # TODO(developer): Uncomment these lines and replace with your values.
     # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue = 'queue-blue'
+    # queue = 'my-queue'
+    # location = 'us-central1'
+    # url = 'https://example.com/task_handler'
+    # payload = 'hello' or {'param': 'value'} for application/json
 
-    # Get queue object
-    queue_path = client.queue_path(project, location, queue)
-    queue = client.get_queue(name=queue_path)
-
-    # Update queue object
-    queue.rate_limits.max_dispatches_per_second = 20
-    queue.rate_limits.max_concurrent_dispatches = 10
-
-    response = client.update_queue(queue=queue)
-    print(response)
-    # [END taskqueues_processing_rate]
-    return response
-
-
-def create_task(project, location, queue):
-    # [START taskqueues_new_task]
-    client = tasks.CloudTasksClient()
-
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue = 'default'
-    amount = 10
-
-    parent = client.queue_path(project, location, queue)
-    
-    task = {
-        'app_engine_http_request': {
-            'http_method': tasks.HttpMethod.POST,
-            'relative_uri': '/update_counter',
-            'app_engine_routing': {
-                'service': 'worker'
-            },
-            'body': str(amount).encode()
-        }
-    }
-
-    response = client.create_task(parent=parent, task=task)
-    eta = response.schedule_time.strftime("%m/%d/%Y, %H:%M:%S")
-    print('Task {} enqueued, ETA {}.'.format(response.name, eta))
-    # [END taskqueues_new_task]
-    return response
-
-
-def create_tasks_with_data(project, location, queue, data):
-    # [START taskqueues_passing_data]
-    import json
-    client = tasks.CloudTasksClient()
-
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue = 'default'
-
+    # Construct the fully qualified queue name.
     parent = client.queue_path(project, location, queue)
 
+    # Construct the request body.
     task = {
-#        'name': client.task_path(project, location, queue, data['church_username']),
-        'app_engine_http_request': {
-            'http_method': tasks.HttpMethod.POST,
-            'relative_uri': '/find_member_profiles',
-            'app_engine_routing': {
-                'service': 'task-service'
-            },
-            'headers': {
-                'Content-Type': 'application/json'
-            },
-            'body': json.dumps(data).encode()
+        "http_request": {  # Specify the type of request.
+            "http_method": tasks_v2.HttpMethod.POST,
+            "url": url,  # The full url path that the task will be sent to.
         }
     }
+    if payload is not None:
+        if isinstance(payload, dict):
+            # Convert dict to JSON string
+            payload = json.dumps(payload)
+            # specify http content-type to application/json
+            task["http_request"]["headers"] = {"Content-type": "application/json"}
 
-    response = client.create_task(parent=parent, task=task)
-    print(response)
-    # [END taskqueues_passing_data]
-    return response
+        # The API expects a payload of type bytes.
+        converted_payload = payload.encode()
 
-
-def create_task_with_name(project, location, queue, task_name):
-    # [START taskqueues_naming_tasks]
-    client = tasks.CloudTasksClient()
-
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue = 'default'
-    # task_name = 'first-try'
-
-    parent = client.queue_path(project, location, queue)
-
-    task = {
-        'name': client.task_path(project, location, queue, task_name),
-        'app_engine_http_request': {
-            'http_method': tasks.HttpMethod.GET,
-            'relative_uri': '/url/path'
-        }
-    }
-    response = client.create_task(parent=parent, task=task)
-    print(response)
-    # [END taskqueues_naming_tasks]
-    return response
+        # Add the payload to the request.
+        task["http_request"]["body"] = converted_payload
 
 
-def delete_task(project, location, queue):
-    # [START taskqueues_deleting_tasks]
-    client = tasks.CloudTasksClient()
+    # Use the client to build and send the task.
+    response = client.create_task(request={"parent": parent, "task": task})
 
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue = 'queue1'
+    print("Created task {}".format(response.name))
 
-    task_path = client.task_path(project, location, queue, 'foo')
-    response = client.delete_task(name=task_path)
-    # [END taskqueues_deleting_tasks]
-    return response
-
-
-def purge_queue(project, location, queue):
-    # [START taskqueues_purging_tasks]
-    client = tasks.CloudTasksClient()
-
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue = 'queue1'
-
-    queue_path = client.queue_path(project, location, queue)
-    response = client.purge_queue(name=queue_path)
-    # [END taskqueues_purging_tasks]
-    return response
-
-
-def pause_queue(project, location, queue):
-    # [START taskqueues_pause_queue]
-    client = tasks.CloudTasksClient()
-
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue = 'queue1'
-
-    queue_path = client.queue_path(project, location, queue)
-    response = client.pause_queue(name=queue_path)
-    # [END taskqueues_pause_queue]
-    return response
-
-
-def delete_queue(project, location, queue):
-    # [START taskqueues_deleting_queues]
-    client = tasks.CloudTasksClient()
-
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # queue = 'queue1'
-
-    queue_path = client.queue_path(project, location, queue)
-    response = client.delete_queue(name=queue_path)
-    # [END taskqueues_deleting_queues]
-    return response
-
-
-def retry_task(project, location, fooqueue, barqueue, bazqueue):
-    # [START taskqueues_retrying_tasks]
-    from google.protobuf import duration_pb2
-
-    client = tasks.CloudTasksClient()
-
-    # TODO(developer): Uncomment these lines and replace with your values.
-    # project = 'my-project-id'
-    # location = 'us- central1'
-    # fooqueue = 'fooqueue'
-    # barqueue = 'barqueue'
-    # bazqueue = 'bazqueue'
-
-    parent = f"projects/{project}/locations/{location}"
-
-    max_retry = duration_pb2.Duration()
-    max_retry.seconds = 2*60*60*24
-
-    foo = {
-        'name': client.queue_path(project, location, fooqueue),
-        'rate_limits': {
-            'max_dispatches_per_second': 1
-        },
-        'retry_config': {
-            'max_attempts': 7,
-            'max_retry_duration': max_retry
-        }
-    }
-
-    min = duration_pb2.Duration()
-    min.seconds = 10
-
-    max = duration_pb2.Duration()
-    max.seconds = 200
-
-    bar = {
-        'name': client.queue_path(project, location, barqueue),
-        'rate_limits': {
-            'max_dispatches_per_second': 1
-        },
-        'retry_config': {
-            'min_backoff': min,
-            'max_backoff': max,
-            'max_doublings': 0
-        }
-    }
-
-    max.seconds = 300
-    baz = {
-        'name': client.queue_path(project, location, bazqueue),
-        'rate_limits': {
-            'max_dispatches_per_second': 1
-        },
-        'retry_config': {
-            'min_backoff': min,
-            'max_backoff': max,
-            'max_doublings': 3
-        }
-    }
-
-    queues = [foo, bar, baz]
-    for queue in queues:
-        response = client.create_queue(parent=parent, queue=queue)
-        print(response)
-    # [END taskqueues_retrying_tasks]
-    return response
+def create_tasks_with_data_v2(url, payload):
+    url = "http://96.3.72.48/find_member_profiles"
+    headers = {'Content-Type': 'application/json'}
+    response = requests.request("POST", url, headers=headers, data = json.dumps(payload).encode())
+    print(response.text.encode('utf8'))
