@@ -43,14 +43,14 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    self.chrome_options.add_argument("--headless")
+    # self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-gpu")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
     self.chrome_options.add_argument("--silent")
     self.chrome_options.add_argument("--incognito")
     self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
-    # self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
+    #self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
     self.chrome_options.add_argument("--log-level=3")
     self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
@@ -96,6 +96,7 @@ class MissionaryBot:
         combined = {}
         facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(row["firstName"]+ " " + row["lastName"])}'
         self.wd.get(facebook_search_url)
+        time.sleep(1)
         content = self.parse_facebook_search_page(self.wd.page_source)
         if content == None or content == "None":
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{row["firstName"]+ " " +row["lastName"]}</a> on Facebook by hand?<br>'
@@ -246,9 +247,10 @@ class MissionaryBot:
         picture_log[f"5-email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         picture_log[f"6-continue past email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
-        for choice in self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix"):
-          choice.find_elements_by_css_selector('span').click()
-          email = choice.text
+        for i in range(len(self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix"))):
+          choice = self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix")[i]
+          self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix")[i].find_element_by_css_selector('span').click()
+          email = self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix")[i].text
           self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
           picture_log[f"7-pick an email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           if len(self.wd.find_elements_by_xpath('//div[contains(text(), "An error occurred while sending the message")]')) >= 1:
