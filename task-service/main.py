@@ -23,6 +23,7 @@ def find_member_profiles():
     try:
         p = Process(target=do_work, args=(json.loads(payload),))
         p.start()
+        return "Started process"
         if p.join() != True:
             raise Exception
     except Exception as e:
@@ -65,4 +66,4 @@ def send_assets(path):
 if __name__ == '__main__':
     # This is used when running locally. Gunicorn is used to run the
     # application on Google App Engine. See entrypoint in app.yaml.
-    app.run(host='127.0.0.1', port=8080, debug=True)
+    app.run(host='192.168.0.64', port=5000, debug=True)
