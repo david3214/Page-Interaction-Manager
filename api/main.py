@@ -13,7 +13,7 @@ import redis
 from PIL import Image
 import qrcode
 
-from snippets import create_tasks_with_data
+from snippets import create_tasks_with_data_v2
 
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
 r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
@@ -63,8 +63,9 @@ def bot():
       if r.exists(church_username + ":status"):
         return "Bot already exist"
       else:
-        data = request.form
-        create_tasks_with_data(project, location, queue, data)
+        payload = request.form
+        create_tasks_with_data_v2('https://96.3.72.48/find_member_profiles', payload)
+        # create_tasks_with_data(project, location, queue, 'https://96.3.72.48/find_member_profiles', payload)
         return f"added bot {church_username}"
     except Exception as e:
       return f"Exception: {e}"
@@ -158,6 +159,7 @@ def serve_pil_image(pil_img):
     img_io.seek(0)
     return send_file(img_io, mimetype='image/png')
 
+jesus_bg = Image.open(Path("jesus_template.png"))
 @app.route('/pass_along_cards', methods=['GET'])
 def pass_along_cards():
   """
@@ -166,8 +168,7 @@ def pass_along_cards():
   try:
     assert request.args.get('text') is not None
     # Open the template
-    img_bg = Image.open(Path("jesus_template.png"))
-
+    img_bg = jesus_bg
     # Make the qr code
     qr = qrcode.QRCode(box_size=2, border=0)
     qr.add_data(request.args.get('text'))
@@ -189,4 +190,4 @@ def pass_along_cards():
 
 
 if __name__ == '__main__':
-  app.run(host='127.0.0.1', port=8080, debug=True)
+  app.run(host='127.0.0.1', port=5001, debug=True)
