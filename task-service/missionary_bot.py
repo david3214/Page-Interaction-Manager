@@ -9,6 +9,7 @@ import threading
 import time
 import urllib.parse
 import uuid
+from random import randint
 
 import pandas as pd
 import pyarrow as pa
@@ -43,14 +44,14 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    # self.chrome_options.add_argument("--headless")
+    self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-gpu")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
     self.chrome_options.add_argument("--silent")
     self.chrome_options.add_argument("--incognito")
     self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
-    #self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
+    # self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
     self.chrome_options.add_argument("--log-level=3")
     self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
     self.wd.set_window_size(1920, 1080)
@@ -78,11 +79,15 @@ class MissionaryBot:
   fetch all the facebook profiles
   """
   def load_facebook_profiles(self):
-    self.set_status("Loading Facebook Profiles")
+    self.set_status("Starting to Load Facebook Profiles")
     area_book_results = context.deserialize(r.get(self.church_username+':area_book_results'))
     r.set(self.church_username + ":current_index", -2)
-    count_row = area_book_results.shape[0] 
-    for index, row in area_book_results.iterrows():
+    count_row = area_book_results.shape[0]
+    blocked_by_facebook = False
+    time_to_wait = 30
+    loop_index = 0
+    for row_number, row in area_book_results.iterrows():
+      loop_index += 1
       if not r.exists(self.church_username + ":status"):
         r.delete(self.church_username + ":facebook_search_results")
         self.wd.quit()
@@ -94,15 +99,32 @@ class MissionaryBot:
         if row['ageCategoryId'] != row['ageCategoryId']:
           row['ageCategoryId'] = 0
         combined = {}
-        facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(row["firstName"]+ " " + row["lastName"])}'
+        search_term = row["firstName"]+ " " + row["lastName"]
+        if len(search_term.split()) > 2:
+          first, *middle, last = search_term.split()
+          search_term = first + " " + last
+        facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(search_term)}'
         self.wd.get(facebook_search_url)
-        time.sleep(1)
+        time.sleep(time_to_wait)
+        if len(self.wd.find_elements_by_xpath("""//*[contains(text(), "You Can't Use This Feature Right Now")]""")) != 0:
+          blocked_by_facebook = True
+          while blocked_by_facebook:
+            self.set_status("Facebook rate limit active, sleeping for an hour")
+            logging.error("Facebook has detected bot")
+            time.sleep(3600)
+            self.wd.get(facebook_search_url)
+            time.sleep(time_to_wait)
+            if len(self.wd.find_elements_by_xpath("""//*[contains(text(), "You Can't Use This Feature Right Now")]""")) == 0:
+              blocked_by_facebook = False
+          self.set_status("Loading Facebook Profiles")
+          time_to_wait += 1
         content = self.parse_facebook_search_page(self.wd.page_source)
         if content == None or content == "None":
+          logging.warning("Didn't find any search results")
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{row["firstName"]+ " " +row["lastName"]}</a> on Facebook by hand?<br>'
         combined['content'] = content
         combined['about'] = f'Name: {str(row["firstName"]) + " " +str(row["lastName"])}<br>Age: {age_map[row["ageCategoryId"]]}<br>Gender: {gender_map[row["gender"]]}'
-        logging.info(f"{row['firstName']} {row['lastName']} {index} / {count_row} ... {round(((index / count_row) * 100), 2)}% done")
+        logging.info(f"{row['firstName']} {row['lastName']} {loop_index} / {count_row} ... {round(((loop_index / count_row) * 100), 2)}% done")
       except Exception as e:
         logging.debug(row)
         logging.error(e)
@@ -248,7 +270,6 @@ class MissionaryBot:
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         picture_log[f"6-continue past email radio"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
         for i in range(len(self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix"))):
-          choice = self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix")[i]
           self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix")[i].find_element_by_css_selector('span').click()
           email = self.wd.find_elements_by_css_selector(".uiInputLabel.clearfix")[i].text
           self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
@@ -331,8 +352,10 @@ class MissionaryBot:
     upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps(area_book_data), f'areabooks/{self.pros_area_id}.json')
     upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps({'church_username': self.church_username,'church_password': self.church_password,'facebook_username': self.facebook_username,'facebook_password': self.facebook_password,'pros_area_id': self.pros_area_id}), f'users/{self.church_username}.json')
     df = pd.json_normalize(area_book_data['persons'])
+    df = df[(df['ageCategoryId'] > inv_age_map["Youth Primary 9–11"]) | (df['ageCategoryId'] == 0)]
     self.set_status("Done scraping areabook.")
     return df
+
 
   def pass_data(self, url):
     self.wd.get(url)
@@ -470,6 +493,7 @@ age_map = {
   50: "Mature Adult 46–59",
   60: "Senior Adult 60+"
 }
+inv_age_map = {v: k for k, v in age_map.items()}
 
 gender_map = {
   'M': "Male",
