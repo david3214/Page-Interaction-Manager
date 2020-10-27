@@ -2,8 +2,8 @@ service: task-service
 runtime: custom
 env: flex
 resources:
-  cpu: 1
-  memory_gb: 1
+  cpu: 2
+  memory_gb: 4
   disk_size_gb: 10
 automatic_scaling:
   min_num_instances: 1
@@ -11,4 +11,4 @@ automatic_scaling:
   cool_down_period_sec: 60
   cpu_utilization:
     target_utilization: 0.6
-  target_concurrent_requests: 1
+  target_concurrent_requests: 5

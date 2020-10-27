@@ -64,8 +64,8 @@ def bot():
         return "Bot already exist"
       else:
         payload = request.form
-        create_tasks_with_data_v2('https://96.3.72.48/find_member_profiles', payload)
-        # create_tasks_with_data(project, location, queue, 'https://96.3.72.48/find_member_profiles', payload)
+        create_tasks_with_data_v2('http://35.224.213.80/find_member_profiles', payload)
+        #create_tasks_with_data(project, location, queue, 'https://96.3.72.48/find_member_profiles', payload)
         return f"added bot {church_username}"
     except Exception as e:
       return f"Exception: {e}"
@@ -159,7 +159,6 @@ def serve_pil_image(pil_img):
     img_io.seek(0)
     return send_file(img_io, mimetype='image/png')
 
-jesus_bg = Image.open(Path("jesus_template.png"))
 @app.route('/pass_along_cards', methods=['GET'])
 def pass_along_cards():
   """
@@ -167,6 +166,7 @@ def pass_along_cards():
   """
   try:
     assert request.args.get('text') is not None
+    jesus_bg = Image.open(Path("jesus_template.png"))
     # Open the template
     img_bg = jesus_bg
     # Make the qr code
