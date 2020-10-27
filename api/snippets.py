@@ -59,7 +59,6 @@ def create_tasks_with_data(project, location, queue, url, payload):
     print("Created task {}".format(response.name))
 
 def create_tasks_with_data_v2(url, payload):
-    url = "http://96.3.72.48/find_member_profiles"
     headers = {'Content-Type': 'application/json'}
     response = requests.request("POST", url, headers=headers, data = json.dumps(payload).encode())
     print(response.text.encode('utf8'))

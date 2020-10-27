@@ -167,7 +167,7 @@ class MissionaryBot:
     """
     try:
       soup = BeautifulSoup(html, "html.parser")
-      results_container = soup.find("div", {"aria-label": "Preview of a Search Result"})
+      results_container = soup.find("div", {"aria-label": "Search Results"})
       if results_container == None:
         results_container = soup.find("div", {"id": "BrowseResultsContainer"})
       else:
