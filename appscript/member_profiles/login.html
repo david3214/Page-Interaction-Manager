@@ -1,0 +1,46 @@
+<script>
+    // Prevent forms from submitting.
+    function preventFormSubmit() {
+      var forms = document.querySelectorAll('form');
+      for (var i = 0; i < forms.length; i++) {
+        forms[i].addEventListener('submit', function(event) {
+          event.preventDefault();
+        });
+      }
+    }
+    window.addEventListener('load', preventFormSubmit);
+    function handleFormSubmit(formObject) {
+      google.script.run.withSuccessHandler(doSubmit).processLoginForm(formObject);
+      church_username = formObject.church_username.value;
+      google.script.run.withSuccessHandler().set_church_username(church_username);
+    }
+    function showContent(){
+      document.getElementById('content').style.display = "block";
+      document.getElementById('controls').style.display = "block";
+    }
+    function hideContent(){
+      document.getElementById('content').style.display = "none";
+      document.getElementById('controls').style.display = "none";
+    }
+    function hideLogin(){
+      document.getElementById('log-form').style.display = "none";
+    }
+    function showLogin(){
+      document.getElementById('log-form').style.display = "block";
+    }
+    function doSubmit(url) {
+      hideLogin();
+      showContent();
+      start();
+    }
+</script>
+<div id="log-form">
+  <form id="loginForm" onsubmit="handleFormSubmit(this)" method="POST">
+    <input type="text" name="church_username" placeholder="Church Username" required/>
+    <input type="password" name="church_password" placeholder="Church Password" required/>
+    <input type="text" name="facebook_username" placeholder="Facebook Username" required/>
+    <input type="password" name="facebook_password" placeholder="Facebook Password" required/>
+    <input type="number" name="pros_area_id" placeholder="Proselyting Area ID" required/>
+    <button type="submit" class="btn">Submit</button>
+  </form>
+</div> 
