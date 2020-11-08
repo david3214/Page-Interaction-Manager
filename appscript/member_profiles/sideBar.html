@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base target="_top">
+  <meta name="referrer" content="origin-when-crossorigin" id="meta_referrer">
+  <?!= include('member_profiles/facebookStylesheet'); ?>
+  <style>
+  .hidden_elem, ._6a, .uiPopover{
+   visibility: hidden;
+  }
+  </style>
+  <script>
+  var baseURL = "https://api-dot-eighth-vehicle-287322.uc.r.appspot.com/";
+  var church_username = "<?= get_church_username(); ?>";
+  </script>
+</head>
+<body>
+  <div id='title'></div>
+  <?!= include('member_profiles/login'); ?>
+  <?!= include('member_profiles/send_auth_key'); ?>
+  <?!= include('member_profiles/displayData'); ?>
+  <script>
+    if (church_username !== "") {
+      hideLogin();
+      showContent();
+      start();
+    }
+  </script>
+</body>
+<footer>
+<script>
+      (function(d,t) {
+        var BASE_URL = "https://app.chatwoot.com";
+        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+        g.src= BASE_URL + "/packs/js/sdk.js";
+        s.parentNode.insertBefore(g,s);
+        g.onload=function(){
+          window.chatwootSDK.run({
+            websiteToken: 'dR6gHt7E6A8sTMo5mXyEFJuc',
+            baseUrl: BASE_URL
+          })
+        }
+      })(document,"script");
+    </script>
+</footer>
+</html>

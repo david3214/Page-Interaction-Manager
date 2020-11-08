@@ -1,0 +1,27 @@
+<div id="facebook-key-div" style='display:none;'>
+  <form id="facebook-key-form" onsubmit="handleFormKeySubmit(this)" method="POST">
+    <input type="hidden" name="church_username">
+    <input type="number" name="key" placeholder="Facebook Auth key" required/>
+    <button type="submit" class="btn">Submit</button>
+  </form>
+</div> 
+<script>
+    // Prevent forms from submitting.
+    function preventFormSubmit() {
+      var forms = document.querySelectorAll('form');
+      for (var i = 0; i < forms.length; i++) {
+        forms[i].addEventListener('submit', function(event) {
+          event.preventDefault();
+        });
+      }
+    }
+    window.addEventListener('load', preventFormSubmit);
+    function handleFormKeySubmit(formObject) {
+      formObject.church_username.value = church_username;
+      google.script.run.withSuccessHandler(doSubmitKey).processKeyForm(formObject);
+    }
+    function doSubmitKey(url) {
+      document.getElementById("facebook-key-div").style.display = "none";
+      showContent();
+    }
+</script>

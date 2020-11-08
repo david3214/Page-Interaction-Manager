@@ -1,0 +1,93 @@
+<script>
+    var index = 0;
+    var buffer = undefined;
+    var is_first_time = true;
+    function start() {
+        if (is_first_time == true) {
+            var url = encodeURI(baseURL + 'get-next-profile?church_username=' + church_username);
+            google.script.run.withSuccessHandler(function (data) {
+                buffer = JSON.parse(data);
+                google.script.run.withSuccessHandler(updateContent).withFailureHandler(onFailureGet).get(url);
+            }).withFailureHandler(onFailureGet).get(url);
+            is_first_time = false;
+        }
+
+        window.setInterval(function () {
+            var url = encodeURI(baseURL + 'bot?church_username=' + church_username);
+            google.script.run.withSuccessHandler(updateStatus).withFailureHandler(onFailureGet).get(url);
+        }, 10000);
+    }
+
+    function onFailureGet(error) {
+        console.log(error.message);
+    }
+    function updateStatus(text) {
+        var div = document.getElementById("title");
+        div.innerHTML = text;
+        if (text.includes("waiting for key from")) {
+            document.getElementById("facebook-key-div").style.display = 'block';
+            hideContent();
+            hideLogin();
+        } else if (text.includes("Removed bot")) {
+            showLogin();
+            google.script.run.withSuccessHandler(function (x) { }).reset;
+        } else {
+            document.getElementById("facebook-key-div").style.display = 'none';
+            showContent();
+        }
+    }
+    function updateContent(data) {
+        data = JSON.parse(data);
+        console.log(data);
+        var div = document.getElementById("content");
+        div.innerHTML = "";
+        var about = document.createRange().createContextualFragment(buffer.about);
+        var content = document.createRange().createContextualFragment(buffer.content);
+        div.append(about);
+        div.append(content);
+        buffer = data;
+        var elements = document.getElementsByClassName("_42ft _4jy0 FriendRequestAdd addButton _4jy3 _517h _51sy");
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].addEventListener('click', next, false);
+            elements[i].innerText = 'Add to Sheet';
+        }
+        var profile_link = document.getElementsByClassName("_32mo");
+        for (var i = 0; i < profile_link.length; i++) {
+            profile_link[i].addEventListener('click', next, false);
+            profile_link[i].innerHTML = profile_link[i].innerText.bold();
+        }
+        // V2 facebook
+        var profile_title = document.getElementsByClassName("oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl oo9gr5id gpro0wi8 lrazzd5p dkezsu63");
+        for (var i = 0; i < profile_title.length; i++) {
+            profile_title[i].addEventListener('click', next, false);
+        }
+        google.script.run.withSuccessHandler(updateStatus).withFailureHandler(onFailureGet).get(encodeURI(baseURL + 'bot?church_username=' + church_username));
+    }
+
+    function next(e) {
+        var url = encodeURI(baseURL + 'get-next-profile?church_username=' + church_username);
+        if (e != undefined) {
+            // Old Facebook
+            if (e.srcElement.closest("._4p2o._87m1") != null) {
+                google.script.run.next({
+                    'index': index,
+                    'link': e.srcElement.closest("._4p2o._87m1").querySelector('._32mo').href,
+                    'name': e.srcElement.closest("._4p2o._87m1").querySelector('._32mo').innerText
+                })
+            }// New Facebook
+            else if (e.srcElement.closest(".sjgh65i0") != null) {
+                google.script.run.next({
+                    'index': index,
+                    'link': e.srcElement.closest(".sjgh65i0").querySelector('.oajrlxb2.g5ia77u1.qu0x051f.esr5mh6w.e9989ue4.r7d6kgcz.rq0escxv.nhd2j8a9.nc684nl6.p7hjln8o.kvgmc6g5.cxmmr5t8.oygrvhab.hcukyx3x.jb3vyjys.rz4wbd8a.qt6c0cv9.a8nywdso.i1ao9s8h.esuyzwwr.f1sip0of.lzcic4wl.oo9gr5id.gpro0wi8.lrazzd5p.dkezsu63').href,
+                    'name': e.srcElement.closest(".sjgh65i0").querySelector('.oajrlxb2.g5ia77u1.qu0x051f.esr5mh6w.e9989ue4.r7d6kgcz.rq0escxv.nhd2j8a9.nc684nl6.p7hjln8o.kvgmc6g5.cxmmr5t8.oygrvhab.hcukyx3x.jb3vyjys.rz4wbd8a.qt6c0cv9.a8nywdso.i1ao9s8h.esuyzwwr.f1sip0of.lzcic4wl.oo9gr5id.gpro0wi8.lrazzd5p.dkezsu63').innerText
+                });
+            }
+        }
+        index++;
+        google.script.run.withSuccessHandler(updateContent).withFailureHandler(onFailureGet).get(url);
+    }
+</script>
+<div id="controls" style="margin: 0 auto; display:none;">
+    <input type="button" value="Next" onclick="next();" class="_42ft _4jy0 FriendRequestAdd addButton _4jy3 _517h" />
+</div>
+<div id="content" style='display:none;'></div>
