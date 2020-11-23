@@ -16,3 +16,15 @@ function onOpen() {
           .addItem('Remove sheet', 'tearDownSheet'))
       .addToUi();
 }
+
+// Make the menu appear after installing it
+function onInstall(e) {
+    onOpen(e);
+    // Perform additional setup as needed.
+}
+
+
+function getEffectiveUserEmail() {
+    //Put user email into html when it loads for determining whether user is the authorized user
+    return Session.getEffectiveUser().getEmail();
+}
