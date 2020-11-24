@@ -18,6 +18,7 @@ import requests
 from bs4 import BeautifulSoup
 from google.cloud import storage
 from selenium import webdriver
+import jwt
 
 # Redis
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
@@ -25,19 +26,16 @@ r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
 context = pa.default_serialization_context()
 
 class MissionaryBot:
-  def __init__(self, church_username=None, church_password=None, pros_area_id=None, facebook_username=None, facebook_password=None):
+  def __init__(self, church_username=None, church_password=None, facebook_username=None, facebook_password=None):
     self.set_status('Intializing')
     self.church_username = church_username
     self.church_password = church_password
     self.facebook_username = facebook_username
     self.facebook_password = facebook_password
-    self.pros_area_id = pros_area_id
 
-    self.mission_id = 14440
-    self.pros_area_url = f'https://areabook.churchofjesuschrist.org/services/mission/prosArea/{self.pros_area_id}'
-    # https://areabook.churchofjesuschrist.org/services/mission/prosArea/units/4025235
-    self.mission_directory_url = f'https://areabook.churchofjesuschrist.org/services/mission/{self.mission_id}'
+    self.church_auth_url = "https://areabook.churchofjesuschrist.org/services/auth"
     self.stewardCmisIds = []
+    # self.pros_area_url = f'https://areabook.churchofjesuschrist.org/services/mission/prosArea/{pros_area_id}'
     self.area_book_json = f'https://areabook.churchofjesuschrist.org/services/people/primary?stewardCmisIds={",".join(self.stewardCmisIds)}'
     self.person_profile_id = None
     self.person_profile = f'https://areabook.churchofjesuschrist.org/services/people/{self.person_profile_id}'
@@ -185,14 +183,14 @@ class MissionaryBot:
     Authenticate with church
     return true if successfull 
     """
-    self.set_status('Authenticating with church')
+    self.set_status('Starting Authentication with church')
     # Check if already logged in
     self.wd.find_element_by_id("okta-signin-username").send_keys(self.church_username)
     self.wd.find_element_by_id("okta-signin-submit").click()
     self.wd.find_element_by_name("password").send_keys(self.church_password)
     self.wd.find_element_by_name("password").submit()
     self.set_status('Done authenticating with church')
-
+    return True
 
   def safe_find_element_by_id(self, elem_id):
     """
@@ -210,9 +208,8 @@ class MissionaryBot:
     Log in to Facebook so we can start doing searches
     """
     self.wd.implicitly_wait(5)
-    # Try 3 times to login
     try: # Loggin in
-      self.set_status(f"Authenticating with Facebook")
+      self.set_status(f"Starting Authentication with Facebook")
       self.wd.get("https://www.facebook.com/")
       picture_log = {}
       picture_log[f"1"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
@@ -336,21 +333,24 @@ class MissionaryBot:
     Connect to areabook web and scrape the data
     return the df
     """
-    self.set_status("Scraping Areabook")
-    self.wd.get(self.pros_area_url)
+    # Authenticate with area book app
+    self.set_status("Starting Scraping Areabook")
+    self.wd.get(self.church_auth_url)
     try:
       self.authenticate_with_church()
     except:
       self.set_status("Failed to login to church")
+    
+    # 
     self.wd.find_elements_by_tag_name("pre")
-    pros_area_data = self.parse_church_json(self.wd.page_source)
-    for missionary in pros_area_data['missionaries']:
-      self.stewardCmisIds.append(missionary['cmisId'])
+    auth_data = self.parse_church_json(self.wd.page_source)
+    auth_data = jwt.decode(auth_data['token'], verify=False)
+    self.stewardCmisIds = auth_data['companions']
     self.wd.get(self.area_book_json)
     self.wd.find_elements_by_tag_name("pre")
     area_book_data = self.parse_church_json(self.wd.page_source)
-    upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps(area_book_data), f'areabooks/{self.pros_area_id}.json')
-    upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps({'church_username': self.church_username,'church_password': self.church_password,'facebook_username': self.facebook_username,'facebook_password': self.facebook_password,'pros_area_id': self.pros_area_id}), f'users/{self.church_username}.json')
+    upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps(area_book_data), f'areabooks/{auth_data["areaId"]}.json')
+    upload_blob_from_string(os.environ.get('BUCKET_NAME'), json.dumps({'church_username': self.church_username,'church_password': self.church_password,'facebook_username': self.facebook_username,'facebook_password': self.facebook_password,'authdata': json.dumps(auth_data)}), f'users/{self.church_username}.json')
     df = pd.json_normalize(area_book_data['persons'])
     df = df[(df['ageCategoryId'] > inv_age_map["Youth Primary 9–11"]) | (df['ageCategoryId'] == 0)]
     self.set_status("Done scraping areabook.")

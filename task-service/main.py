@@ -29,20 +29,6 @@ def find_member_profiles():
         return f"{e} Didn't completed loading Facebook profile information"
     return "Completed loading Facebook profile information"
 
-@app.route('/test_find_member_profiles', methods=['POST'])
-def test_find_member_profiles():
-    """Log the request payload."""
-    payload = request.get_data(as_text=True) or '(empty payload)'
-    try:
-        p = Process(target=do_work, args=(json.loads(payload),))
-        p.start()
-        if p.join() != True:
-            raise Exception
-    except Exception as e:
-        logging.error(e)
-        return f"{e} Didn't completed loading Facebook profile information"
-    return "Completed loading Facebook profile information"
-
 @app.route('/')
 def hello():
     """Basic index to verify app is serving."""
