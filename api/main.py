@@ -56,9 +56,8 @@ def bot():
     church_password = request.form['church_password']
     facebook_username = request.form['facebook_username']
     facebook_password = request.form['facebook_password']
-    pros_area_id = request.form['pros_area_id']
     try:
-      if (church_username == None or church_password == None or facebook_username == None or facebook_password == None or pros_area_id == None):
+      if (church_username == None or church_password == None or facebook_username == None or facebook_password == None):
         raise ValueError
       if r.exists(church_username + ":status"):
         return "Bot already exist"

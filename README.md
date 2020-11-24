@@ -16,9 +16,8 @@ church_username->Tom
 church_password->Riddle
 facebook_username->lord_voldemort
 facebook_password->I_dontlikeharry
-pros_area_id->123456789
 Create a bot
-http://127.0.0.1:5000/create-bot?church_username=Tom&church_password=Riddle&facebook_username=lord_voldemort&facebook_password=I_dontlikeharry&pros_area_id=123456789
+http://127.0.0.1:5000/create-bot?church_username=Tom&church_password=Riddle&facebook_username=lord_voldemort&facebook_password=I_dontlikeharry
 
 Check bot status
 http://127.0.0.1:5000/bot-status?church_username=Tom
