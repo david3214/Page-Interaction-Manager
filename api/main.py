@@ -74,6 +74,7 @@ def bot():
     church_username = urllib.parse.unquote_plus(args['church_username'])
     try:
       if r.exists(church_username + ":status"):
+        r.delete(church_username + ":alive")
         r.delete(church_username + ":status")
         r.delete(church_username + ":current_index")
         r.delete(church_username + ':area_book_results')
