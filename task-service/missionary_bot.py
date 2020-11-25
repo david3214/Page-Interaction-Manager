@@ -63,11 +63,13 @@ class MissionaryBot:
   def do_work(self):
     try:
       self.set_status('Doing work')
+      r.set(self.church_username + ":alive", 'true')
       area_book_results = self.scrape_area_book_for_people()
       r.set(self.church_username+':area_book_results', context.serialize(area_book_results).to_buffer().to_pybytes())
       self.authenticate_with_facebook()
       self.load_facebook_profiles()
       self.set_status('Done working')
+      r.set(self.church_username + ":alive", 'false')
       return True
     except:
       self.delete()
@@ -86,10 +88,10 @@ class MissionaryBot:
     loop_index = 0
     for row_number, row in area_book_results.iterrows():
       loop_index += 1
-      if not r.exists(self.church_username + ":status"):
+      if not r.exists(self.church_username + ":alive"):
         r.delete(self.church_username + ":facebook_search_results")
         self.wd.quit()
-        break
+        raise KeyboardInterrupt
       try:
         row['firstName'] = str(row['firstName'] or '')
         row['lastName'] = str(row['lastName'] or '')
