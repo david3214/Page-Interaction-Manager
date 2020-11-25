@@ -3,15 +3,15 @@ import json
 import logging
 from multiprocessing import Process
 
-import google.cloud.logging
+#import google.cloud.logging
 from flask import Flask, request, send_from_directory
 
 from missionary_bot import MissionaryBot
 
 app = Flask(__name__)
-client = google.cloud.logging.Client()
-client.get_default_handler()
-client.setup_logging()
+#client = google.cloud.logging.Client()
+#client.get_default_handler()
+#client.setup_logging()
 
 def do_work(kwargs):
     MissionaryBot(**kwargs).do_work()
