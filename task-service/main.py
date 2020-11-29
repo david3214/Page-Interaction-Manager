@@ -21,7 +21,7 @@ def find_member_profiles():
     """Log the request payload."""
     payload = request.get_data(as_text=True) or '(empty payload)'
     try:
-        p = Process(target=do_work, args=(json.loads(payload),))
+        p = Process(target=do_work, args=(json.loads(payload),)) #TODO Give the theads and processes names
         p.start()
         return "Started process"
     except Exception as e:
