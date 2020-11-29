@@ -13,7 +13,11 @@ function onOpen() {
       .addSeparator()
       .addSubMenu(SpreadsheetApp.getUi().createMenu('Page interaction manager')
           .addItem('Create sheet', 'setUpSheet')
-          .addItem('Remove sheet', 'tearDownSheet'))
+          .addItem('Remove sheet', 'tearDownSheet')
+          .addItem('Test page logic', 'test_doLogicPageMessages')
+          .addItem('updateSheet', 'updateSheet')
+          .addItem('compute The Stuff', 'computeTheStuff')
+          .addItem('Settings', 'showSettings'))
       .addToUi();
 }
 

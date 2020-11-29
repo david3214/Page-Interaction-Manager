@@ -1,51 +1,107 @@
-// Program variables
-var headerRowNumber = 1;
+/*jshint esversion: 6 */
+// Dictionary of program settings
+var defaultSettings = {
+  // Program variables
+  headerRowNumber: 1,
+  
+  // List of ad likes status
+  adLikesStatus : ["Select", "Pending", "Not Reached", "Left on Read", "Rejected", "Do Not Contact", "Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching", "Previously Contacted"],
+  
+  // List of messages status
+  messagesStatus : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
+  
+  // Statuses to hide
+  hiddenStatuses : ["Member", "Do Not Contact", "Rejected"],
 
-// List of ad likes status
-var adLikesStatus = ["Select", "Pending", "Not Reached", "Left on Read", "Rejected", "Do Not Contact", "Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching", "Previously Contacted"];
+  // Dictionary to map reactions
+  reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
+  
+  // Dictionary to map wards to colors
+  assignmentMap : {'Ward 1': '#82C1EC', 'Ward 2': '#F28530', 'Ward 3': '#FCFBC2', 'Ward 4': '#ECE3D4', 'Ward 5': '#F9F85F'},
+  
+  // Dictionary to map gender to colors
+  genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
+  
+  // Dictionary to map the ads ids to names
+  adIDMap : {"1234567890": "Ad Name here"},
+  // Read the IDs set by the user some how
+  
+  // Dictionary to map the area ids to area names
+  areaIDs : {'123456789': 'Area Name Here'},
+  
+  // Initial row length
+  initialRowLength : 1000,
+  
+  // Name of trigger functions
+  triggerNames : ['doLogicPageMessages', 'computeTheStuff'],
 
-// List of messages status
-var messagesStatus = ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"];
+  // Sheet Settings
+  sheetSettings: {
+      "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "setMerging": false },
+      "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "setMerging": true }
+    }
+};
 
-// Dictionary to map reactions
-var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
+var programSettings = function(){
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get("programSettings");
+  if (cached !== null) {
+    return JSON.parse(cached);
+  }
+  var documentProperties = PropertiesService.getDocumentProperties();
+  var settings = documentProperties.getProperty('programSettings') ? JSON.parse(documentProperties.getProperty('programSettings')) : defaultSettings;
+  cache.put("programSettings", JSON.stringify(settings), 60);
+  return settings;
+};
 
-// Dictionary to map wards to colors
-var assignmentMap = {'Ward 1': '#82C1EC', 'Ward 2': '#F28530', 'Ward 3': '#FCFBC2', 'Ward 4': '#ECE3D4', 'Ward 5': '#F9F85F'};
+function saveSettings(settings){
+  /* Write the settings to the sheet */
+  var documentProperties = PropertiesService.getDocumentProperties();
+  documentProperties.setProperty('programSettings', JSON.stringify(settings));
+  var cache = CacheService.getScriptCache();
+  cache.put("programSettings", JSON.stringify(settings), 60);
+  updateSheet();
+}
 
-// Dictionary to map gender to colors
-var genderMap = {'male': '#6ca0dc', 'female': '#f8b9d4'};
+var TableHeader = function(){
+  /* Translate page header */
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var header = {
+    headerData: sheet.getRange(programSettings().headerRowNumber, 1, 1, sheet.getLastColumn()).getValues()[0],
+    getColumnIndex(columnName) {return this.headerData.indexOf(columnName);}
+  };
+  return header;
+};
 
-// Dictionary to map the ads ids to names
-var adIDMap = {};
-// Read the IDs set by the user some how
-
-// Dictionary to map the area ids to area names
-var areaIDs = {'102302324777572': 'Grand Forks'};
-
-// Initial row length
-var initialRowLength = 1000;
-
-// Name of current triggers
-var triggerNames = ['doLogicPageMessages', 'highlightSheet'];
+var Rule = function(){
+    return {'create': undefined};
+};
+function testBoi (){
+  return 2
+}
+function computeTheStuff(e) {
+  Logger.log("computeTheStuff called");
+  //Logger.log(`${JSON.stringify(e)}`);
+  //Logger.log(e);
+  //updateAndMerge(e);
+  //updateSheet();
+  return 0;
+}
 
 function doLogicPageMessages(e) {
   /*
   // Main function for the program
   Runs from the onChange trigger
   */
-  Logger.log(JSON.stringify( e , null, 2 ));
-  
+
   // Determine what type of onChange event it is
   switch (e.changeType){
     case "INSERT_ROW":
       // Run logic to move row to top
       updateNewRow();
       
-      // Expand the rules
-      updateConditionalFormattingRules();
-      updateDataValidationRules();
-      highlightSheet();
+      // Update the rules
+      updateSheet();
       
       // End
       break;    
@@ -55,30 +111,24 @@ function doLogicPageMessages(e) {
 
 function updateNewRow() {
 /*
-  
+  Run the sort logic when a new row is added
 */
   // Get the current active sheet
   var sheet = SpreadsheetApp.getActiveSheet();
-  
-  // Check if allowed to sort this sheet
-  var finder = sheet.createDeveloperMetadataFinder();
-  var results = finder.withKey('sortingEnabled');
-  var test = results.find()[0].getValue();
-  if (test != "TRUE"){ return; }
+  var sheetName = sheet.getName();
+
+  // Check if sortingEnabled is true for this sheet
+  if (!programSettings()['sheetSettings'][sheetName].sortingEnabled){return;}
   
   // Check if allowed to merge rows
-  var finder = sheet.createDeveloperMetadataFinder();
-  var results = finder.withKey('mergingEnabled');
-  var test = results.find()[0].getValue();
-  var doMerge = true;
-  if (test != "TRUE"){ doMerge = false; }
-  
+  var doMerge = programSettings()['sheetSettings'][sheetName].mergingEnabled;
+
   // Get range of all data
-  var range = sheet.getDataRange().offset(headerRowNumber, 0, sheet.getLastRow() - headerRowNumber);
+  var range = sheet.getDataRange().offset(programSettings().headerRowNumber, 0, sheet.getLastRow() - programSettings().headerRowNumber);
   var values = range.getValues();
   
   // Read in the table header translate to in
-  tableHeader = new TableHeader;
+  tableHeader = new TableHeader();
   
   // Get the new entry row
   var newRow = values.pop();
@@ -109,7 +159,7 @@ function updateNewRow() {
     // Measure difference and add the blanks in
     var finalLength = values.length;
     var difference = (finalLength - initialLength) * -1;
-    var blankArray = [...Array(difference + 1)].map(x=>Array(newRow.length))
+    var blankArray = [...Array(difference + 1)].map(x=>Array(newRow.length));
     values.push(...blankArray);
     
     // Find the old entry and increment the counter
@@ -122,7 +172,7 @@ function updateNewRow() {
   
   // Case 2 non member messaging page for the multiple times
   // PSID is in the non member list
-  else if (nonMemberPSIDList.includes(newPSID) && doMerge == true){
+  else if (nonMemberPSIDList.includes(newPSID) && doMerge === true){
     // Bump the old row to the top
     // Get the old row
     objIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
@@ -138,7 +188,7 @@ function updateNewRow() {
     
     // Add a blank row to keep the length the same
     var blankArray = new Array(oldRow.length);
-    values.push(blankArray)
+    values.push(blankArray);
   }
   
   // Case 3 member or non member first time messaging page
@@ -154,8 +204,8 @@ function updateNewRow() {
     // Source -> map number to an ad
     // newRow[tableHeader.getColumnIndex('Source')] = adIDMap[newRow[tableHeader.getColumnIndex('Source')]] == undefined ? newRow[tableHeader.getColumnIndex('Source')] : adIDMap[newRow[tableHeader.getColumnIndex('Source')]];
     
-    // Assignment -> Default to first Ward
-    newRow[tableHeader.getColumnIndex('Assignment')] = 'Ward 1';
+    // Assignment -> Default to first key
+    newRow[tableHeader.getColumnIndex('Assignment')] = Object.keys(programSettings().assignmentMap)[0];
     
     // Status -> Select
     newRow[tableHeader.getColumnIndex('Status')] = 'Select';
@@ -173,11 +223,10 @@ function updateNewRow() {
     newRow[tableHeader.getColumnIndex('Counter')] = 1;
     
     // Predict if name is male or female
-    var name = newRow[tableHeader.getColumnIndex('Name')]
+    var name = newRow[tableHeader.getColumnIndex('Name')];
     if (name) {
       name = name.split(" ")[0];
-      var url = 'https://api.genderize.io'
-      + '?name=' + encodeURIComponent(name);
+      var url = 'https://api.genderize.io' + '?name=' + encodeURIComponent(name);
       var response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
       var json = response.getContentText();
       var data = JSON.parse(json);
@@ -198,33 +247,28 @@ function updateNewRow() {
   return;
 }
 
-function updateConditionalFormattingRules(){
+function updateConditionalFormattingRules(sheet){
   /*
   Adjust the conditional formating rules to cover the sheet data
   */
-  // Get the current active sheet
-  var sheet = SpreadsheetApp.getActiveSheet();
-  
+
   // Read in the table header translate to in
-  tableHeader = new TableHeader;
+  tableHeader = new TableHeader();
   
   // Track the conditional formatting
   var sheetConditionalFormatRules = [];
-  
+
   // Get 'Name' column
   var name = sheet.getRange(2, tableHeader.getColumnIndex('Name')+1, sheet.getLastRow() - 1);
   
   // Get 'Assignment' column
   var assignment = sheet.getRange(2, tableHeader.getColumnIndex('Assignment')+1, sheet.getLastRow() - 1);
   
-  // Format name to respective colors
-  var genderConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
-  
   // Make conditional formatting rule to give the different genders
-  Object.keys(genderMap).forEach(function(key){
+  Object.keys(programSettings().genderMap).forEach(function(key){
     var genderConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied(`=C2="${key}"`)
-    .setBackground(genderMap[key])
+    .setBackground(programSettings().genderMap[key])
     .setRanges([name])
     .build();
     sheetConditionalFormatRules.push(genderConditionalFormatRule);
@@ -233,13 +277,12 @@ function updateConditionalFormattingRules(){
   // Hide gender, PSID. source
   sheet.hideColumns(tableHeader.getColumnIndex('Gender')+1);
   sheet.hideColumns(tableHeader.getColumnIndex('PSID')+1);
-  // sheet.hideColumns(tableHeader.getColumnIndex('Source')+1);
   
   // Make conditional formatting rule to give the Assignments different colors
-  Object.keys(assignmentMap).forEach(function(key){
+  Object.keys(programSettings().assignmentMap).forEach(function(key){
     var assignmentConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
     .whenTextEqualTo(key)
-    .setBackground(assignmentMap[key])
+    .setBackground(programSettings().assignmentMap[key])
     .setRanges([assignment])
     .build();
     sheetConditionalFormatRules.push(assignmentConditionalFormatRule);
@@ -249,15 +292,14 @@ function updateConditionalFormattingRules(){
   sheet.setConditionalFormatRules(sheetConditionalFormatRules);
 }
 
-function updateDataValidationRules(){
+function updateDataValidationRules(sheet){
   /*
   Function is reponsible for apply page wide data validation rules
   */ 
   // Get the current active sheet
-  var sheet = SpreadsheetApp.getActiveSheet();
   
   // Read in the table header translate to in
-  tableHeader = new TableHeader;
+  tableHeader = new TableHeader();
   
   // Clear previous rules
   var range = sheet.getDataRange().offset(sheet.getLastRow(), 0, sheet.getMaxRows() - sheet.getLastRow()).setDataValidation(null);
@@ -266,12 +308,12 @@ function updateDataValidationRules(){
   var rules = {};
   
   // Make 'Assignment' rule
-  var assignment = new Rule;
+  var assignment = new Rule();
   assignment.create = function(){
     
     // Make data validation rule for Assignment
     var enforceAssignment = SpreadsheetApp.newDataValidation();
-    enforceAssignment.requireValueInList(Object.keys(assignmentMap), true);
+    enforceAssignment.requireValueInList(Object.keys(programSettings().assignmentMap), true);
     enforceAssignment.build();
     
     // Set the assignment range rule
@@ -280,20 +322,21 @@ function updateDataValidationRules(){
   rules["Assignment"] = assignment;
   
   // Make a 'Status' rule
-  var status = new Rule;
+  var status = new Rule();
   status.create = function(){
     
     // Make data validation rule for Status
     var enforceStatus = SpreadsheetApp.newDataValidation();
-    enforceStatus.requireValueInList(messagesStatus, true);
     
+    enforceStatus.requireValueInList(programSettings().messagesStatus, true);
+
     // Set the status range rule andd apply the rule
     sheet.getRange(2, tableHeader.getColumnIndex('Status')+1, sheet.getLastRow() - 1).setDataValidation(enforceStatus);
   };
   rules["Status"] = status;
   
   // Make a '@Sac' rule
-  var atSac = new Rule;
+  var atSac = new Rule();
   atSac.create = function(){
     
     // Make data validation rule for check boxes
@@ -308,7 +351,7 @@ function updateDataValidationRules(){
   rules["@Sac"] = atSac;
   
   // Make a 'On Date' rule
-  var onDate = new Rule;
+  var onDate = new Rule();
   onDate.create = function(){
     
     // Make data validation rule for check boxes
@@ -323,12 +366,12 @@ function updateDataValidationRules(){
   rules["On Date"] = onDate;
   
   // Make a 'Reaction' rule
-  var reaction = new Rule;
+  var reaction = new Rule();
   reaction.create = function(){
     
     // Make data validation rule for Reaction
     var enforceReaction = SpreadsheetApp.newDataValidation();
-    enforceReaction.requireValueInList(Object.values(reactionsMap), true);
+    enforceReaction.requireValueInList(Object.values(programSettings().reactionsMap), true);
     enforceReaction.build();
     
     // Get the reaction range and apply data validation rule for reaction
@@ -344,25 +387,24 @@ function updateDataValidationRules(){
   });
 }
 
-function highlightSheet(){
+function highlightSheet(sheet){
   /*
   Ensure acurate highlighting on the sheet
   */
-  var sheet = SpreadsheetApp.getActiveSheet();
-  
+
+  // Load initial data
+  var sheetName = sheet.getName();
+
   // Check if highlighting is enabled
-  var finder = sheet.createDeveloperMetadataFinder();
-  var results = finder.withKey('highlightEnabled');
-  var test = results.find()[0].getValue();
-  if (test != "TRUE"){ return; }
+  if (!programSettings()['sheetSettings'][sheetName].highlightEnabled){ return; }
   
   // Highlight the rows in red that contain a matching PSID and have a default status
   // Get the values from the sheet
-  var range = sheet.getDataRange().offset(headerRowNumber, 0, sheet.getLastRow());
+  var range = sheet.getDataRange().offset(programSettings().headerRowNumber, 0, sheet.getLastRow());
   var values = range.getValues();
   
   // Read in the table header translate to in
-  tableHeader = new TableHeader;
+  var tableHeader = new TableHeader();
   
   // Filter the values and get all PSID where status == select
   var selectPSID = values.filter(row => row[tableHeader.getColumnIndex('Status')] == 'Select').map(row => row[tableHeader.getColumnIndex('PSID')]);
@@ -370,7 +412,6 @@ function highlightSheet(){
   // Map the values if PSID is in previous filter results then mark the line red
   var colorRow = function(row){
     /* Color a specific cell in a row */
-    var test = row[tableHeader.getColumnIndex('PSID')];
     if (selectPSID.includes(row[tableHeader.getColumnIndex('PSID')])) {
       var res = new Array(row.length).fill("red");
     } else {
@@ -383,23 +424,45 @@ function highlightSheet(){
   // Write back the results to google sheets
   range.setBackgrounds(results);
   
-  // lock font to arial
 }
 
-function setHighlighting(value){
-  // TODO check if this is going on the individual sheet or the whole project
-  var sheet = SpreadsheetApp.getActiveSheet();
-  sheet.addDeveloperMetadata('highlightEnabled', value);
+function hideRows(sheet){
+  /* Hide rows with specific statuses */
+
+  // Get inital data
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var hiddenStatuses = programSettings().hiddenStatuses;
+  var tableHeader = new TableHeader();
+
+  // Unhide all the rows
+  sheet.unhideRow(range);
+
+  // Get a list of indexes where the row status is in hidden status
+  // Filter the values and get all PSID where status is in hiddenStatuses
+  var PSIDsToHide = values.filter(row => hiddenStatuses.includes(row[tableHeader.getColumnIndex('Status')])).map(row => row[tableHeader.getColumnIndex('PSID')]);
+
+  // Hides the rows in results
+  var hideMatchingPSID = function(row, index){
+    var currentPSID = row[tableHeader.getColumnIndex('PSID')];
+    if (PSIDsToHide.includes(currentPSID)) {
+      sheet.hideRows(index+1, 1);
+    }
+  };
+  values.forEach(hideMatchingPSID);
+
 }
 
-function setSorting(value){
-  var sheet = SpreadsheetApp.getActiveSheet();
-  sheet.addDeveloperMetadata('sortingEnabled', value);
-}
+function updateAndMerge(e){
+  /* When one status is updated, update all the matching ones*/
 
-function setMerging(value){
-  var sheet = SpreadsheetApp.getActiveSheet();
-  sheet.addDeveloperMetadata('mergingEnabled', value);
+  // 
+  Logger.log(`I was edited ${e}`);
+  // get the psid of what was changes
+  // set all the other PSID to thoese values
+  // merge all the values to the one that was clicked
+
+
 }
 
 function activateTriggers(){
@@ -407,13 +470,13 @@ function activateTriggers(){
   
   // Enable a trigger to run the page logic
   var ss = SpreadsheetApp.getActive();
-  ScriptApp.newTrigger('doLogicPageMessages')
+  ScriptApp.newTrigger(programSettings().triggerNames[0])
    .forSpreadsheet(ss)
    .onChange()
    .create();
   
   // Enable a triger to run on edit to do the highlights
-  var highlightSheetID = ScriptApp.newTrigger('highlightSheet')
+  ScriptApp.newTrigger(programSettings().triggerNames[1])
   .forSpreadsheet(ss)
   .onEdit()
   .create();
@@ -423,10 +486,10 @@ function deactivateTrigger(){
   /* Remove our project triggers */
   var triggers = ScriptApp.getProjectTriggers();
    var removeOurTriggers = function(trigger) {
-     if (triggerNames.includes(trigger.getHandlerFunction())) {
+     if (programSettings().triggerNames.includes(trigger.getHandlerFunction())) {
        ScriptApp.deleteTrigger(trigger);
      }
-   }
+   };
   triggers.forEach(removeOurTriggers);
 }
 
@@ -435,12 +498,11 @@ function setUpSheet() {
   */
   // Begin Setting up the sheet
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
-  var spreadSheet = sheet.getActiveSheet();
   
   // Check if there are already sheets with the names to be created if so, give an error notifcation that the sheet names already exist
 
   var sheetNames = sheet.getSheets().map(sheet => sheet.getName());
-  var neededSheetNames = ['Ad Likes', 'Page Messages', 'Data Storage'];
+  var neededSheetNames = ['Ad Likes', 'Page Messages'];
   var nameIntersection = sheetNames.filter(name => neededSheetNames.includes(name));
 
   if (nameIntersection === undefined || nameIntersection.length > 0){
@@ -454,16 +516,11 @@ function setUpSheet() {
   
   // Write headers
   var newSheet = sheet.insertSheet(sheetName);
-  var header = newSheet.getRange(1,1,1, adLikesHeaders.length).setValues([adLikesHeaders]);
+  newSheet.getRange(1,1,1, adLikesHeaders.length).setValues([adLikesHeaders]);
   
   // Trim to length
   var deleteColumns = newSheet.getMaxColumns() - newSheet.getLastColumn();
   newSheet.deleteColumns((newSheet.getLastColumn() +1), deleteColumns); 
-  
-  // Enable highlighting on sheet ad likes sheet
-  setHighlighting('TRUE');
-  setSorting('TRUE');
-  setMerging('FALSE');
   
   // Create 'Page Messages' sheet
   var pageMessagHeaders = ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Message', 'Notes', 'Counter'];
@@ -471,45 +528,19 @@ function setUpSheet() {
   
   // Insert sheet
   var newSheet = sheet.insertSheet(sheetName);
-  // Wrtite headers
-  var header = newSheet.getRange(1,1,1, pageMessagHeaders.length).setValues([pageMessagHeaders]);
+
+  // Write headers
+  newSheet.getRange(1,1,1, pageMessagHeaders.length).setValues([pageMessagHeaders]);
 
   // Trim columns
   var deleteColumns = newSheet.getMaxColumns() - newSheet.getLastColumn();
-  newSheet.deleteColumns((newSheet.getLastColumn() +1), deleteColumns); 
+  newSheet.deleteColumns((newSheet.getLastColumn() +1), deleteColumns);
 
-  // Enable sorting and merging on Page Messages
-  setHighlighting('FALSE');
-  setSorting('TRUE');
-  setMerging('TRUE');
+  // Save default settings to sheet
+  saveSettings(defaultSettings);
 
-  // Create a data storage sheet
-  var sheetName = "Data Storage";
-  var initialData = {'adLikesStatus':adLikesStatus, 'messagesStatus':messagesStatus, 'reactionsMap':Object.values(reactionsMap)};
-  var header = Object.keys(initialData);
-  // Reshape array and write to sheet
-  var body = Object.values(initialData);
-  body = body[0].map((_, colIndex) => body.map(row => row[colIndex]));
-  var data = [];
-  data.push(header);
-  data.push(...body);
-  var newSheet = sheet.insertSheet(sheetName);
-  
-  // Write sheet settings
-  setHighlighting('FALSE');
-  setSorting('FALSE');
-  setMerging('FALSE');
-  
-  // Write the data
-  newSheet.getRange(1,1, data.length, header.length).setValues(data);
-  
-  // Trim to length
-  var deleteColumns = newSheet.getMaxColumns() - newSheet.getLastColumn();
-  newSheet.deleteColumns((newSheet.getLastColumn() +1), deleteColumns); 
-  
   // Activate triggers
   activateTriggers();
-
   // popup, authenticate with facebook, give missionary tools facebook app permision to get page data
   // write plan on how to get facebook data and dump it to sheet
 
@@ -522,14 +553,13 @@ function tearDownSheet() {
   deactivateTrigger();
   // Get the current active sheet
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
-  var spreadSheet = sheet.getActiveSheet();
   
   // Check if there are already sheets with the names to be created if so, give an error notifcation that the sheet names already exist
   var sheetNames = sheet.getSheets().map(sheet => sheet.getName());
-  var neededSheetNames = ['Ad Likes', 'Page Messages', 'Data Storage'];
+  var neededSheetNames = ['Ad Likes', 'Page Messages'];
   var nameIntersection = sheetNames.filter(name => neededSheetNames.includes(name));
   
-  // Delete the page messages, ad likes, and data storage sheet
+  // Delete the page messages, and ad likes sheet
   if (nameIntersection === undefined || nameIntersection.length > 0){
     nameIntersection.forEach(name => sheet.deleteSheet(sheet.getSheetByName(name)));
   }
@@ -537,21 +567,42 @@ function tearDownSheet() {
 
 function test_doLogicPageMessages(){
   /**/
-  var e = JSON.parse('{ "authMode": "FULL", "changeType": "INSERT_ROW", "source": {}, "triggerUid": "5026549", "user": { "email": "northdakota.bismarck@missionary.org", "nickname": "northdakota.bismarck" }}')
+  var sheet = SpreadsheetApp.getActiveSheet();
+  sheet.appendRow(["1",	"a",	"m",	"a",	"2",	"a",	"Assignmenta3",	"a",	"a",	"3",	"3",	"3",	"3"]);
+  var e = JSON.parse('{ "authMode": "FULL", "changeType": "INSERT_ROW", "source": {}, "triggerUid": "502test6549", "user": { "email": "test.test@test.org", "nickname": "test.test" }}');
   doLogicPageMessages(e);
 }
 
-var TableHeader = function(){
-  // Translate page header
-  var sheet = SpreadsheetApp.getActiveSheet()
-  var header = {
-    headerData: sheet.getRange(headerRowNumber, 1, 1, sheet.getLastColumn()).getValues()[0],
-    getColumnIndex(columnName) {return this.headerData.indexOf(columnName)}
-  }
-  return header;
+
+function showSettings(){
+  /* Updates to make
+  When you click some one as a member, update the rest of their entries to be member as well, also collapse them into one row
+  hide member rows
+  Don't hide the source column
+  have a section to calculate the page stats, member to non member interaction count, total interactions, 
+  
+  double check the code is clearing out the highlights out side of its bounds
+
+  Settings needs to be able to:
+  Adjust adLikesStatus, messagesStatus, reactionsMap, assignmentMap, genderMap, adIDMap
+
+  */
+ var html = HtmlService.createTemplateFromFile('page_interaction/settings').evaluate()
+ .setTitle('Program Settings')
+ .setWidth(600)
+ .setHeight(600);
+SpreadsheetApp.getUi() // Or DocumentApp or SlidesApp or FormApp.
+ .showModalDialog(html, 'Program Settings');
+
 }
 
-var Rule = function(){
-    return {'create': undefined};
+function updateSheet(){
+  // Update the sheet rules, formatting and, coloring
+  // Return if no data
+  var sheet = SpreadsheetApp.getActiveSheet();
+  if (sheet.getDataRange().getValues().length == 1) {return;}
+  updateConditionalFormattingRules(sheet);
+  updateDataValidationRules(sheet);
+  highlightSheet(sheet);
+  hideRows(sheet);
 }
-

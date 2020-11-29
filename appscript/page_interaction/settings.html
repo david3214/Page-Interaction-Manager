@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>Program Settings</h1>
+        <textarea style="display: block;" cols="50" rows="25" v-model="programSettings" placeholder="Adjust program settings here"></textarea>
+        <button class="btn btn-primary" @click="saveSettings">Save Settings</button>
+      </div>
+
+      <script>
+        new Vue({
+            el: '#app',
+            data: {
+                programSettings: ''
+            },
+            methods: {
+                saveSettings: function(){
+                    // google.script.this.programSettings
+                    google.script.run.withSuccessHandler().saveSettings(JSON.parse(this.programSettings))
+
+                },
+                onSuccess: function(settings){
+                    // Request settings from google
+                    this.programSettings = JSON.stringify(settings, null, 2)
+                }
+            },
+            created: function(){
+                google.script.run.withSuccessHandler(this.onSuccess).programSettings();
+
+            },
+        })
+        </script>
+</body>
+
+</html>
