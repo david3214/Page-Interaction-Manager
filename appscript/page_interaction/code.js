@@ -76,16 +76,17 @@ var TableHeader = function(){
 var Rule = function(){
     return {'create': undefined};
 };
-function testBoi (){
-  return 2
-}
-function computeTheStuff(e) {
-  Logger.log("computeTheStuff called");
-  //Logger.log(`${JSON.stringify(e)}`);
-  //Logger.log(e);
-  //updateAndMerge(e);
-  //updateSheet();
-  return 0;
+
+function computeTheStuff() {
+  Logger.log("computeTheStuff was found");
+  Logger.log(this)
+  var stuff = this
+  SpreadsheetApp.getActiveSheet().appendRow([JSON.stringify(stuff)])
+  // Logger.log(`${JSON.stringify(e)}`);
+  // Logger.log(e);
+  // updateAndMerge(e);
+  // updateSheet();
+  return;
 }
 
 function doLogicPageMessages(e) {
@@ -247,7 +248,7 @@ function updateNewRow() {
   return;
 }
 
-function updateConditionalFormattingRules(sheet){
+function updateConditionalFormattingRules(sheet=SpreadsheetApp.getActiveSheet()){
   /*
   Adjust the conditional formating rules to cover the sheet data
   */
@@ -292,7 +293,7 @@ function updateConditionalFormattingRules(sheet){
   sheet.setConditionalFormatRules(sheetConditionalFormatRules);
 }
 
-function updateDataValidationRules(sheet){
+function updateDataValidationRules(sheet=SpreadsheetApp.getActiveSheet()){
   /*
   Function is reponsible for apply page wide data validation rules
   */ 
@@ -387,7 +388,7 @@ function updateDataValidationRules(sheet){
   });
 }
 
-function highlightSheet(sheet){
+function highlightSheet(sheet=SpreadsheetApp.getActiveSheet()){
   /*
   Ensure acurate highlighting on the sheet
   */
@@ -426,7 +427,7 @@ function highlightSheet(sheet){
   
 }
 
-function hideRows(sheet){
+function hideRows(sheet=SpreadsheetApp.getActiveSheet()){
   /* Hide rows with specific statuses */
 
   // Get inital data
@@ -464,23 +465,34 @@ function updateAndMerge(e){
 
 
 }
+function myFunction() {
+  var message = 'The current time is ' + new Date().toString();
+  var title = 'Welcome to Google Sheets';
+  //var obj = JSON.stringify(e)
+  SpreadsheetApp.getActiveSpreadsheet().toast(message, title);
+}
 
 function activateTriggers(){
   /* Create the project triggers */ 
+  // var ss = SpreadsheetApp.getActive();
   
+  // Enable a triger to run on edit to do the highlights
+  var sheet = SpreadsheetApp.getActive();
+  ScriptApp.newTrigger("myFunction")
+    .forSpreadsheet(sheet)
+    .onEdit()
+    .create();
+
+  /*
   // Enable a trigger to run the page logic
-  var ss = SpreadsheetApp.getActive();
-  ScriptApp.newTrigger(programSettings().triggerNames[0])
+  ScriptApp.newTrigger(programSettings()['triggerNames'][0])
    .forSpreadsheet(ss)
    .onChange()
    .create();
-  
-  // Enable a triger to run on edit to do the highlights
-  ScriptApp.newTrigger(programSettings().triggerNames[1])
-  .forSpreadsheet(ss)
-  .onEdit()
-  .create();
+  */
 }
+
+
 
 function deactivateTrigger(){
   /* Remove our project triggers */
