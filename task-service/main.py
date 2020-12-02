@@ -12,6 +12,8 @@ app = Flask(__name__)
 #client = google.cloud.logging.Client()
 #client.get_default_handler()
 #client.setup_logging()
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
 
 def do_work(kwargs):
     MissionaryBot(**kwargs).do_work()
