@@ -27,11 +27,13 @@ context = pa.default_serialization_context()
 
 class MissionaryBot:
   def __init__(self, church_username=None, church_password=None, facebook_username=None, facebook_password=None):
-    self.set_status('Intializing')
+    self.logger = logging.getLogger(__name__)
+    self.logger.setLevel(logging.DEBUG)
     self.church_username = church_username
     self.church_password = church_password
     self.facebook_username = facebook_username
     self.facebook_password = facebook_password
+    self.set_status('Intializing')
 
     self.church_auth_url = "https://areabook.churchofjesuschrist.org/services/auth"
     self.stewardCmisIds = []
@@ -110,7 +112,7 @@ class MissionaryBot:
           blocked_by_facebook = True
           while blocked_by_facebook:
             self.set_status("Facebook rate limit active, sleeping for an hour")
-            logging.error("Facebook has detected bot")
+            self.logger.error("Facebook has detected bot")
             time.sleep(3600)
             self.wd.get(facebook_search_url)
             time.sleep(time_to_wait)
@@ -120,14 +122,14 @@ class MissionaryBot:
           time_to_wait += 1
         content = self.parse_facebook_search_page(self.wd.page_source)
         if content == None or content == "None":
-          logging.warning("Didn't find any search results")
+          self.logger.warning("Didn't find any search results")
           content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{row["firstName"]+ " " +row["lastName"]}</a> on Facebook by hand?<br>'
         combined['content'] = content
         combined['about'] = f'Name: {str(row["firstName"]) + " " +str(row["lastName"])}<br>Age: {age_map[row["ageCategoryId"]]}<br>Gender: {gender_map[row["gender"]]}'
-        logging.info(f"{row['firstName']} {row['lastName']} {loop_index} / {count_row} ... {round(((loop_index / count_row) * 100), 2)}% done")
+        self.logger.info(f"{row['firstName']} {row['lastName']} {loop_index} / {count_row} ... {round(((loop_index / count_row) * 100), 2)}% done")
       except Exception as e:
-        logging.debug(row)
-        logging.error(e)
+        self.logger.debug(row)
+        self.logger.error(e)
       finally:
         try:
           combined = bytes(json.dumps(combined), 'utf-8')
@@ -144,10 +146,10 @@ class MissionaryBot:
     Set status of the bot
     """
     try:
-      logging.info(f'{self.church_username}: {status}')
+      self.logger.info(f'{self.church_username}: {status}')
       return r.set(self.church_username + ":status", status)
     except:
-        logging.info(f'{status}')
+        self.logger.info(f'{status}')
 
 
   def parse_church_json(self, html):
@@ -255,7 +257,7 @@ class MissionaryBot:
         time.sleep(60)
         self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         while(self.wd.find_elements_by_xpath("//div[text()='Login was not approved']")[0] != []):
-          logging.info('trying to confirm)
+          self.logger.info('trying to confirm)
           time.sleep(10)
           self.wd.find_element_by_xpath('//button[contains(text(), "Continue")]').click()
         continue
@@ -320,7 +322,7 @@ class MissionaryBot:
         print(e)
 
     except Exception as e:
-      logging.error(f'{self.church_username} : {e}') 
+      self.logger.error(f'{self.church_username} : {e}') 
       picture_log[f"exception"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
       raise Exception
     finally:

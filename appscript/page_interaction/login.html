@@ -5,41 +5,33 @@
     <base target="_top">
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
     <script>
-        window.fbAsyncInit = function () {
-            FB.init({
-                appId: '***REMOVED***',
-                cookie: true,
-                xfbml: true,
-                version: 'v8.0'
-            });
-
-            FB.AppEvents.logPageView();
-
+        window.fbAsyncInit = function() {
+          FB.init({
+            appId            : '177470164010190',
+            autoLogAppEvents : true,
+            xfbml            : true,
+            version          : 'v9.0'
+          });
+          FB.getLoginStatus(function(response) {
+              if (response.status === 'connected') {
+                  console.log(response.authResponse.accessToken);
+                  FB.api('/me', function(response) {
+                        console.log(JSON.stringify(response));
+                    });
+              }
+          });
         };
-
-        (function (d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) { return; }
-            js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/en_US/sdk.js";
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
-    </script>
-    <script>
-        FB.getLoginStatus(function(response) {
-            statusChangeCallback(response);
-        });
-        function checkLoginState() {
-            FB.getLoginStatus(function(response) {
-                statusChangeCallback(response);
-            });
+        function checkLoginState(e){
+            console.log(e)
         }
-    </script>
+      </script>
+      <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+        
 </head>
 
 <body>
     <fb:login-button 
-        scope="public_profile,email"
+        scope="public_profile,email, pages_read_engagement, pages_manage_metadata, pages_read_user_content, pages_manage_ads, pages_manage_posts, pages_manage_engagement"
         onlogin="checkLoginState();">
     </fb:login-button>
 </body>
