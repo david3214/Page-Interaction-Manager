@@ -14,9 +14,19 @@ function onOpen() {
       .addSubMenu(SpreadsheetApp.getUi().createMenu('Page interaction manager')
           .addItem('Create sheet', 'setUpSheet')
           .addItem('Remove sheet', 'tearDownSheet')
+          .addItem('activateTriggers', 'activateTriggers')
+          .addItem('deactivateTrigger', 'deactivateTrigger')
+          .addItem('updateNewRow', 'updateNewRow')
+          .addItem('updateConditionalFormattingRules', 'updateConditionalFormattingRules')
+          .addItem('updateDataValidationRules', 'updateDataValidationRules')
+          .addItem('highlightSheet', 'highlightSheet')
+          .addItem('hideRows', 'hideRows')
+          .addItem('updateAndMerge', 'updateAndMerge')
+          .addItem('testDeets', 'testDeets')
+          
           .addItem('Test page logic', 'test_doLogicPageMessages')
           .addItem('updateSheet', 'updateSheet')
-          .addItem('compute The Stuff', 'computeTheStuff')
+          .addItem('computeTheStuff', 'computeTheStuff')
           .addItem('Settings', 'showSettings'))
       .addToUi();
 }
