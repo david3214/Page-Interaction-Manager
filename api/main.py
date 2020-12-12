@@ -188,6 +188,15 @@ def pass_along_cards():
     return serve_pil_image(img_bg)
 
 
+@app.route('/page-interaction-manager/credentials', methods=['POST', 'GET'])
+def credentials():
+    """ Handle the credentials """
+    if request.method == "POST":
+        for page in request.payload:
+            r.sadd(f"PIM:{page.id}", page)
+        return
+    if request.method == "GET":
+        return list(r.smembers(f"PIM{request.args.id}"))
 
 
 if __name__ == '__main__':
