@@ -1,5 +1,6 @@
 """ Used for interacting with redis and queue """
 import os
+import json
 import pickle
 import gzip
 import urllib.parse
@@ -8,7 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 import pyarrow as pa
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify, abort
 import redis
 from PIL import Image
 import qrcode
@@ -188,16 +189,27 @@ def pass_along_cards():
     return serve_pil_image(img_bg)
 
 
-@app.route('/page-interaction-manager/credentials', methods=['POST', 'GET'])
+@app.errorhandler(404)
+def resource_not_found(e):
+    return jsonify(error=str(e)), 404
+
+@app.route('/page-interaction-manager/credentials', methods=['POST', 'GET', 'DELETE'])
 def credentials():
     """ Handle the credentials """
     if request.method == "POST":
-        for page in request.payload:
-            r.sadd(f"PIM:{page.id}", page)
-        return
+        for page in request.json['data']:
+            r.sadd(f"PIM:{page['id']}", json.dumps(page))
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
     if request.method == "GET":
-        return list(r.smembers(f"PIM{request.args.id}"))
-
+      results = str(r.smembers(f"PIM:{request.args['id']}"))
+      return jsonify(results)
+    if request.method == "DELETE":
+      key = f"PMI:{request.args['page_id']}"
+      for page in r.smembers(key):
+        if page['google_sheet']['id'] == request.args['sheet_id']:
+          resp = r.srem(key, page)
+          return jsonify(resp)
+      abort(404, description="Resource not found")
 
 if __name__ == '__main__':
   app.run(host='127.0.0.1', port=5001, debug=True)
