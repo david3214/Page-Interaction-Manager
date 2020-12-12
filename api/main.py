@@ -204,10 +204,11 @@ def credentials():
       results = str(r.smembers(f"PIM:{request.args['id']}"))
       return jsonify(results)
     if request.method == "DELETE":
-      key = f"PMI:{request.args['page_id']}"
-      for page in r.smembers(key):
-        if page['google_sheet']['id'] == request.args['sheet_id']:
-          resp = r.srem(key, page)
+      key = f"PIM:{request.args['page_id']}"
+      for page in r.sscan_iter(key):
+        page = json.loads(page)
+        if page['google_sheets']['id'] == request.args['sheet_id']:
+          resp = r.srem(key, json.dumps(page))
           return jsonify(resp)
       abort(404, description="Resource not found")
 
