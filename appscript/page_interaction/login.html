@@ -17,6 +17,10 @@
                   console.log(response.authResponse.accessToken);
                   FB.api('/me', function(response) {
                         console.log(JSON.stringify(response));
+                        
+                        // send the token to the server
+                        google.script.run.withSuccessHandler().uploadFacebookToken(JSON.stringify(response['authResponse']))
+
                     });
               }
           });
