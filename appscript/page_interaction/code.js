@@ -618,3 +618,44 @@ function updateSheet(){
   highlightSheet(sheet);
   hideRows(sheet);
 }
+
+function uploadFacebookToken(response) {
+  // Exchange the token to long lasting user token
+  // TODO somehow remove these from src
+  var APP_ID = "177470164010190";
+  var APP_SECRET = "7fe710fe40f7d3a8bf74e8584510613f"
+  var graphApiVersion = "v9.0";
+  var FBurl = `https://graph.facebook.com/${graphApiVersion}/oauth/access_token?  
+  grant_type=fb_exchange_token&          
+  client_id=${APP_ID}&
+  client_secret=${APP_SECRET}&
+  fb_exchange_token=${response['access_token']}`
+  var longLivedUserAccessToken = UrlFetchApp.fetch(FBurl)['access_token'];
+
+  // Exchange the token for a page token
+  FBurl = `https://graph.facebook.com/{graphApiVersion}/${response['userID']}/accounts?
+  access_token=${longLivedUserAccessToken}`
+  response = UrlFetchApp.fetch(FBurl);
+
+  // Get the access token for the script
+  var scriptAuthToken = ScriptApp.getOAuthToken();
+
+  // get the spreadsheet id
+  var spreadSheetId = SpreadsheetApp.getActive().getId();
+  
+  // Zip together the appropriate keys
+  response.data.forEach(page => page['google_sheets'] = {"id": spreadSheetId, "token": scriptAuthToken})
+  
+  // return true if successful
+  var options = {
+    'method' : 'post',
+    'contentType': 'application/json',
+    // Convert the JavaScript object to a JSON string.
+    'payload' : JSON.stringify(response)
+  };
+
+  // Store it over in redis
+  UrlFetchApp.fetch(baseURL + "page-interaction-manager/credentials", options);
+
+} 
+
