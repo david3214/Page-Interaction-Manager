@@ -29,6 +29,6 @@ def test_credentials_get(app):
 
 def test_credentials_delete(app):
     for item in mock_data['page_results']['data']:
-        r = app.delete(f'/page-interaction-manager/credentials?page_id={item["id"]}&token_id={item['google_sheets']['id']}')
+        r = app.delete(f'/page-interaction-manager/credentials?page_id={item["id"]}&sheet_id={item["google_sheets"]["id"]}')
         assert r.status_code == 200
         
