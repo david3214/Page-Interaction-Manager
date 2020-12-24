@@ -619,43 +619,128 @@ function updateSheet(){
   hideRows(sheet);
 }
 
-function uploadFacebookToken(response) {
-  // Exchange the token to long lasting user token
-  // TODO somehow remove these from src
-  var APP_ID = "177470164010190";
-  var APP_SECRET = "7fe710fe40f7d3a8bf74e8584510613f"
-  var graphApiVersion = "v9.0";
-  var FBurl = `https://graph.facebook.com/${graphApiVersion}/oauth/access_token?  
-  grant_type=fb_exchange_token&          
-  client_id=${APP_ID}&
-  client_secret=${APP_SECRET}&
-  fb_exchange_token=${response['access_token']}`
-  var longLivedUserAccessToken = UrlFetchApp.fetch(FBurl)['access_token'];
 
-  // Exchange the token for a page token
-  FBurl = `https://graph.facebook.com/{graphApiVersion}/${response['userID']}/accounts?
-  access_token=${longLivedUserAccessToken}`
-  response = UrlFetchApp.fetch(FBurl);
+function showSidebar() {
+  var facebookService = getFacebookService();
+  if (!facebookService.hasAccess()) {
+    var authorizationUrl = facebookService.getAuthorizationUrl();
+    var template = HtmlService.createTemplate(
+        '<a href="<?= authorizationUrl ?>" target="_blank">Authorize</a>. ' +
+        'Reopen the sidebar when the authorization is complete.');
+    template.authorizationUrl = authorizationUrl;
+    var page = template.evaluate();
+    SpreadsheetApp.getUi().showSidebar(page);
+  } else {
+  // ... What to do if they are authenticated
+  var scriptProperties = PropertiesService.getScriptProperties();
+  var data = scriptProperties.getProperties();
+  var foo = ""
+  for (var key in data) {
+    foo = foo + `Key: ${key}, Value: ${data[key]}` + '\n';
+  }
+  var template = HtmlService.createTemplate(
+    'You are authorized\n'
+    + foo
+  );
+  var page = template.evaluate();
+  SpreadsheetApp.getUi().showSidebar(page);
+  }
+}
 
-  // Get the access token for the script
-  var scriptAuthToken = ScriptApp.getOAuthToken();
+/**
+ * Webhook that can handle the event from Facebook
+ */
+function doPost(request){
+  Logger.log(request);
 
-  // get the spreadsheet id
-  var spreadSheetId = SpreadsheetApp.getActive().getId();
+  // Load the stored data for the page
+  var event = JSON.parse(request.postData.getDataAsString());
+  var scriptProperties = PropertiesService.getScriptProperties();
+  var page_details = JSON.parse(scriptProperties.getProperty(event.entry[0].id));
+
+  var eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'};
+  var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
+
+  // Access the user spreadsheet
+  var spreadsheet = SpreadsheetApp.openById(page_details.google_sheets.id);
+  var active_sheet = undefined;
+
+  // Classify the incoming event
+  // Reject stuff we aren't interested in
+  if (event.body.entry[0].changes[0].value.item == 'video' 
+  ||  event.body.entry[0].changes[0].value.item == 'comment'
+  ||  event.body.entry[0].changes[0].value.verb != 'add') {
+    return ContentService.createTextOutput("Ok");
+  }
+
+  // Process reactions
+  if (event.entry[0].changes[0].value.item){
+    var event_type = event.entry[0].changes[0].value.item;
+    active_sheet = spreadsheet.getSheetByName(eventNameMap[event_type]);
+    var long_lived_page_access_token = page_details.access_token;
+    var messageOrReaction = reactionsMap[event.entry[0].changes[0].value.reaction_type.toUpperCase()];
+    var name = event.entry[0].changes[0].value.from.name;
+    var psid = event.entry[0].changes[0].value.from.id;
+    var facebookClue = `https://facebook.com/${encodeURIComponent(event.entry[0].changes[0].value.post_id)}`
+  }
+
+  // Process messages
+  if (event.entry[0].messaging){
+    var pageID = event.entry[0].messaging[0].recipient.id
+    active_sheet = eventNameMap['message'];
+    this.messageOrReaction = event.entry[0].messaging[0].message.text;
+    
+    // Get name from fb
+    var url = `https://graph.facebook.com/${event.entry[0].messaging[0].sender.id}?fields=first_name,last_name&access_token=${accessTokenMap[pageID]}`
+    JSON.parse(UrlFetchApp.fetch(url));
+
+    this.name = getReqRes['first_name'] + " " + getReqRes['last_name'];
+    this.psid = event.entry[0].messaging[0].sender.id;
+    this.facebookClue = `https://www.facebook.com/search/people?q=${encodeURIComponent(this.name)}`
   
-  // Zip together the appropriate keys
-  response.data.forEach(page => page['google_sheets'] = {"id": spreadSheetId, "token": scriptAuthToken})
+  }
+
+  // Process current time
+  var today  = new Date();
+  today = today.toLocaleDateString("en-US")
+
+  // Send the results to the sheet
+  var row = [today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""];
+  active_sheet.appendRow(row);
+}
+/*
+function doGet(request)
+{
+  Logger.log(request);
+  if (request.parameter['hub.verify_token'] == 'hambone') {
+    return ContentService.createTextOutput(request.parameter['hub.challenge']);
+  }
+}
+*/
+
+QUnit.helpers( this );
+function testFunctions() {
+   testingFacebookWebhookUpdate();
+}
+ 
+function doGet( e ) {
+     QUnit.urlParams( e.parameter );
+     QUnit.config({
+          title: "QUnit for Google Apps Script - Test suite" // Sets the title of the test page.
+     });
+     QUnit.load( testFunctions );
+ 
+     return QUnit.getHtml();
+};
+
+function testFacebookPost(){
   
-  // return true if successful
-  var options = {
-    'method' : 'post',
-    'contentType': 'application/json',
-    // Convert the JavaScript object to a JSON string.
-    'payload' : JSON.stringify(response)
-  };
+}
 
-  // Store it over in redis
-  UrlFetchApp.fetch(baseURL + "page-interaction-manager/credentials", options);
+function testingFacebookWebhookUpdate(){
+   QUnit.test("facebook post testing", function() {
+      expect(7);
+      equal(calculateAmountAndQty(10,2000), 20000, "Test for quantity : 10 and amount : 2000 sp output is 20000" );
 
-} 
-
+   });
+}

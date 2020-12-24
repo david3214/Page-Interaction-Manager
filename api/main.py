@@ -193,6 +193,7 @@ def pass_along_cards():
 def resource_not_found(e):
     return jsonify(error=str(e)), 404
 
+
 @app.route('/page-interaction-manager/credentials', methods=['POST', 'GET', 'DELETE'])
 def credentials():
     """ Handle the credentials """
