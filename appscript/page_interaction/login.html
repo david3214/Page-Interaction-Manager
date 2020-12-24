@@ -26,7 +26,8 @@
           });
         };
         function checkLoginState(e){
-            console.log(e)
+            console.log(e);
+            google.script.run.withSuccessHandler().googlelogRedirectUri()
         }
       </script>
       <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>

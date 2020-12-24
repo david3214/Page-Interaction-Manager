@@ -23,7 +23,7 @@ function onOpen() {
           .addItem('hideRows', 'hideRows')
           .addItem('updateAndMerge', 'updateAndMerge')
           .addItem('testDeets', 'testDeets')
-          
+          .addItem('showFacebookAuth', 'showFacebookAuth')
           .addItem('Test page logic', 'test_doLogicPageMessages')
           .addItem('updateSheet', 'updateSheet')
           .addItem('computeTheStuff', 'computeTheStuff')
