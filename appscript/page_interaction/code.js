@@ -651,96 +651,76 @@ function showSidebar() {
  * Webhook that can handle the event from Facebook
  */
 function doPost(request){
-  Logger.log(request);
-
   // Load the stored data for the page
-  var event = JSON.parse(request.postData.getDataAsString());
-  var scriptProperties = PropertiesService.getScriptProperties();
-  var page_details = JSON.parse(scriptProperties.getProperty(event.entry[0].id));
+  try {
+    var event = JSON.parse(request.postData.getDataAsString());
+    var event_type = undefined;
+    var eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'};
+    var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
+    var page_id = undefined;
+    var page_details = undefined;
+    var active_sheet = undefined;
 
-  var eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'};
-  var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
+    // Classify the incoming event
+    // Reject stuff we aren't interested in
+    if (event.entry[0].changes[0].value.item == 'video' 
+    ||  event.entry[0].changes[0].value.item == 'comment'
+    ||  event.entry[0].changes[0].value.verb != 'add') {
+      return ContentService.createTextOutput(JSON.stringify({"status": "Unprocessed"}));
+    }
 
-  // Access the user spreadsheet
-  var spreadsheet = SpreadsheetApp.openById(page_details.google_sheets.id);
-  var active_sheet = undefined;
+    // Classify event 
+    else if(event.entry[0].changes[0].value.item) {
+      event_type = event.entry[0].changes[0].value.item;
+      page_id = event.entry[0].id;
+    } else if (event.entry[0].messaging) {
+      event_type = event.entry[0].messaging;
+      page_id = event.entry[0].messaging[0].recipient.id
+    }
 
-  // Classify the incoming event
-  // Reject stuff we aren't interested in
-  if (event.body.entry[0].changes[0].value.item == 'video' 
-  ||  event.body.entry[0].changes[0].value.item == 'comment'
-  ||  event.body.entry[0].changes[0].value.verb != 'add') {
-    return ContentService.createTextOutput("Ok");
-  }
-
-  // Process reactions
-  if (event.entry[0].changes[0].value.item){
-    var event_type = event.entry[0].changes[0].value.item;
+    // Access the user spreadsheet
+    var scriptProperties = PropertiesService.getScriptProperties();
+    var page_details = JSON.parse(scriptProperties.getProperty(page_id));
+    if (!page_details) {throw {name : "ValueError", message : `Searched for ${page_id} but no result was found`}}
+    var spreadsheet = SpreadsheetApp.openById(page_details.google_sheets.id);
     active_sheet = spreadsheet.getSheetByName(eventNameMap[event_type]);
-    var long_lived_page_access_token = page_details.access_token;
-    var messageOrReaction = reactionsMap[event.entry[0].changes[0].value.reaction_type.toUpperCase()];
-    var name = event.entry[0].changes[0].value.from.name;
-    var psid = event.entry[0].changes[0].value.from.id;
-    var facebookClue = `https://facebook.com/${encodeURIComponent(event.entry[0].changes[0].value.post_id)}`
+
+    // Process reactions
+    if (event_type == "reaction"){
+      var messageOrReaction = reactionsMap[event.entry[0].changes[0].value.reaction_type.toUpperCase()];
+      var name = event.entry[0].changes[0].value.from.name;
+      var psid = event.entry[0].changes[0].value.from.id;
+      var facebookClue = `https://facebook.com/${encodeURIComponent(event.entry[0].changes[0].value.post_id)}`
+    }
+    else if (event_type == "message"){
+      var messageOrReaction = event.entry[0].messaging[0].message.text;
+      // Get name from fb
+      var url = `https://graph.facebook.com/${event.entry[0].messaging[0].sender.id}?fields=first_name,last_name&access_token=${accessTokenMap[pageID]}`
+      JSON.parse(UrlFetchApp.fetch(url));
+      var name = getReqRes['first_name'] + " " + getReqRes['last_name'];
+      var psid = event.entry[0].messaging[0].sender.id;
+      var facebookClue = `https://www.facebook.com/search/people?q=${encodeURIComponent(name)}`
+    }
+
+    // Process current time
+    var today  = new Date();
+    today = today.toLocaleDateString("en-US")
+
+    // Send the results to the sheet
+    var row = [today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""];
+    active_sheet.appendRow(row);
+
+    return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
+  } catch (error) {
+      Logger.log(error)
+      return ContentService.createTextOutput(JSON.stringify({"status": "Error"}));
   }
-
-  // Process messages
-  if (event.entry[0].messaging){
-    var pageID = event.entry[0].messaging[0].recipient.id
-    active_sheet = eventNameMap['message'];
-    this.messageOrReaction = event.entry[0].messaging[0].message.text;
-    
-    // Get name from fb
-    var url = `https://graph.facebook.com/${event.entry[0].messaging[0].sender.id}?fields=first_name,last_name&access_token=${accessTokenMap[pageID]}`
-    JSON.parse(UrlFetchApp.fetch(url));
-
-    this.name = getReqRes['first_name'] + " " + getReqRes['last_name'];
-    this.psid = event.entry[0].messaging[0].sender.id;
-    this.facebookClue = `https://www.facebook.com/search/people?q=${encodeURIComponent(this.name)}`
-  
-  }
-
-  // Process current time
-  var today  = new Date();
-  today = today.toLocaleDateString("en-US")
-
-  // Send the results to the sheet
-  var row = [today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""];
-  active_sheet.appendRow(row);
 }
-/*
+
 function doGet(request)
 {
   Logger.log(request);
   if (request.parameter['hub.verify_token'] == 'hambone') {
     return ContentService.createTextOutput(request.parameter['hub.challenge']);
   }
-}
-*/
-
-QUnit.helpers( this );
-function testFunctions() {
-   testingFacebookWebhookUpdate();
-}
- 
-function doGet( e ) {
-     QUnit.urlParams( e.parameter );
-     QUnit.config({
-          title: "QUnit for Google Apps Script - Test suite" // Sets the title of the test page.
-     });
-     QUnit.load( testFunctions );
- 
-     return QUnit.getHtml();
-};
-
-function testFacebookPost(){
-  
-}
-
-function testingFacebookWebhookUpdate(){
-   QUnit.test("facebook post testing", function() {
-      expect(7);
-      equal(calculateAmountAndQty(10,2000), 20000, "Test for quantity : 10 and amount : 2000 sp output is 20000" );
-
-   });
 }
