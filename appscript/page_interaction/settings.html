@@ -22,7 +22,6 @@
                 saveSettings: function(){
                     // google.script.this.programSettings
                     google.script.run.withSuccessHandler().saveSettings(JSON.parse(this.programSettings))
-
                 },
                 onSuccess: function(settings){
                     // Request settings from google
