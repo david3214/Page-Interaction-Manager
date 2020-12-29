@@ -1,9 +1,9 @@
-var connectionName = 'eighth-vehicle-287322:us-central1:database';
+var connectionName = 'eighth-vehicle-287322:us-central1:datab';
 var user = 'app_script';
 var userPwd = '***REMOVED***';
 var db = 'page_interaction_manager';
 var root = 'root';
-var rootPwd = 'B53sAez4lvjgiusO';
+var rootPwd = '***REMOVED***';
 var instanceUrl = 'jdbc:google:mysql://' + connectionName;
 var dbUrl = instanceUrl + '/' + db;
 
@@ -11,8 +11,9 @@ var dbUrl = instanceUrl + '/' + db;
  * Create a new database within a Cloud SQL instance.
  */
 function createDatabase() {
-  var conn = Jdbc.getCloudSqlConnection(instanceUrl, root, rootPwd);
-  conn.createStatement().execute('CREATE DATABASE ' + db);
+    var conn = Jdbc.getCloudSqlConnection(instanceUrl, root, rootPwd);
+    var stmt = conn.prepareStatement(`CREATE DATABASE ${db} DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci`);
+    stmt.execute();
 }
 
 /**
@@ -20,12 +21,10 @@ function createDatabase() {
  */
 function createUser() {
   var conn = Jdbc.getCloudSqlConnection(dbUrl, root, rootPwd);
-
   var stmt = conn.prepareStatement('CREATE USER ? IDENTIFIED BY ?');
   stmt.setString(1, user);
   stmt.setString(2, userPwd);
   stmt.execute();
-
   conn.createStatement().execute('GRANT ALL ON `%`.* TO ' + user);
 }
 
@@ -34,12 +33,13 @@ function createUser() {
  */
 function createTable() {
   var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
-  conn.createStatement().execute('CREATE TABLE preferences '
-  + '(sheet_id VARCHAR(100) NOT NULL, preference VARCHAR(2000) NOT NULL, '
+  conn.createStatement().execute('CREATE TABLE preferences ('
+  + 'sheet_id VARCHAR(100) NOT NULL, '
+  + 'preference VARCHAR(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, '
   + 'PRIMARY KEY (sheet_id));');
   conn.createStatement().execute('CREATE TABLE page_data ('
   +	'page_id VARCHAR(50) NOT NULL,'
-  +	'page_details VARCHAR(1500) NOT NULL,'
+  +	'page_details VARCHAR(1500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, '
   +	'PRIMARY KEY (page_id));');
 }
 
@@ -49,11 +49,14 @@ function createTable() {
 function setPreference(sheet_id, preference) {
     var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
   
-    var stmt = conn.prepareStatement('INSERT INTO preferences '
+    var stmt = conn.prepareStatement('REPLACE INTO preferences '
         + '(sheet_id, preference) values (?, ?)');
     stmt.setString(1, sheet_id);
     stmt.setString(2, JSON.stringify(preference));
-    stmt.execute();
+    stmt.executeUpdate();
+    stmt.close();
+    conn.close();
+    return true;
   }
 
 /**
@@ -61,16 +64,19 @@ function setPreference(sheet_id, preference) {
  */
 function getPreference(sheet_id) {
     var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
-    var stmt = conn.prepareStatement('SELECT sheet_id '
-        + 'FROM preferences WHERE preference = (?)');
+    var stmt = conn.prepareStatement('SELECT preference '
+        + 'FROM preferences WHERE sheet_id = ?');
     stmt.setString(1, sheet_id);
-    results = stmt.execute();
-    var preference = JSON.loads(results.getString());
-    results.close();
+    results = stmt.executeQuery();
+    while (results.next()) {
+        var preference = JSON.parse(results.getString(1));
+        break;
+    }
     stmt.close();
     conn.close();
     return preference;
 }
+
 
 /**
  * Delete preferences for a sheet_id
@@ -78,73 +84,77 @@ function getPreference(sheet_id) {
 function deletePreference(sheet_id) {
     var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('DELETE '
-    + 'FROM preferences WHERE sheet_id = (?)');
+    + 'FROM preferences WHERE sheet_id = ?');
     stmt.setString(1, sheet_id);
-    results = stmt.execute();
-    results.close();
+    results = stmt.executeUpdate();
     stmt.close();
     conn.close();
+    return true;
 }
 
 /**
  * Write page_data for a page_id
  */
-function setPageDetail(page_id, page_detail) {
+function setPageDetails(page_id, page_details) {
     var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
-    var stmt = conn.prepareStatement('INSERT INTO page_data '
-        + '(page_id, page_detail) values (?, ?)');
+    var stmt = conn.prepareStatement('REPLACE INTO page_data '
+        + '(page_id, page_details) values (?, ?)');
     stmt.setString(1, page_id);
-    stmt.setString(2, JSON.stringify(page_detail));
-    stmt.execute();
+    stmt.setString(2, JSON.stringify(page_details));
+    stmt.executeUpdate();
     stmt.close();
     conn.close();
+    return true;
   }
 
 /**
  * Get page_details for a page_id
  */
-function getPageDetail(page_id) {
+function getPageDetails(page_id) {
     var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
-    var stmt = conn.prepareStatement('SELECT page_detail '
-        + 'FROM page_data WHERE page_id = (?)');
+    var stmt = conn.prepareStatement('SELECT page_details '
+        + 'FROM page_data WHERE page_id = ?');
     stmt.setString(1, page_id);
-    results = stmt.execute();
-    var page_detail = JSON.loads(results.getString());
+    results = stmt.executeQuery();
+    while (results.next()) {
+        var page_details = JSON.parse(results.getString(1));
+        break;
+    }
     results.close();
     stmt.close();
     conn.close();
-    return page_detail;
+    return page_details;
 }
 
 /**
  * Get all page_details for a page_id
  */
-function getAllPageDetail(page_id) {
+function getAllPageDetails(page_id) {
     var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('SELECT * '
         + 'FROM page_data');
-    stmt.setString(1, page_id);
-    results = stmt.execute();
-    var page_detail = JSON.loads(results.getString());
+    results = stmt.executeQuery();
+    var pageDetails = {};
+    while (results.next()) {
+      pageDetails[JSON.parse(results.getString(1))] = JSON.parse(results.getString(2));
+    }
     results.close();
     stmt.close();
     conn.close();
-    return page_detail;
+    return pageDetails;
 }
 
 
 /**
  * Delete page_details for a page_id
  */
-function deletePageDetail(page_id) {
+function deletePageDetails(page_id) {
     var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('DELETE '
         + 'FROM page_data WHERE page_id = (?)');
     stmt.setString(1, page_id);
-    results = stmt.execute();
-    var page_detail = JSON.loads(results.getString());
-    results.close();
+    results = stmt.executeUpdate();
     stmt.close();
     conn.close();
-    return page_detail;
+    return true;
 }
