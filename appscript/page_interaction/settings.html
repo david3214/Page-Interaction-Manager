@@ -21,7 +21,8 @@
             methods: {
                 saveSettings: function(){
                     // google.script.this.programSettings
-                    google.script.run.withSuccessHandler().saveSettings(settings=JSON.parse(this.programSettings))
+                    google.script.run.withSuccessHandler().saveSettings(settings=JSON.parse(this.programSettings));
+                    google.script.run.withSuccessHandler().updateSheet();
                 },
                 onSuccess: function(settings){
                     // Request settings from google
@@ -30,7 +31,6 @@
             },
             created: function(){
                 google.script.run.withSuccessHandler(this.onSuccess).programSettings();
-
             },
         })
         </script>
