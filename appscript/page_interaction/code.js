@@ -42,7 +42,7 @@ var defaultSettings = {
     }
 };
 
-var programSettings = function(sheet_id){
+var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().getId()){
   var cache = CacheService.getScriptCache();
   var cached = cache.get(`programSettings:${sheet_id}`);
   if (cached !== null) {
@@ -65,7 +65,7 @@ function saveSettings(spreadSheet=SpreadsheetApp.getActiveSpreadsheet(), setting
 /*
   Intakes a spreadsheet
 */
-var TableHeader = function(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()){
+var TableHeader = function(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Translate page header */
   var spreadSheetID = spreadSheet.getId();
   var sheet = spreadSheet.getActiveSheet();
@@ -80,7 +80,7 @@ var Rule = function(){
     return {'create': undefined};
 };
 
-function doLogicPageMessages(e, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()) {
+function doLogicPageMessages(e) {
   /*
   // Main function for the program
   Runs from the onChange trigger
@@ -90,6 +90,8 @@ function doLogicPageMessages(e, spreadSheet=SpreadsheetApp.getActiveSpreadsheet(
   switch (e.changeType){
     case "INSERT_ROW":
       // Run logic to move row to top
+      Logger.log("running doLogicPageMessages")
+      var spreadSheet = SpreadsheetApp.getActiveSpreadsheet()
       updateNewRow(spreadSheet);
       
       // Update the rules
@@ -101,14 +103,12 @@ function doLogicPageMessages(e, spreadSheet=SpreadsheetApp.getActiveSpreadsheet(
   }
 }
 
-function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()) {
+function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
 /*
   Run the sort logic when a new row is added
 */
-
   var sheet = spreadSheet.getActiveSheet();
   var spreadSheetID = spreadSheet.getId();
-
   // Get the current active sheet
   var sheetName = sheet.getName();
 
@@ -242,7 +242,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()) {
   return;
 }
 
-function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()){
+function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /*
   Adjust the conditional formating rules to cover the sheet data
   */
@@ -289,7 +289,7 @@ function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSp
   sheet.setConditionalFormatRules(sheetConditionalFormatRules);
 }
 
-function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()){
+function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /*
   Function is reponsible for apply page wide data validation rules
   */ 
@@ -386,7 +386,7 @@ function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadshe
   });
 }
 
-function highlightSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()){
+function highlightSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /*
   Ensure acurate highlighting on the sheet
   */
@@ -427,7 +427,7 @@ function highlightSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()){
   
 }
 
-function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()){
+function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Hide rows with specific statuses */
   var spreadSheetID = spreadSheet.getId();
   var sheet = spreadSheet.getActiveSheet();
@@ -456,19 +456,17 @@ function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()){
 
 }
 
-function activateTriggers(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()()){
+function activateTriggers(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Create the project triggers */ 
-  var spreadSheetID = spreadSheet.getId();
-  var spreadSheet = spreadSheet.getActiveSheet();
 
   // Enable a trigger to run the page logic
-  ScriptApp.newTrigger(programSettings(spreadSheet)['triggerNames'][0])
+  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][0])
    .forSpreadsheet(spreadSheet)
    .onChange()
    .create();
     
   // Enable a triger to run on edit to do the highlights
-  ScriptApp.newTrigger(programSettings(spreadSheet)['triggerNames'][1])
+  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][1])
     .forSpreadsheet(spreadSheet)
     .onEdit()
     .create();
@@ -479,7 +477,7 @@ function deactivateTrigger(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Remove our project triggers */
   var triggers = ScriptApp.getProjectTriggers();
    var removeOurTriggers = function(trigger) {
-     if (programSettings(spreadSheet).triggerNames.includes(trigger.getHandlerFunction())) {
+     if (programSettings(spreadSheet.getId()).triggerNames.includes(trigger.getHandlerFunction())) {
        ScriptApp.deleteTrigger(trigger);
      }
    };
@@ -490,7 +488,7 @@ function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
   */
   // Save default settings to sheet
-  saveSettings(spreadSheet.getId(), defaultSettings);
+  saveSettings(spreadSheet, defaultSettings);
 
   // Clear any old possible sheets 
   tearDownSheet(spreadSheet);
@@ -506,9 +504,6 @@ function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   // Trim to length
   var deleteColumns = newSheet.getMaxColumns() - newSheet.getLastColumn();
   newSheet.deleteColumns((newSheet.getLastColumn() +1), deleteColumns);
-
-  // Initialize with blank data
-  newSheet.appendRow(new Array(adLikesHeaders.length).fill(" "));
   
   // Create 'Page Messages' sheet
   var pageMessagHeaders = ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Message', 'Notes', 'Counter'];
@@ -519,9 +514,6 @@ function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
 
   // Write headers
   newSheet.getRange(1,1,1, pageMessagHeaders.length).setValues([pageMessagHeaders]);
-
-  // Initialize with blank data
-  newSheet.appendRow(new Array(pageMessagHeaders.length).fill(" "));
 
   // Trim columns
   var deleteColumns = newSheet.getMaxColumns() - newSheet.getLastColumn();
@@ -560,7 +552,6 @@ function tearDownSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   }
 }
 
-
 function showSettings(){
   /* 
   have a section to calculate the page stats, member to non member interaction count, total interactions, 
@@ -569,13 +560,13 @@ function showSettings(){
 
   Settings needs to be able to:
   */
- var html = HtmlService.createTemplateFromFile('page_interaction/settings').evaluate()
- .setTitle('Program Settings')
- .setWidth(600)
- .setHeight(600);
-SpreadsheetApp.getUi() // Or DocumentApp or SlidesApp or FormApp.
- .showModalDialog(html, 'Program Settings');
-
+  var html = HtmlService.createTemplateFromFile('page_interaction/settings');
+  html = html.evaluate()
+    .setTitle('Program Settings')
+    .setWidth(600)
+    .setHeight(600);
+  SpreadsheetApp.getUi()
+    .showModalDialog(html, 'Program Settings');
 }
 
 function updateSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
@@ -629,6 +620,7 @@ function showDebugPannel(){
  */
 function doPost(request){
   // Load the stored data for the page
+  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc'); 
   try {
     var event = JSON.parse(request.postData.getDataAsString());
     var event_type = undefined;
@@ -657,8 +649,11 @@ function doPost(request){
 
     var page_details = getPageDetails(page_id);
     if (!page_details) {throw {name : "ValueError", message : `Searched for ${page_id} but no result was found`}}
-    var spreadsheet = SpreadsheetApp.openById(page_details.google_sheets.id);
-    active_sheet = spreadsheet.getSheetByName(eventNameMap[event_type]);
+    var spreadSheet = SpreadsheetApp.openById(page_details.google_sheets.id);
+    active_sheet = spreadSheet.setActiveSheet(spreadSheet.getSheetByName(eventNameMap[event_type]));
+    
+    Logger.log(active_sheet.getName());
+    Logger.log(eventNameMap[event_type]);
 
     // Process reactions
     if (event_type == "reaction"){
@@ -684,10 +679,12 @@ function doPost(request){
     // Send the results to the sheet
     var row = [today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""];
     active_sheet.appendRow(row);
+    updateNewRow(spreadSheet);
+    updateSheet(spreadSheet);
 
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
   } catch (error) {
-      Logger.log(error)
+      Logger.severe(JSON.stringify(error))
       return ContentService.createTextOutput(JSON.stringify({"status": "Error"}));
   }
 }
@@ -700,6 +697,3 @@ function doGet(request)
   }
 }
 */
-// Finish testing the new database preferences and page_details
-// TODO addin code to remove the preferences and page data on delete
-// TODO Fix the delete method to check if it is actually removing the key

@@ -88,13 +88,13 @@ function testingFacebookWebhookUpdate(){
 function test_db_pref(){
     setPreference(test_data.sample_page_details_property.google_sheets.id, test_data.sample_sheet_settings);
     getPreference(test_data.sample_page_details_property.google_sheets.id);
-    deletePreference(test_data.sample_page_details_property.google_sheets.id);
+    //deletePreference(test_data.sample_page_details_property.google_sheets.id);
 }
 
 function test_db_page_details(){
   setPageDetails(test_data.sample_page_details_property.id, test_data.sample_page_details_property);
   getPageDetails(test_data.sample_page_details_property.id);
-  deletePageDetails(test_data.sample_page_details_property.id);
+  // deletePageDetails(test_data.sample_page_details_property.id);
   getAllPageDetails();
 }
 
