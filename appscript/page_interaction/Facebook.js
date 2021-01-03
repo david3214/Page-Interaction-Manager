@@ -53,7 +53,7 @@ function getFacebookService() {
     .setCallbackFunction('authCallback')
 
     // Set the access scope
-    .setScope("public_profile,email,pages_read_engagement,pages_manage_metadata,pages_read_user_content,pages_manage_ads,pages_manage_posts,pages_manage_engagement")
+    .setScope("public_profile,email,pages_read_engagement,pages_manage_metadata,pages_read_user_content,messages") //pages_manage_ads,pages_manage_posts,pages_manage_engagement
 
     // Set the property store where authorized tokens should be persisted.
     .setPropertyStore(PropertiesService.getUserProperties());

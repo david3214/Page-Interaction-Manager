@@ -589,14 +589,14 @@ function showFacebookSidebar() {
     var authorizationUrl = facebookService.getAuthorizationUrl();
     var template = HtmlService.createTemplate(
         '<a href="<?= authorizationUrl ?>" target="_blank">Authorize</a>. ' +
-        'Click the link to connect pages from facebook.');
+        'Click the link to connect pages from Facebook.');
     template.authorizationUrl = authorizationUrl;
-    var page = template.evaluate();
+    var page = template.evaluate().setTitle("Facebook Authentication");
     SpreadsheetApp.getUi().showSidebar(page);
   } else {
   // ... What to do if they are authenticated
   var template = HtmlService.createTemplate('You are authorized\n');
-  var page = template.evaluate();
+  var page = template.evaluate().setTitle("Facebook Authentication");
   SpreadsheetApp.getUi().showSidebar(page);
   }
 }
@@ -618,33 +618,39 @@ function showDebugPannel(){
 /**
  * Webhook that can handle the event from Facebook
  */
+/*
+function doPost(e) {
+  e.method = "POST";
+  return ContentService.createTextOutput(JSON.stringify(e)).setMimeType(
+    ContentService.MimeType.JSON
+  );
+}
+*/
+
 function doPost(request){
   // Load the stored data for the page
   Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc'); 
   try {
     var event = JSON.parse(request.postData.getDataAsString());
-    var event_type = undefined;
+    var event_type = request.parameter.event_type;
     var eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'};
     var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
     var page_id = undefined;
     var page_details = undefined;
     var active_sheet = undefined;
-
-    // Classify the incoming event
-    // Reject stuff we aren't interested in
-    if (event.entry[0].changes[0].value.item == 'video' 
-    ||  event.entry[0].changes[0].value.item == 'comment'
-    ||  event.entry[0].changes[0].value.verb != 'add') {
-      return ContentService.createTextOutput(JSON.stringify({"status": "Unprocessed"}));
-    }
-
-    // Classify event 
-    else if(event.entry[0].changes[0].value.item) {
-      event_type = event.entry[0].changes[0].value.item;
+    if (event_type == "reaction"){
+      // Classify the incoming event
+      // Reject stuff we aren't interested in
+      if (event.entry[0].changes[0].value.item == 'video' 
+      ||  event.entry[0].changes[0].value.item == 'comment'
+      ||  event.entry[0].changes[0].value.verb != 'add') {
+        return ContentService.createTextOutput(JSON.stringify({"status": "Unprocessed"}));
+      }
       page_id = event.entry[0].id;
-    } else if (event.entry[0].messaging) {
-      event_type = event.entry[0].messaging;
+
+    } else if (event_type == "message"){
       page_id = event.entry[0].messaging[0].recipient.id
+
     }
 
     var page_details = getPageDetails(page_id);
@@ -665,9 +671,9 @@ function doPost(request){
     else if (event_type == "message"){
       var messageOrReaction = event.entry[0].messaging[0].message.text;
       // Get name from fb
-      var url = `https://graph.facebook.com/${event.entry[0].messaging[0].sender.id}?fields=first_name,last_name&access_token=${accessTokenMap[pageID]}`
-      JSON.parse(UrlFetchApp.fetch(url));
-      var name = getReqRes['first_name'] + " " + getReqRes['last_name'];
+      var url = `https://graph.facebook.com/${event.entry[0].messaging[0].sender.id}?fields=first_name,last_name&access_token=${page_details.access_token}`
+      var results = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+      var name = results['first_name'] + " " + results['last_name'];
       var psid = event.entry[0].messaging[0].sender.id;
       var facebookClue = `https://www.facebook.com/search/people?q=${encodeURIComponent(name)}`
     }
@@ -684,10 +690,12 @@ function doPost(request){
 
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
   } catch (error) {
-      Logger.severe(JSON.stringify(error))
+      Logger.severe(JSON.stringify(error));
+      Logger.severe(JSON.stringify(event));
       return ContentService.createTextOutput(JSON.stringify({"status": "Error"}));
   }
 }
+
 /*
 function doGet(request)
 {
