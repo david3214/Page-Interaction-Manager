@@ -532,8 +532,11 @@ function tearDownSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   // Uninstaill the triggers
   deactivateTrigger(spreadSheet);
 
-  // Remove facebook authentication
+  // Remove facebook authentication for user
   resetAuth();
+
+  // Unsubscribe the page from facebook app
+  // TODO Not sure if this is needed
 
   // Remove the pages from the script properties
   // Delete managed pages by page id
@@ -705,3 +708,8 @@ function doGet(request)
   }
 }
 */
+
+// TODO Page Analytics
+
+// 
+
