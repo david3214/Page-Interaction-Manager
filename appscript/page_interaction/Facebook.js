@@ -53,7 +53,7 @@ function getFacebookService() {
     .setCallbackFunction('authCallback')
 
     // Set the access scope
-    .setScope("public_profile,email,pages_read_engagement,pages_manage_metadata,pages_read_user_content,messages") //pages_manage_ads,pages_manage_posts,pages_manage_engagement
+    .setScope("pages_read_engagement,pages_manage_metadata,pages_messaging")
 
     // Set the property store where authorized tokens should be persisted.
     .setPropertyStore(PropertiesService.getUserProperties());
@@ -121,6 +121,15 @@ function uploadFacebookToken(token) {
   // Set the page_id to the data
   var scriptProperties = PropertiesService.getScriptProperties();
   pageResults.data.forEach(page => scriptProperties.setProperty(page.id, JSON.stringify(page)));
+
+  // Subscribe each page to webhook updates
+  pageResults.data.forEach(function(page){
+    var options = {
+      'method': 'post',
+    }
+    var FBurl = `https://graph.facebook.com/${page.id}/subscribed_apps?subscribed_fields=feed,messages&access_token=${page.access_token}`;
+    var results = JSON.parse(UrlFetchApp.fetch(FBurl, options));
+  })
 
 }
 
