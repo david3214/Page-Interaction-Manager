@@ -59,7 +59,6 @@ function saveSettings(spreadSheet=SpreadsheetApp.getActiveSpreadsheet(), setting
   setPreference(sheet_id, settings);
   var cache = CacheService.getScriptCache();
   cache.put(`programSettings:${sheet_id}`, JSON.stringify(settings), 60);
-  //updateSheet();
 }
 
 /*
