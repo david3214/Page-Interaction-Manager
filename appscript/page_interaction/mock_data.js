@@ -52,7 +52,7 @@ test_data = {
         messagesStatus : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
         hiddenStatuses : ["Member", "Do Not Contact", "Rejected"],
         reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
-        assignmentMap : {'Ward 1': '#82C1EC', 'Ward 2': '#F28530', 'Ward 3': '#FCFBC2', 'Ward 4': '#ECE3D4', 'Ward 5': '#F9F85F'},
+        assignmentMap : [['Ward 1', '#82C1EC'], ['Ward 2', '#F28530'], ['Ward 3', '#FCFBC2'], ['Ward 4', '#ECE3D4'], ['Ward 5', '#F9F85F']],
         genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
         adIDMap : {"1234567890": "Ad Name here"},
         areaIDs : {'123456789': 'Area Name Here'},

@@ -1,4 +1,4 @@
-var mode = "PRODUCTION";
+var mode = "TEST";
 
 QUnit.helpers( this );
 function testFunctions() {
@@ -69,6 +69,11 @@ function testFacebookWebhookUpdate(){
    });
     
 }
+function test_sheet_creation(){
+    mode = "TEST";
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    setUpSheet(spreadSheet);
+}
 
 function testSheetFunctions(){
     QUnit.test("Test sheet", function(assert){
@@ -105,6 +110,10 @@ function testSheetFunctions(){
     });
 }
 
-function test(){
-    
+function test_updateNewRow(){
+    mode = "TEST";
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+
+    updateNewRow(spreadSheet);
 }

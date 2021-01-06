@@ -17,7 +17,7 @@ var defaultSettings = {
   reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
   
   // Dictionary to map wards to colors
-  assignmentMap : {'Ward 1': '#82C1EC', 'Ward 2': '#F28530', 'Ward 3': '#FCFBC2', 'Ward 4': '#ECE3D4', 'Ward 5': '#F9F85F'},
+  assignmentMap : [['Ward 1', '#82C1EC'], ['Ward 2', '#F28530'], ['Ward 3', '#FCFBC2'], ['Ward 4', '#ECE3D4'], ['Ward 5', '#F9F85F']],
   
   // Dictionary to map gender to colors
   genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
@@ -53,8 +53,10 @@ var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().ge
   return settings;
 };
 
-function saveSettings(spreadSheet=SpreadsheetApp.getActiveSpreadsheet(), settings){
-  /* Write the settings to the database */
+function saveSettings(settings, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  /* Write the settings to the database 
+   * Takes an active spreadSheet
+  */
   var sheet_id = spreadSheet.getId();
   setPreference(sheet_id, settings);
   var cache = CacheService.getScriptCache();
@@ -89,8 +91,6 @@ function doLogicPageMessages(e) {
   switch (e.changeType){
     case "INSERT_ROW":
       // Run logic to move row to top
-      Logger.log("running doLogicPageMessages")
-      var spreadSheet = SpreadsheetApp.getActiveSpreadsheet()
       updateNewRow(spreadSheet);
       
       // Update the rules
@@ -199,7 +199,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     // newRow[tableHeader.getColumnIndex('Source')] = adIDMap[newRow[tableHeader.getColumnIndex('Source')]] == undefined ? newRow[tableHeader.getColumnIndex('Source')] : adIDMap[newRow[tableHeader.getColumnIndex('Source')]];
     
     // Assignment -> Default to first key
-    newRow[tableHeader.getColumnIndex('Assignment')] = Object.keys(programSettings(spreadSheetID).assignmentMap)[0];
+    newRow[tableHeader.getColumnIndex('Assignment')] = programSettings(spreadSheetID).assignmentMap.shift().shift();
     
     // Status -> Select
     newRow[tableHeader.getColumnIndex('Status')] = 'Select';
@@ -275,10 +275,10 @@ function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSp
   sheet.hideColumns(tableHeader.getColumnIndex('PSID')+1);
   
   // Make conditional formatting rule to give the Assignments different colors
-  Object.keys(programSettings(spreadSheetID).assignmentMap).forEach(function(key){
+  programSettings(spreadSheetID).assignmentMap.forEach(function(assignmentPair){
     var assignmentConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo(key)
-    .setBackground(programSettings(spreadSheetID).assignmentMap[key])
+    .whenTextEqualTo(assignmentPair[0])
+    .setBackground(assignmentPair[1])
     .setRanges([assignment])
     .build();
     sheetConditionalFormatRules.push(assignmentConditionalFormatRule);
@@ -311,7 +311,8 @@ function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadshe
     
     // Make data validation rule for Assignment
     var enforceAssignment = SpreadsheetApp.newDataValidation();
-    enforceAssignment.requireValueInList(Object.keys(programSettings(spreadSheetID).assignmentMap), true);
+    var assigment_vals = programSettings(spreadSheetID).assignmentMap.map(pair => pair[0]);
+    enforceAssignment.requireValueInList(assigment_vals, true);
     enforceAssignment.build();
     
     // Set the assignment range rule
@@ -481,7 +482,7 @@ function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
   */
   // Save default settings to sheet
-  saveSettings(spreadSheet, defaultSettings);
+  saveSettings(defaultSettings, spreadSheet);
 
   // Clear any old possible sheets 
   tearDownSheet(spreadSheet);
@@ -525,6 +526,8 @@ function tearDownSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   // Uninstaill the triggers
   deactivateTrigger(spreadSheet);
 
+  // Get app installed page_id's, remove them from database
+
   // Remove facebook authentication for user
   resetAuth();
 
@@ -533,9 +536,9 @@ function tearDownSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
 
   // Remove the pages from the script properties
   // Delete managed pages by page id
-  var sheet_id = spreadSheet.getId()
-  deletePageDetails(sheet_id);
-  deletePreference(sheet_id);
+  // var sheet_id = spreadSheet.getId();
+  
+  /// deletePreference(sheet_id);
 
   // Check if there are already sheets with the names to be created if so, give an error notifcation that the sheet names already exist
   var sheetNames = spreadSheet.getSheets().map(sheet => sheet.getName());
@@ -625,10 +628,10 @@ function doPost(e) {
 
 function doPost(request){
   // Load the stored data for the page
-  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc'); 
+  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
   try {
-    var event = JSON.parse(request.postData.getDataAsString());
-    var event_type = request.parameter.event_type;
+    var event = mode == "TEST" ? test_data.sample_page_notifications_accept.shift() : JSON.parse(request.postData.getDataAsString());
+    var event_type = mode == "TEST" ? "reaction" : request.parameter.event_type;
     var eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'};
     var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
     var page_id = undefined;
@@ -699,7 +702,6 @@ function doGet(request)
 }
 */
 
-// TODO Page Analytics
+// TODO Page Analytics, reduce all unique items count 
 
-// 
-
+// TODO remove page details by page_id in settings. Dropdown -> pages -> delete those page_id's deletePageDetails(page_id);
