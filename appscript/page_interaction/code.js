@@ -33,7 +33,7 @@ var defaultSettings = {
   initialRowLength : 1000,
   
   // Name of trigger functions
-  triggerNames : ['doLogicPageMessages', 'updateSheet'],
+  triggerNames : ['updateSheet'],
 
   // Sheet Settings
   sheetSettings: {
@@ -459,14 +459,8 @@ function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
 function activateTriggers(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Create the project triggers */ 
 
-  // Enable a trigger to run the page logic
-  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][0])
-   .forSpreadsheet(spreadSheet)
-   .onChange()
-   .create();
-    
   // Enable a triger to run on edit to do the highlights
-  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][1])
+  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][0])
     .forSpreadsheet(spreadSheet)
     .onEdit()
     .create();
@@ -660,9 +654,6 @@ function doPost(request){
     if (!page_details) {throw {name : "ValueError", message : `Searched for ${page_id} but no result was found`}}
     var spreadSheet = SpreadsheetApp.openById(page_details.google_sheets.id);
     active_sheet = spreadSheet.setActiveSheet(spreadSheet.getSheetByName(eventNameMap[event_type]));
-    
-    Logger.log(active_sheet.getName());
-    Logger.log(eventNameMap[event_type]);
 
     // Process reactions
     if (event_type == "reaction"){
