@@ -1,4 +1,4 @@
-var mode = "TEST";
+var mode = "PRODUCTION";
 
 QUnit.helpers( this );
 function testFunctions() {
