@@ -19,6 +19,18 @@
       "version": "6"
     }]
   },
+  "sheets": {
+    "name": "Missionary Tools",
+    "logoUrl": "https://eighth-vehicle-287322.uc.r.appspot.com/assets/images/ymt_icon.png",
+    "primaryColor": "#4285F4",
+    "secondaryColor": "#00BCD4",
+    "authorizationCheckFunction": "get3PAuthorizationUrls",
+    "contextualTriggers": [{
+      "unconditional": {},
+      "onChange": "doLogicPageMessages",
+      "onEdit": "updateSheet"
+    }]
+  },
   "webapp": {
     "access": "ANYONE_ANONYMOUS",
     "executeAs": "USER_DEPLOYING"
