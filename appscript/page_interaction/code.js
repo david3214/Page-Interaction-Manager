@@ -33,7 +33,7 @@ var defaultSettings = {
   initialRowLength : 1000,
   
   // Name of trigger functions
-  triggerNames : ['updateSheet'],
+  triggerNames : ['doLogicPageMessages', 'updateSheet'],
 
   // Sheet Settings
   sheetSettings: {
@@ -81,7 +81,7 @@ var Rule = function(){
     return {'create': undefined};
 };
 
-function doLogicPageMessages(e) {
+function doLogicPageMessages(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
   // Main function for the program
   Runs from the onChange trigger
@@ -95,7 +95,7 @@ function doLogicPageMessages(e) {
       
       // Update the rules
       updateSheet(spreadSheet);
-      
+
       // End
       break;    
     default:
@@ -399,6 +399,9 @@ function highlightSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   // Check if highlighting is enabled
   if (!programSettings(spreadSheetID)['sheetSettings'][sheetName].highlightEnabled){ return; }
   
+  // Clear previous highlighting
+  sheet.getRange(sheet.getLastRow(), sheet.getLastColumn()).setBackground("white");
+  
   // Highlight the rows in red that contain a matching PSID and have a default status
   // Get the values from the sheet
   var range = sheet.getDataRange().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow());
@@ -459,11 +462,17 @@ function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
 function activateTriggers(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Create the project triggers */ 
 
-  // Enable a triger to run on edit to do the highlights
+  // Enable a trigger to run the page logic
   ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][0])
-    .forSpreadsheet(spreadSheet)
-    .onEdit()
-    .create();
+  .forSpreadsheet(spreadSheet.getId())
+  .onChange()
+  .create();
+  
+  // Enable a triger to run on edit to do the highlights
+  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][1])
+  .forSpreadsheet(spreadSheet.getId())
+  .onEdit()
+  .create();
 }
 
 
@@ -482,6 +491,9 @@ function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
   */
   // Save default settings to sheet
+  var authMode = ScriptApp.AuthMode
+  spreadSheet.getUi().toast(authMode)
+
   saveSettings(defaultSettings, spreadSheet);
 
   // Clear any old possible sheets 
@@ -681,8 +693,6 @@ function doPost(request){
     // Send the results to the sheet
     var row = [today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""];
     active_sheet.appendRow(row);
-    updateNewRow(spreadSheet);
-    updateSheet(spreadSheet);
 
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
   } catch (error) {
