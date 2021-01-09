@@ -1,17 +1,16 @@
-var connectionName = 'eighth-vehicle-287322:us-central1:datab';
 var user = 'app_script';
 var userPwd = '***REMOVED***';
 var db = 'page_interaction_manager';
 var root = 'root';
 var rootPwd = '***REMOVED***';
-var instanceUrl = 'jdbc:google:mysql://' + connectionName;
+var instanceUrl = "jdbc:mysql://34.68.83.123";
 var dbUrl = instanceUrl + '/' + db;
 
 /**
  * Create a new database within a Cloud SQL instance.
  */
 function createDatabase() {
-    var conn = Jdbc.getCloudSqlConnection(instanceUrl, root, rootPwd);
+    var conn = Jdbc.getConnection(instanceUrl, root, rootPwd);
     var stmt = conn.prepareStatement(`CREATE DATABASE ${db} DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci`);
     stmt.execute();
 }
@@ -20,7 +19,7 @@ function createDatabase() {
  * Create a new user for your database with full privileges.
  */
 function createUser() {
-  var conn = Jdbc.getCloudSqlConnection(dbUrl, root, rootPwd);
+  var conn = Jdbc.getConnection(dbUrl, root, rootPwd);
   var stmt = conn.prepareStatement('CREATE USER ? IDENTIFIED BY ?');
   stmt.setString(1, user);
   stmt.setString(2, userPwd);
@@ -32,7 +31,7 @@ function createUser() {
  * Create a new table in the database.
  */
 function createTable() {
-  var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
+  var conn = Jdbc.getConnection(dbUrl, user, userPwd);
   conn.createStatement().execute('CREATE TABLE preferences ('
   + 'sheet_id VARCHAR(100) NOT NULL, '
   + 'preference VARCHAR(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, '
@@ -47,7 +46,7 @@ function createTable() {
  * Write preferences for a sheet_id
  */
 function setPreference(sheet_id, preference) {
-    var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
   
     var stmt = conn.prepareStatement('REPLACE INTO preferences '
         + '(sheet_id, preference) values (?, ?)');
@@ -63,7 +62,7 @@ function setPreference(sheet_id, preference) {
  * Get preferences for a sheet_id
  */
 function getPreference(sheet_id) {
-    var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('SELECT preference '
         + 'FROM preferences WHERE sheet_id = ?');
     stmt.setString(1, sheet_id);
@@ -82,7 +81,7 @@ function getPreference(sheet_id) {
  * Delete preferences for a sheet_id
  */
 function deletePreference(sheet_id) {
-    var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('DELETE '
     + 'FROM preferences WHERE sheet_id = ?');
     stmt.setString(1, sheet_id);
@@ -96,7 +95,7 @@ function deletePreference(sheet_id) {
  * Write page_data for a page_id
  */
 function setPageDetails(page_id, page_details) {
-    var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('REPLACE INTO page_data '
         + '(page_id, page_details) values (?, ?)');
     stmt.setString(1, page_id);
@@ -111,7 +110,7 @@ function setPageDetails(page_id, page_details) {
  * Get page_details for a page_id
  */
 function getPageDetails(page_id) {
-    var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('SELECT page_details '
         + 'FROM page_data WHERE page_id = ?');
     stmt.setString(1, page_id);
@@ -130,7 +129,7 @@ function getPageDetails(page_id) {
  * Get all page_details for a page_id
  */
 function getAllPageDetails(page_id) {
-    var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('SELECT * '
         + 'FROM page_data');
     results = stmt.executeQuery();
@@ -149,7 +148,7 @@ function getAllPageDetails(page_id) {
  * Delete page_details for a page_id
  */
 function deletePageDetails(page_id) {
-    var conn = Jdbc.getCloudSqlConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('DELETE '
         + 'FROM page_data WHERE page_id = (?)');
     stmt.setString(1, page_id);
