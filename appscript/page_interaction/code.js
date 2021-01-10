@@ -106,9 +106,6 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
 /*
   Run the sort logic when a new row is added
 */
-  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
-  Logger.log('running updateNewRow');
-  
   var sheet = spreadSheet.getActiveSheet();
   var spreadSheetID = spreadSheet.getId();
   // Get the current active sheet
@@ -464,7 +461,6 @@ function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
 
 function activateTriggers(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Create the project triggers */ 
-  sayAuth('activateTriggers');
   // Enable a trigger to run the page logic
   ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][0])
   .forSpreadsheet(spreadSheet.getId())
@@ -490,47 +486,11 @@ function deactivateTrigger(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   triggers.forEach(removeOurTriggers);
 }
 
-function sayAuth(msg='ree'){
-
-  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
-  Logger.log(`${msg} ${ScriptApp.AuthMode} : ${ScriptApp.AuthorizationStatus}`);
-
-  var authInfo = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
-  Logger.log(authInfo.getAuthorizationStatus());
-  Logger.log(authInfo.getAuthorizationUrl());
-  Logger.log('Current project has ' + ScriptApp.getProjectTriggers().length + ' triggers.');
-
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-var triggers = ScriptApp.getUserTriggers(ss);
-// Log the event type for the first trigger in the array.
-Logger.log(triggers[0].getEventType());
-Logger.log(triggers[1].getEventType());
-
-Logger.log(triggers[0].getHandlerFunction());
-Logger.log(triggers[1].getHandlerFunction()); 
-
-Logger.log(triggers[0].getTriggerSourceId());
-Logger.log(triggers[1].getTriggerSourceId()); 
-
-var triggers = ScriptApp.getProjectTriggers();
-for (var i = 0; i < triggers.length; i++) {
-  if (triggers[i].getTriggerSource() == ScriptApp.TriggerSource.CLOCK) {
-    Logger.log(triggers[i].getUniqueId() + " source is clock");
-  } else if (triggers[i].getTriggerSource() == ScriptApp.TriggerSource.SPREADSHEETS) {
-    Logger.log(triggers[i].getUniqueId() + " source is spreadsheets");
-  }
-  else {
-    Logger.log(triggers[i].getTriggerSource())
-  }
-}
-
-}
 
 function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
   */
   // Save default settings to sheet
-  sayAuth('setUpSheet')
   saveSettings(defaultSettings, spreadSheet);
 
   // Clear any old possible sheets 
@@ -621,8 +581,6 @@ function updateSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   // Update the sheet rules, formatting and, coloring
   // Called every time an edit happens
   // Return if no data
-  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
-  Logger.log('running updateSheet')
   var sheet = spreadSheet.getActiveSheet()
   if (sheet.getDataRange().getValues().length == 1) {return;}
   updateConditionalFormattingRules(spreadSheet);
@@ -645,7 +603,13 @@ function showFacebookSidebar() {
     SpreadsheetApp.getUi().showSidebar(page);
   } else {
   // ... What to do if they are authenticated
+  // Go get all the page details
+  // Populate a dropdown with the page details
+  // select the page you want to link to this sheet
+  // press button to save the selected sheeting
+
   var template = HtmlService.createTemplate('You are authorized\n');
+
   var page = template.evaluate().setTitle("Facebook Authentication");
   SpreadsheetApp.getUi().showSidebar(page);
   }
@@ -679,8 +643,9 @@ function doPost(e) {
 
 function doPost(request){
   // Load the stored data for the page
-  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
-  Logger.log('Recieved Post request');
+  // Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
+  // Logger.log('Recieved Post request');
+
   try {
     var event = mode == "TEST" ? test_data.sample_page_notifications_accept.shift() : JSON.parse(request.postData.getDataAsString());
     var event_type = mode == "TEST" ? "reaction" : request.parameter.event_type;
@@ -741,16 +706,6 @@ function doPost(request){
       return ContentService.createTextOutput(JSON.stringify({"status": "Error"}));
   }
 }
-
-/*
-function doGet(request)
-{
-  Logger.log(request);
-  if (request.parameter['hub.verify_token'] == 'hambone') {
-    return ContentService.createTextOutput(request.parameter['hub.challenge']);
-  }
-}
-*/
 
 // TODO Page Analytics, reduce all unique items count 
 
