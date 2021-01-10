@@ -10,28 +10,52 @@
         <h1>Program Settings</h1>
         <textarea style="display: block;" cols="50" rows="25" v-model="programSettings" placeholder="Adjust program settings here"></textarea>
         <button class="btn btn-primary" @click="saveSettings">Save Settings</button>
-      </div>
+        <br>
+        <h1>Facebook Settings</h1>
+        <select v-model="selected">
+            <option disabled value="">Please select a page</option>
+            <option v-for="page in facebookPages" v-bind:value="[page]"
+            >{{ page.name }}</option>
+          </select>
+          <button class="btn btn-primary" @click="submitFacebookPageSelection">Submit</button>
+          <h3>This sheet is connected the following, </h3>
+          <p v-for="page in selected">{{ page.name }}<br></p>
+        </div>
 
       <script>
         new Vue({
             el: '#app',
             data: {
-                programSettings: ''
+                programSettings: '',
+                facebookPages:[],
+                selected:[]
             },
             methods: {
                 saveSettings: function(){
                     // google.script.this.programSettings
                     google.script.run.withSuccessHandler().saveSettings(JSON.parse(this.programSettings));
                     google.script.run.withSuccessHandler().updateSheet();
-                    google.script.host.close();
+                    // google.script.host.close();
                 },
                 onSuccess: function(settings){
                     // Request settings from google
                     this.programSettings = JSON.stringify(settings, null, 2)
+                },
+                submitFacebookPageSelection: function(){
+                    var pageResults = {'data':this.selected};
+                    google.script.run.withSuccessHandler().saveFacebookPagesDetails(pageResults);
+                },
+                onSuccessFacebook: function(pageResults){
+                    this.facebookPages = pageResults.data;
+                },
+                onSuccessSelected: function(selectedPages){
+                    this.selected = selectedPages.data;
                 }
             },
             created: function(){
                 google.script.run.withSuccessHandler(this.onSuccess).programSettings();
+                google.script.run.withSuccessHandler(this.onSuccessFacebook).getFacebookPages();
+                google.script.run.withSuccessHandler(this.onSuccessSelected).getSelectedPages();
             },
         })
         </script>

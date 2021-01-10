@@ -2,21 +2,21 @@
   "timeZone": "America/Mexico_City",
   "dependencies": {
     "libraries": [{
-      "userSymbol": "BetterLog",
-      "libraryId": "1DSyxam1ceq72bMHsE6aOVeOl94X78WCwiYPytKi7chlg4x5GqiNXSw0l",
-      "version": "27"
-    }, {
       "userSymbol": "OAuth2",
       "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF",
       "version": "40"
+    }, {
+      "userSymbol": "LodashGS",
+      "libraryId": "1SQ0PlSMwndIuOAgtVJdjxsuXueECtY9OGejVDS37ckSVbMll73EXf2PW",
+      "version": "6"
     }, {
       "userSymbol": "QUnit",
       "libraryId": "13agWuzcPH32W4JJvOqOEYqeNHGihS63P2V-a-Vxz-c9WPIzZYBvIhs3m",
       "version": "4"
     }, {
-      "userSymbol": "LodashGS",
-      "libraryId": "1SQ0PlSMwndIuOAgtVJdjxsuXueECtY9OGejVDS37ckSVbMll73EXf2PW",
-      "version": "6"
+      "userSymbol": "BetterLog",
+      "libraryId": "1DSyxam1ceq72bMHsE6aOVeOl94X78WCwiYPytKi7chlg4x5GqiNXSw0l",
+      "version": "27"
     }]
   },
   "webapp": {

@@ -66,7 +66,6 @@ function authCallback(request) {
   var service = getFacebookService();
   var authorized = service.handleCallback(request);
   if (authorized) {
-    uploadFacebookToken(service.getAccessToken());
     return HtmlService.createHtmlOutput('Success!');
   } else {
     return HtmlService.createHtmlOutput('Denied.');
@@ -80,11 +79,26 @@ function logRedirectUri() {
   Logger.log(OAuth2.getRedirectUri());
 }
 
-/**
- * Stores the page data in the script properties
- */
-function uploadFacebookToken(token) {
-  // Exchange the token to long lasting user token
+function getSelectedPages(){
+  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
+  var foo = PropertiesService.getDocumentProperties().getProperty('selectedPages')
+  Logger.log(`${foo}`);
+  var selectedPages = JSON.parse(PropertiesService.getDocumentProperties().getProperty('selectedPages'));
+  if (selectedPages != null){
+    return selectedPages;
+  }
+  else{
+    return {'data':[]}
+  }
+}
+
+function getFacebookPages(){
+  /**
+   * Get all facebook pages as list of obj
+   */
+  service = getFacebookService();
+  var token = service.getAccessToken();
+
   var FBurl = `https://graph.facebook.com/v9.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&fb_exchange_token=${token}`;
   var longLivedUserAccessToken = JSON.parse(UrlFetchApp.fetch(FBurl))['access_token'];
 
@@ -95,33 +109,22 @@ function uploadFacebookToken(token) {
   // Exchange the token for a page token
   FBurl = `https://graph.facebook.com/v9.0/${userID}/accounts?access_token=${longLivedUserAccessToken}`
   var pageResults = JSON.parse(UrlFetchApp.fetch(FBurl));
+  return pageResults;
+}
 
+/**
+ * Stores the page data in the cloud sql
+ */
+function saveFacebookPagesDetails(pageResults) {
   // Get the access token for the script
   var scriptAuthToken = ScriptApp.getOAuthToken();
 
-  // get the spreadsheet id
+  // Get the spreadsheet id
   var spreadSheetId = SpreadsheetApp.getActive().getId();
   
   // Zip together the appropriate keys
   pageResults.data.forEach(page => page['google_sheets'] = {"id": spreadSheetId, "token": scriptAuthToken});
   
-  /* Storing in properties since can't afford a cloud hosted db right now
-  // Return true if successful
-  var options = {
-    'method' : 'post',
-    'contentType': 'application/json',
-    // Convert the JavaScript object to a JSON string.
-    'payload' : JSON.stringify(response)
-  };
-
-  // Store in db
-  UrlFetchApp.fetch(baseURL + "page-interaction-manager/credentials", options);
-  */
-  
-  // Set the page_id to the data
-  var scriptProperties = PropertiesService.getScriptProperties();
-  pageResults.data.forEach(page => scriptProperties.setProperty(page.id, JSON.stringify(page)));
-
   // Subscribe each page to webhook updates
   pageResults.data.forEach(function(page){
     var options = {
@@ -131,5 +134,10 @@ function uploadFacebookToken(token) {
     var results = JSON.parse(UrlFetchApp.fetch(FBurl, options));
   })
 
+  // Save results to db
+  pageResults.data.forEach(page => setPageDetails(page.id, page));
+
+  // Save results to doc properties
+  PropertiesService.getDocumentProperties().setProperty('selectedPages', JSON.stringify(pageResults));
 }
 
