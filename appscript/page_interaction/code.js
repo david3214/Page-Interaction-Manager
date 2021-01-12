@@ -655,7 +655,8 @@ function doPost(request){
 
   try {
     var event = mode == "TEST" ? test_data.sample_page_notifications_accept.shift() : JSON.parse(request.postData.getDataAsString());
-    var event_type = mode == "TEST" ? "reaction" : request.parameter.event_type;
+    if (event.entry[0].messaging) {var event_type = 'message'} else if (event.entry[0].changes[0].value.item) {var event_type = 'reaction'}
+    var event_type = mode == "TEST" ? "reaction" : event_type;
     var eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'};
     var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
     var page_id = undefined;
