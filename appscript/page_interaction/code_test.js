@@ -21,8 +21,6 @@ function doGet( e ) {
 function testFacebookWebhookUpdate(){
     var web_app_url1 = `${ScriptApp.getService().getUrl()}?access_token=${ScriptApp.getOAuthToken()}`;
     var web_app_url = "https://script.google.com/macros/s/AKfycbyntJvxGIZalY9QGLCv89H_OBSFdSJARHyhpWxJo4II_SpgSIxW/dev?access_token=ya29.a0AfH6SMCMEiS8qfomf-WIWEtedCHW1m5VuY1_XpRXKNcHENHaWbPOy1DmZ1OQH0qTt8PufVElKJub3ZLvarl12bd-lZLwqatpJU3zDSgIE7yOWCY-7r6vkUArOBbbweydx1hZH9B0Pw5Y1PzyYVMVyr4sZPAVDe5uyPWE0VOJHs7cr4eAh6JYzJ_FORA5qkc";
-    var web_app_url_reaction = "&event_type=reaction";
-    var web_app_url_messages = web_app_url + "&event_type=message";
     Logger.log(`1: ${web_app_url1}\n 2:${web_app_url}`);
     QUnit.test("Facebook post interaction testing", function(assert) {
         test_data.sample_page_notifications_accept.forEach(function(data){
@@ -31,7 +29,7 @@ function testFacebookWebhookUpdate(){
                 'contentType': 'application/json',
                 'payload' : JSON.stringify(data)
             };
-            var results = UrlFetchApp.fetch(web_app_url_reaction, options).getContentText();
+            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
             assert.ok(results, `Should say Processed: ${JSON.parse(results).status}`)
         })
         
@@ -41,7 +39,7 @@ function testFacebookWebhookUpdate(){
                 'contentType': 'application/json',
                 'payload' : JSON.stringify(data)
             };
-            var results = UrlFetchApp.fetch(web_app_url_reaction, options).getContentText();
+            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
             assert.ok(results, `Should say Unprocessed: ${JSON.parse(results).status}`)
         })
 
@@ -51,7 +49,7 @@ function testFacebookWebhookUpdate(){
                 'contentType': 'application/json',
                 'payload' : JSON.stringify(data)
             };
-            var results = UrlFetchApp.fetch(web_app_url_reaction, options).getContentText();
+            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
             assert.ok(results, `Should say Error: ${JSON.parse(results).status}`)
         })
     });
@@ -63,7 +61,7 @@ function testFacebookWebhookUpdate(){
             'contentType': 'application/json',
             'payload' : JSON.stringify(data)
         };
-        var results = UrlFetchApp.fetch(web_app_url_messages, options).getContentText();
+        var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
         assert.equal("Processed", JSON.parse(results).status, `Should say Processed: ${JSON.parse(results).status}`)
     })
    });
