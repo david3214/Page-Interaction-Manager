@@ -81,22 +81,22 @@ var Rule = function(){
     return {'create': undefined};
 };
 
-function doLogicPageMessages(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
+function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
-  // Main function for the program
+  Main function for the program
   Runs from the onChange trigger
   */
+ Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
+ Logger.log(JSON.stringify(e));
 
   // Determine what type of onChange event it is
   switch (e.changeType){
     case "INSERT_ROW":
       // Run logic to move row to top
-      updateNewRow(spreadSheet);
-      
+      updateNewRow(spreadSheet);  
+    case "EDIT":
       // Update the rules
       updateSheet(spreadSheet=spreadSheet);
-
-      // End
       break;    
     default:
   }
@@ -581,6 +581,8 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   // Update the sheet rules, formatting and, coloring
   // Called every time an edit happens
   // Return if no data
+  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
+  Logger.log(JSON.stringify(e));
   var spreadSheet = e == undefined ? spreadSheet : e.source;
   var sheet = spreadSheet.getActiveSheet();
   if (sheet.getDataRange().getValues().length == 1) {return;}
@@ -697,11 +699,18 @@ function doPost(request){
     today = today.toLocaleDateString("en-US")
 
     // Send the results to the sheet
-    var row = [today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""];
-    active_sheet.appendRow(row);
+    var resource = {
+      "majorDimension": "ROWS",
+      "values": [[today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""]]
+    }
+    var spreadsheetId = page_details.google_sheets.id
+    var range = eventNameMap[event_type];
+    var optionalArgs = {valueInputOption: "USER_ENTERED", insertDataOption: "INSERT_ROWS"};
+    Sheets.Spreadsheets.Values.append(resource, spreadsheetId, range, optionalArgs);
 
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
   } catch (error) {
+      Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
       Logger.severe(JSON.stringify(error));
       Logger.severe(JSON.stringify(event));
       return ContentService.createTextOutput(JSON.stringify({"status": "Error"}));
