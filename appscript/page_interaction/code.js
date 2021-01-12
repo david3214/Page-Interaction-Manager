@@ -89,15 +89,18 @@ function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSp
  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
  Logger.log(JSON.stringify(e));
 
+ var spreadSheet = e == undefined ? spreadSheet : e.source;
   // Determine what type of onChange event it is
   switch (e.changeType){
     case "INSERT_ROW":
       // Run logic to move row to top
-      updateNewRow(spreadSheet);  
+      // Un-hide so we can see all the data
+      hideRows(spreadSheet=spreadSheet, active=false);
+      updateNewRow(spreadSheet=spreadSheet);
+      updateSheet(e, spreadSheet=spreadSheet);
+      break;  
     case "EDIT":
-      // Update the rules
-      updateSheet(spreadSheet=spreadSheet);
-      break;    
+      return;
     default:
   }
 }
@@ -270,7 +273,7 @@ function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSp
     sheetConditionalFormatRules.push(genderConditionalFormatRule);
   });
   
-  // Hide gender, PSID. source
+  // Hide gender, PSID
   sheet.hideColumns(tableHeader.getColumnIndex('Gender')+1);
   sheet.hideColumns(tableHeader.getColumnIndex('PSID')+1);
   
@@ -300,7 +303,7 @@ function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadshe
   tableHeader = new TableHeader(spreadSheet);
   
   // Clear previous rules
-  var range = sheet.getDataRange().offset(sheet.getLastRow(), 0, sheet.getMaxRows() - sheet.getLastRow()).setDataValidation(null);
+  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).setDataValidation(null);
   
   // Dictionary to hold all of our rules
   var rules = {};
@@ -400,7 +403,7 @@ function highlightSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   if (!programSettings(spreadSheetID)['sheetSettings'][sheetName].highlightEnabled){ return; }
   
   // Clear previous highlighting
-  sheet.getRange(sheet.getLastRow(), sheet.getLastColumn()).setBackground("white");
+  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).setBackground("white");
   
   // Highlight the rows in red that contain a matching PSID and have a default status
   // Get the values from the sheet
@@ -430,7 +433,7 @@ function highlightSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   
 }
 
-function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet(), active=true){
   /* Hide rows with specific statuses */
   var spreadSheetID = spreadSheet.getId();
   var sheet = spreadSheet.getActiveSheet();
@@ -443,6 +446,7 @@ function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
 
   // Unhide all the rows
   sheet.unhideRow(range);
+  if (active == false) {return;}
 
   // Get a list of indexes where the row status is in hidden status
   // Filter the values and get all PSID where status is in hiddenStatuses
@@ -589,7 +593,7 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   updateConditionalFormattingRules(spreadSheet);
   updateDataValidationRules(spreadSheet);
   highlightSheet(spreadSheet);
-  hideRows(spreadSheet);
+  hideRows(spreadSheet=spreadSheet, active=true);
 }
 
 
