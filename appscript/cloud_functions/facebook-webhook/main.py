@@ -21,7 +21,7 @@ def index(request):
         project = 'eighth-vehicle-287322'
         queue = 'facebook-webhook'
         location = 'us-central1'
-        url = 'https://script.google.com/macros/s/AKfycbyntJvxGIZalY9QGLCv89H_OBSFdSJARHyhpWxJo4II_SpgSIxW/exec?event_type=' + request.args.get('event_type')
+        url = 'https://script.google.com/macros/s/AKfycbyntJvxGIZalY9QGLCv89H_OBSFdSJARHyhpWxJo4II_SpgSIxW/exec
         payload = request.get_json()
 
         # Construct the fully qualified queue name.
