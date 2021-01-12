@@ -460,7 +460,7 @@ def upload_blob_from_string(bucket_name, string, destination_blob_name):
   bucket = storage_client.bucket(bucket_name)
   blob = bucket.blob(destination_blob_name)
   blob.upload_from_string(string)
-  logging.info("File {} uploaded to {}.".format(string[0:10], destination_blob_name))
+  # logging.info("File {} uploaded to {}.".format(string[0:10], destination_blob_name))
 
 def upload_blob_from_html(bucket_name, html, destination_blob_name):
   """Uploads a file to the bucket."""

@@ -94,7 +94,7 @@ function doLogicPageMessages(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) 
       updateNewRow(spreadSheet);
       
       // Update the rules
-      updateSheet(spreadSheet);
+      updateSheet(spreadSheet=spreadSheet);
 
       // End
       break;    
@@ -577,11 +577,12 @@ function showSettings(){
     .showModalDialog(html, 'Program Settings');
 }
 
-function updateSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   // Update the sheet rules, formatting and, coloring
   // Called every time an edit happens
   // Return if no data
-  var sheet = spreadSheet.getActiveSheet()
+  var spreadSheet = e == undefined ? spreadSheet : e.source;
+  var sheet = spreadSheet.getActiveSheet();
   if (sheet.getDataRange().getValues().length == 1) {return;}
   updateConditionalFormattingRules(spreadSheet);
   updateDataValidationRules(spreadSheet);
