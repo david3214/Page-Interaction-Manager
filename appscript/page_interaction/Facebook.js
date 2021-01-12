@@ -4,8 +4,8 @@
  * https://developers.facebook.com/apps/
  */
 
-var CLIENT_ID = '177470164010190';
-var CLIENT_SECRET = '7fe710fe40f7d3a8bf74e8584510613f';
+var CLIENT_ID = '***REMOVED***';
+var CLIENT_SECRET = '***REMOVED***';
 
 /**
  * Authorizes and makes a request to the Facebook API.
