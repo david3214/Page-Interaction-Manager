@@ -80,9 +80,6 @@ function logRedirectUri() {
 }
 
 function getSelectedPages(){
-  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
-  var foo = PropertiesService.getDocumentProperties().getProperty('selectedPages')
-  Logger.log(`${foo}`);
   var selectedPages = JSON.parse(PropertiesService.getDocumentProperties().getProperty('selectedPages'));
   if (selectedPages != null){
     return selectedPages;
@@ -140,4 +137,3 @@ function saveFacebookPagesDetails(pageResults) {
   // Save results to doc properties
   PropertiesService.getDocumentProperties().setProperty('selectedPages', JSON.stringify(pageResults));
 }
-
