@@ -7,7 +7,6 @@ function testFunctions() {
 }
 
 function doGet( e ) {
-    Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc'); 
      QUnit.urlParams( e.parameter );
      QUnit.config({
           title: "QUnit for Google Apps Script - Test suite" // Sets the title of the test page.
@@ -21,7 +20,6 @@ function doGet( e ) {
 function testFacebookWebhookUpdate(){
     var web_app_url1 = `${ScriptApp.getService().getUrl()}?access_token=${ScriptApp.getOAuthToken()}`;
     var web_app_url = "https://script.google.com/macros/s/AKfycbyntJvxGIZalY9QGLCv89H_OBSFdSJARHyhpWxJo4II_SpgSIxW/dev?access_token=ya29.a0AfH6SMCMEiS8qfomf-WIWEtedCHW1m5VuY1_XpRXKNcHENHaWbPOy1DmZ1OQH0qTt8PufVElKJub3ZLvarl12bd-lZLwqatpJU3zDSgIE7yOWCY-7r6vkUArOBbbweydx1hZH9B0Pw5Y1PzyYVMVyr4sZPAVDe5uyPWE0VOJHs7cr4eAh6JYzJ_FORA5qkc";
-    Logger.log(`1: ${web_app_url1}\n 2:${web_app_url}`);
     QUnit.test("Facebook post interaction testing", function(assert) {
         test_data.sample_page_notifications_accept.forEach(function(data){
             var options = {

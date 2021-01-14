@@ -33,7 +33,7 @@ var defaultSettings = {
   initialRowLength : 1000,
   
   // Name of trigger functions
-  triggerNames : ['doLogicPageMessages', 'updateSheet'],
+  triggerNames : ['doLogicPageMessages', 'updateSheet', 'everyHour'],
 
   // Sheet Settings
   sheetSettings: {
@@ -86,8 +86,6 @@ function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSp
   Main function for the program
   Runs from the onChange trigger
   */
- Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
- Logger.log(JSON.stringify(e));
 
  var spreadSheet = e == undefined ? spreadSheet : e.source;
   // Determine what type of onChange event it is
@@ -476,6 +474,11 @@ function activateTriggers(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   .forSpreadsheet(spreadSheet.getId())
   .onEdit()
   .create();
+
+  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][2])
+  .timeBased()
+  .everyHours(1)
+  .create();
 }
 
 
@@ -585,8 +588,6 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   // Update the sheet rules, formatting and, coloring
   // Called every time an edit happens
   // Return if no data
-  Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
-  Logger.log(JSON.stringify(e));
   var spreadSheet = e == undefined ? spreadSheet : e.source;
   var sheet = spreadSheet.getActiveSheet();
   if (sheet.getDataRange().getValues().length == 1) {return;}
@@ -650,8 +651,6 @@ function doPost(e) {
 
 function doPost(request){
   // Load the stored data for the page
-  // Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
-  // Logger.log('Recieved Post request');
 
   try {
     var event = mode == "TEST" ? test_data.sample_page_notifications_accept.shift() : JSON.parse(request.postData.getDataAsString());
@@ -679,8 +678,6 @@ function doPost(request){
 
     var page_details = getPageDetails(page_id);
     if (!page_details) {throw {name : "ValueError", message : `Searched for ${page_id} but no result was found`}}
-    var spreadSheet = SpreadsheetApp.openById(page_details.google_sheets.id);
-    active_sheet = spreadSheet.setActiveSheet(spreadSheet.getSheetByName(eventNameMap[event_type]));
 
     // Process reactions
     if (event_type == "reaction"){
@@ -703,23 +700,45 @@ function doPost(request){
     var today  = new Date();
     today = today.toLocaleDateString("en-US")
 
-    // Send the results to the sheet
-    var resource = {
-      "majorDimension": "ROWS",
-      "values": [[today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""]]
-    }
+    // Send the results to the sheet as the user
     var spreadsheetId = page_details.google_sheets.id
-    var range = eventNameMap[event_type];
-    var optionalArgs = {valueInputOption: "USER_ENTERED", insertDataOption: "INSERT_ROWS"};
-    Sheets.Spreadsheets.Values.append(resource, spreadsheetId, range, optionalArgs);
+    var sheetName = eventNameMap[event_type];
+    var values = {"values":[[today, name, "", "", psid, facebookClue, "", "", "", "", messageOrReaction, "", ""]]};
+    var options = {
+      "headers": {
+           'Authorization': 'Bearer ' + page_details.google_sheets.token,
+           "Content-type": "application/json",
+       },
+      "method": "POST",
+      "payload": JSON.stringify(values) 
+    }
+    var url = "https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(spreadsheetId) + "/values/" + encodeURIComponent(sheetName) + ":append?insertDataOption=INSERT_ROWS&valueInputOption=USER_ENTERED";
+    var results = UrlFetchApp.fetch(url, options);
 
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
   } catch (error) {
-      Logger = BetterLog.useSpreadsheet('19AQj4ks3WlNfD7H1YDa718q5B31rRjcdG0IUFX91Glc');
-      Logger.severe(JSON.stringify(error));
-      Logger.severe(JSON.stringify(event));
+      Logger.log('error in doPost', (JSON.stringify(error), JSON.stringify(event)));
       return ContentService.createTextOutput(JSON.stringify({"status": "Error"}));
   }
+}
+
+function updateSheetToken(){
+  // Get the stored selected page id
+  var pageResults = JSON.parse(PropertiesService.getDocumentProperties().getProperty('selectedPages'));
+  
+  // Update the token
+  var scriptAuthToken = ScriptApp.getOAuthToken();
+  pageResults.data.forEach(page => page['google_sheets'].token = scriptAuthToken);
+
+  // Save to db
+  pageResults.data.forEach(page => setPageDetails(page.id, page));
+
+  // Save results to doc properties
+  PropertiesService.getDocumentProperties().setProperty('selectedPages', JSON.stringify(pageResults));
+}
+
+function everyHour(){
+  updateSheetToken();
 }
 
 // TODO Page Analytics, reduce all unique items count 
