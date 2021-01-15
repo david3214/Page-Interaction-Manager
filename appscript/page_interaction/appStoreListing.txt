@@ -12,3 +12,44 @@ youtube video
 https://www.youtube.com/embed/ZVR3l-mhIkU
 https://www.youtube.com/embed/iOzaXxNy16w
 
+description
+Summary:
+Member profile tool
+1-Open up Google Chrome
+2-Go to sheets and install the Missionary Tools plugin
+3-Open it up and login in, and start finding member profiles
+
+
+Initial Set Up:
+Open up Google Chrome, sign-out of all other accounts, sign into your area email. Note the number of your area email, you will need it later.
+
+Go to Google Sheets, make a new sheet called, "Members Facebook Profiles"
+
+In the toolbar click Add-ons -> get add-ons. Then search "Missionary Tools", click the icon and install the add-on.
+
+Return to Google Sheets and refresh the page. Then click Add-ons -> Missionary Tools -> Find Member Profiles
+
+Put in the information as you would type it as if you were logging into the church's website and Facebook's website. Proselyting Area ID is the number in your area email.
+
+Click submit -> If it doesn't do anything after 5 seconds or so retry in a private window. You should see something like "No bot created". Wait for 30 seconds. If it says authenticating with Facebook and then goes back to bot not created it has failed. Check if you put in the correct login info. If it doesn't work again, try with your companions login info. If it still doesn't work then please call me. If Facebook locks your account just hit continue. 
+
+Once it has 2 profiles in the queue click next 2 times. Right click the current tab and duplicate it, this will be used for manual entry.
+
+
+Operating the Program:
+To add a profile to the sheet, click the profile's name.
+
+If you want to find more information about a person you can open their name up in a new tab. If you have a mouse you can click with the scroll wheel. If nobody shows up for a result, try searching Facebook for their profile by hand. If you take out the middle name you might find them. Once you are done processing the profiles click reset to have your info deleted off the server.
+
+
+Multiple people:
+Share the sheet or you both can login, open the plugin and put in the login info and you both can start working through the sheet. Ie, you're in a quad then 4 people can go through your area book at once.
+
+
+Fixing Errors:
+If it doesn't work please let me know. 
+
+Recently, there were some changes to the program so that it takes longer to load. If you start it one day and come back the next day the program should be done loading.
+
+Tool 2: Page Interaction Manager
+This tool is for managing Facebook pages, create a sheet you want to use to sync your page to. In the addon menu click missionary tools -> page interaction manager -> create . Once it is done, click the popup on the side to sync with facebook. After that open the settings for the page interaction manager, scroll down, click the page you want to sync to this sheet, hit submit. Like something on the page and you should see a new row get created.
