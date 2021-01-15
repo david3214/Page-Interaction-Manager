@@ -137,3 +137,11 @@ function saveFacebookPagesDetails(pageResults) {
   // Save results to doc properties
   PropertiesService.getDocumentProperties().setProperty('selectedPages', JSON.stringify(pageResults));
 }
+
+function deleteFacebookPagesDetails(pageResults) {
+  // Remove results from db
+  pageResults.data.forEach(page => deletePageDetails(page.id));
+
+  // Remove from doc properties
+  PropertiesService.getDocumentProperties().deleteProperty('selectedPages');
+}

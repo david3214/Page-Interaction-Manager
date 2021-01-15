@@ -8,19 +8,19 @@
 <body>
     <div id="app">
         <h1>Program Settings</h1>
-        <textarea style="display: block;" cols="50" rows="25" v-model="programSettings" placeholder="Adjust program settings here"></textarea>
+        <textarea style="display: block; margin-bottom:10px;" cols="50" rows="25" v-model="programSettings" placeholder="Adjust program settings here"></textarea>
         <button class="btn btn-primary" @click="saveSettings">Save Settings</button>
         <br>
         <h1>Facebook Settings</h1>
-        <select v-model="selected">
-            <option disabled value="">Please select a page</option>
-            <option v-for="page in facebookPages" v-bind:value="[page]"
-            >{{ page.name }}</option>
-          </select>
-          <button class="btn btn-primary" @click="submitFacebookPageSelection">Submit</button>
-          <h3>This sheet is connected the following, </h3>
-          <p v-for="page in selected">{{ page.name }}<br></p>
-        </div>
+        <label for="page-select">Select a page:</label>
+        <select v-model="selected" id="page-select">
+            <option v-if="!facebookPages.length" disabled selected="selected">Select a page</option>
+            <option v-for="page in selected" v-bind:value="[page]" disabled selected>{{ page.name }}</option>
+            <option v-for="page in facebookPages" v-bind:value="[page]">{{ page.name }}</option>
+        </select>
+        <button class="btn btn-primary" @click="submitFacebookPageSelection">Submit</button>
+        <button class="btn btn-danger" @click="removeFacebookPageSelection">Delete</button>
+    </div>
 
       <script>
         new Vue({
@@ -44,6 +44,11 @@
                 submitFacebookPageSelection: function(){
                     var pageResults = {'data':this.selected};
                     google.script.run.withSuccessHandler().saveFacebookPagesDetails(pageResults);
+                },
+                removeFacebookPageSelection: function(){
+                    var pageResults = {'data':this.selected};
+                    google.script.run.withSuccessHandler().deleteFacebookPagesDetails(pageResults);
+                    this.selected = [];
                 },
                 onSuccessFacebook: function(pageResults){
                     this.facebookPages = pageResults.data;
