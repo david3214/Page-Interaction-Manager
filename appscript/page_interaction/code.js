@@ -708,30 +708,87 @@ function updateSheetToken(){
 function everyHour(){
   updateSheetToken();
 }
-/**
-// Show the page
 
 // calculate the page data
-function analyzeSheet(){
-  var data = [[]];
+function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  // Get initial data
+  var sheet = spreadSheet.getActiveSheet();
+  var sheetName = sheet.getName();
+  var spreadSheetID = spreadSheet.getId();
+  var values = sheet.getDataRange().getValues();
+  tableHeader = new TableHeader(spreadSheet);
+  values.shift()
+  const PSID = tableHeader.getColumnIndex('PSID');
+  const count = tableHeader.getColumnIndex('Counter');
+  const status = tableHeader.getColumnIndex('Status');
+  const source = tableHeader.getColumnIndex('Source');
+  
+  //example for accessing settings if (!programSettings(spreadSheetID)['sheetSettings'][sheetName].sortingEnabled){return;}
+
   var results = {
-    "status": {},
+    "statuses": {},
+    "PSID": [],
+    "uniquePeople": 0,
+    "members": 0,
+    "nonMembers": 0,
+    "bestNonMemberPosts":{},
+    "bestMemberPosts": {}
   };
-  var header = data.shift();
 
   // Clean data
-  data.forEach()
-  // Count and sumarize
+  // Get the most recent and unique rows by PSID
+  var set = new Set();
+  var cleanedData = values.filter(row => {
+      if (set.has(row[PSID])){ return false; } 
+      else { set.add(row[PSID]); return true; }
+  });
+  results.PSID = Array.from(set);
+  
+  results.uniquePeople = set.size   // Count the number of unique people
+  // Count the number of members and non members
+  // Figure out the best non member and member post
 
-  data.forEach(row){
-    // Count the statuses
-    results.status[row['Status']] += 1;
+  cleanedData.forEach(row => {
+    results.statuses[row[status]] = results.statuses[row[status]] == null ? 0 : results.statuses[row[status]];
+    results.statuses[row[status]] += 1;
 
-
+    if (row[status] == 'Member'){
+      results.members += 1;
+      results.bestMemberPosts[row[source]] = results.bestMemberPosts[row[source]] == null ? 0 : results.bestMemberPosts[row[source]];
+      results.bestMemberPosts[row[source]] += 1;
+    }
+    else {
+      results.nonMembers += 1;
+      results.bestNonMemberPosts[row[source]] = results.bestNonMemberPosts[row[source]] == null ? 0 : results.bestNonMemberPosts[row[source]];
+      results.bestNonMemberPosts[row[source]] += 1;
+    }
+  });
+  //Sort the bests posts
+  // Create items array
+  function sortByValue(dict){
+    var items = Object.keys(dict).map(function(key) {
+      return [key, dict[key]];
+    });
+    // Sort the array based on the second element
+    items.sort(function(first, second) {
+      return second[1] - first[1];
+    });
+    return items;
   }
-
+  results.bestMemberPosts = sortByValue(results.bestMemberPosts);
+  results.bestNonMemberPosts = sortByValue(results.bestNonMemberPosts);
+  
+  return results
 }
 
+function showAnalytics(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
+  if (mode == "TEST") {return;}
+  var template = HtmlService.createTemplateFromFile('page_interaction/analytics');
+  var page = template.evaluate().setTitle("Analytics");
+  SpreadsheetApp.getUi().showSidebar(page);
+}
+
+/**
 [["Date","Name","Gender","Profile Link","PSID","Source","Assignment","Status","@Sac","On Date","Reaction","Notes","Counter"],
 ["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_213783213625929","Ward 1","missionary",false,false,"👍","",1],
 ["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_216371783367072","Ward 1","missionary",false,false,"👍","",1],
