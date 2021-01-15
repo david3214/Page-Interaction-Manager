@@ -604,19 +604,18 @@ function showFacebookSidebar() {
   if (!facebookService.hasAccess()) {
     var authorizationUrl = facebookService.getAuthorizationUrl();
     var template = HtmlService.createTemplate(
-        '<a href="<?= authorizationUrl ?>" target="_blank">Authorize</a>. ' +
-        'Click the link to connect pages from Facebook.');
+      `<div class="auth-container"> 
+        Click the button to connect pages from Facebook.
+        <a target="_blank" id="facebook-auth-link" href="<?= authorizationUrl ?>">
+          <img id="facebook-sign-in-button" style="padding:10px; width: 250px; display:block; margin:auto;" src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/continue-with-facebook.png"></img>
+        </a>
+      </div>`);
     template.authorizationUrl = authorizationUrl;
     var page = template.evaluate().setTitle("Facebook Authentication");
     SpreadsheetApp.getUi().showSidebar(page);
   } else {
   // ... What to do if they are authenticated
-  // Go get all the page details
-  // Populate a dropdown with the page details
-  // select the page you want to link to this sheet
-  // press button to save the selected sheeting
-
-  var template = HtmlService.createTemplate('You are authorized\n');
+  var template = HtmlService.createTemplate('You are authorized, go to Page Interaction Manager settings to pick a page for the sheet.\n');
 
   var page = template.evaluate().setTitle("Facebook Authentication");
   SpreadsheetApp.getUi().showSidebar(page);
@@ -781,3 +780,5 @@ function analyzeSheet(){
 
 
 // TODO remove page details by page_id in settings. Dropdown -> pages -> delete those page_id's deletePageDetails(page_id);
+
+// TODO Bug fix, all stauses should all update to the last updated one. Get the event, update all values to new status / new settings
