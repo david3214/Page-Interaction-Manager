@@ -24,10 +24,6 @@ var defaultSettings = {
   
   // Dictionary to map the ads ids to names
   adIDMap : {"1234567890": "Ad Name here"},
-  // Read the IDs set by the user some how
-  
-  // Dictionary to map the area ids to area names
-  areaIDs : {'123456789': 'Area Name Here'},
   
   // Initial row length
   initialRowLength : 1000,
@@ -622,32 +618,6 @@ function showFacebookSidebar() {
   }
 }
 
-function showDebugPannel(){
-  var data = getAllPageDetails();
-  var foo = ""
-  for (var key in data) {
-    foo = foo + `Key: ${key}, Value: ${data[key]}` + '\n';
-  }
-  var template = HtmlService.createTemplate(
-    'You are authorized\n'
-    + foo
-  );
-  var page = template.evaluate();
-  SpreadsheetApp.getUi().showSidebar(page);
-}
-
-/**
- * Webhook that can handle the event from Facebook
- */
-/*
-function doPost(e) {
-  e.method = "POST";
-  return ContentService.createTextOutput(JSON.stringify(e)).setMimeType(
-    ContentService.MimeType.JSON
-  );
-}
-*/
-
 function doPost(request){
   // Load the stored data for the page
 
@@ -659,7 +629,6 @@ function doPost(request){
     var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
     var page_id = undefined;
     var page_details = undefined;
-    var active_sheet = undefined;
     if (event_type == "reaction"){
       // Classify the incoming event
       // Reject stuff we aren't interested in
