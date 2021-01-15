@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>Page Analytics</h1>
+        <h3>Status Summary</h3>
+        <p v-for="(value, name) in results.statuses">{{ name }} : {{ value }}</p> 
+        <h3>Posts</h3>
+        <table>
+            <tbody>
+                <thead>
+                    <th>Non members</th><th>Post link</th>
+                </thead>
+                <tr v-for="post in results.bestNonMemberPosts">
+                    <td>{{ post[1] }}</td><td><a v-bind:href="post[0]">{{ post[0] }}</a></td> 
+                </tr>
+            </tbody>
+        </table>
+        <h3>Posts</h3>
+        <table>
+            <tbody>
+                <thead>
+                    <th>Members</th><th>Post link</th>
+                </thead>
+                <tr v-for="post in results.bestMemberPosts">
+                    <td>{{ post[1] }}</td><td><a v-bind:href="post[0]">{{ post[0] }}</a></td> 
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+      <script>
+        new Vue({
+            el: '#app',
+            data: {
+                results: {},
+            },
+            methods: {
+                onSuccess: function(results){
+                    this.results = results;
+                },
+            },
+            created: function(){
+                google.script.run.withSuccessHandler(this.onSuccess).analyzeSheet();
+            },
+        })
+        </script>
+</body>
+
+</html>

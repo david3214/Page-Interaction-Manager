@@ -13,6 +13,7 @@ function onOpen() {
       //.addSeparator()
       .addSubMenu(SpreadsheetApp.getUi().createMenu('Page interaction manager')
             .addItem('Create', 'setUpSheet')
+            .addItem('Analytics', 'showAnalytics')
             .addItem('Settings', 'showSettings'))
       .addToUi();
 }
