@@ -15,7 +15,7 @@
         <label for="page-select">Select a page:</label>
         <select v-model="selected" id="page-select">
             <option v-if="!facebookPages.length" disabled selected="selected">Select a page</option>
-            <option v-for="page in selected" v-bind:value="[page]" disabled selected>{{ page.name }}</option>
+            <option v-for="page in selected" v-bind:value="[page]" disabled selected>Selected: {{ page.name }}</option>
             <option v-for="page in facebookPages" v-bind:value="[page]">{{ page.name }}</option>
         </select>
         <button class="btn btn-primary" @click="submitFacebookPageSelection">Submit</button>

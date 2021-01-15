@@ -113,3 +113,10 @@ function test_updateNewRow(){
 
     updateNewRow(spreadSheet);
 }
+
+function test_analyzeSheet(){
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    var results = analyzeSheet(spreadSheet);
+    Logger.log(results)
+}
