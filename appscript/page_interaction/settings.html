@@ -44,7 +44,6 @@
             },
             methods: {
                 saveProgramSettings: function(){
-                    // google.script.this.programSettings
                     google.script.run.withSuccessHandler().saveProgramSettings(JSON.parse(this.programSettings));
                     google.script.run.withSuccessHandler().updateSheet();
                     // google.script.host.close();
