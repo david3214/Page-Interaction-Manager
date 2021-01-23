@@ -115,7 +115,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   var doMerge = programSettings(spreadSheetID)['sheetSettings'][sheetName].mergingEnabled;
 
   // Get range of all data
-  var range = sheet.getDataRange().getValues().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow() - programSettings(spreadSheetID).headerRowNumber);
+  var range = sheet.getDataRange().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow() - programSettings(spreadSheetID).headerRowNumber);
   var values = range.getValues();
   
   // Read in the table header translate to in
