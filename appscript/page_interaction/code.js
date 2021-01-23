@@ -8,10 +8,10 @@ var defaultSettings = {
   adLikesStatus : ["Select", "Pending", "Not Reached", "Left on Read", "Rejected", "Do Not Contact", "Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching", "Previously Contacted"],
   
   // List of messages status
-  messagesStatus : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
+  messagesStatus : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Missionary", "Non Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
   
   // Statuses to hide
-  hiddenStatuses : ["Member", "Do Not Contact", "Rejected"],
+  hiddenStatuses : ["Member", "Missionary", "Do Not Contact", "Rejected"],
 
   // Dictionary to map reactions
   reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
