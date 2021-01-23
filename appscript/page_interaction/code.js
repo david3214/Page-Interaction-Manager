@@ -270,7 +270,7 @@ function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSp
   // Hide Gender, PSID, Profile Link 
   sheet.hideColumns(tableHeader.getColumnIndex('Gender')+1);
   sheet.hideColumns(tableHeader.getColumnIndex('PSID')+1);
-  // sheet.hideColumns(tableHeader.getColumnIndex('Profile Link')+1);
+  sheet.hideColumns(tableHeader.getColumnIndex('Profile Link')+1);
   
   // Make conditional formatting rule to give the Assignments different colors
   programSettings(spreadSheetID).assignmentMap.forEach(function(assignmentPair){
