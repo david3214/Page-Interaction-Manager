@@ -9,7 +9,7 @@
     <div id="app">
         <h1>Program Settings</h1>
         <textarea style="display: block; margin-bottom:10px;" cols="50" rows="25" v-model="programSettings" placeholder="Adjust program settings here"></textarea>
-        <button class="btn btn-primary" @click="saveSettings">Save Settings</button>
+        <button class="btn btn-primary" @click="saveProgramSettings">Save Settings</button>
         <br>
         <h1>Facebook Settings</h1>
         <label for="page-select">Select a page:</label>
@@ -20,6 +20,14 @@
         </select>
         <button class="btn btn-primary" @click="submitFacebookPageSelection">Submit</button>
         <button class="btn btn-danger" @click="removeFacebookPageSelection">Delete</button>
+        <div>
+            <h1>Profile Link Tool</h1>
+            <p>Copy the program input to input file</p>
+            <textarea style="display: block; margin-bottom:10px;" v-model="scraperInput"></textarea>
+            <p>Copy the program output text file here</p>
+            <textarea style="display: block; margin-bottom:10px;" v-model="profileList"></textarea>            
+            <button class="btn btn-primary" @click="updateSheetProfileLinks">Submit</button>
+        </div>
     </div>
 
       <script>
@@ -28,16 +36,18 @@
             data: {
                 programSettings: '',
                 facebookPages:[],
-                selected:[]
+                selected:[],
+                scraperInput: '',
+                profileList: ''
             },
             methods: {
-                saveSettings: function(){
+                saveProgramSettings: function(){
                     // google.script.this.programSettings
-                    google.script.run.withSuccessHandler().saveSettings(JSON.parse(this.programSettings));
+                    google.script.run.withSuccessHandler().saveProgramSettings(JSON.parse(this.programSettings));
                     google.script.run.withSuccessHandler().updateSheet();
                     // google.script.host.close();
                 },
-                onSuccess: function(settings){
+                updateProgramSettings: function(settings){
                     // Request settings from google
                     this.programSettings = JSON.stringify(settings, null, 2)
                 },
@@ -50,17 +60,26 @@
                     google.script.run.withSuccessHandler().deleteFacebookPagesDetails(pageResults);
                     this.selected = [];
                 },
-                onSuccessFacebook: function(pageResults){
+                updateAvailibleFacebookPages: function(pageResults){
                     this.facebookPages = pageResults.data;
                 },
-                onSuccessSelected: function(selectedPages){
+                updateSelectedPage: function(selectedPages){
                     this.selected = selectedPages.data;
-                }
+                },
+                updateSheetProfileLinks: function(){
+                    var profileList = JSON.parse(this.profileList);
+                    google.script.run.withSuccessHandler().updateProfiles(profileList);
+                    this.profileList = '';
+                },
+                updateScraperInput: function(scraperInput){
+                    this.scraperInput = JSON.stringify(scraperInput);
+                },
             },
             created: function(){
-                google.script.run.withSuccessHandler(this.onSuccess).programSettings();
-                google.script.run.withSuccessHandler(this.onSuccessFacebook).getFacebookPages();
-                google.script.run.withSuccessHandler(this.onSuccessSelected).getSelectedPages();
+                google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();
+                google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).getFacebookPages();
+                google.script.run.withSuccessHandler(this.updateSelectedPage).getSelectedPages();
+                google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
             },
         })
         </script>
