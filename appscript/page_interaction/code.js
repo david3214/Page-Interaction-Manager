@@ -267,9 +267,10 @@ function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSp
     sheetConditionalFormatRules.push(genderConditionalFormatRule);
   });
   
-  // Hide gender, PSID
+  // Hide Gender, PSID, Profile Link 
   sheet.hideColumns(tableHeader.getColumnIndex('Gender')+1);
   sheet.hideColumns(tableHeader.getColumnIndex('PSID')+1);
+  sheet.hideColumns(tableHeader.getColumnIndex('Profile Link')+1);
   
   // Make conditional formatting rule to give the Assignments different colors
   programSettings(spreadSheetID).assignmentMap.forEach(function(assignmentPair){
@@ -731,8 +732,8 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
     "uniquePeople": 0,
     "members": 0,
     "nonMembers": 0,
-    "bestNonMemberPosts":{},
-    "bestMemberPosts": {}
+    "posts": {},
+    "sortedPosts": []
   };
 
   // Clean data
@@ -752,22 +753,17 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
     results.statuses[row[status]] = results.statuses[row[status]] == null ? 0 : results.statuses[row[status]];
     results.statuses[row[status]] += 1;
 
-    if (row[status] == 'Member'){
-      results.members += 1;
-      results.bestMemberPosts[row[source]] = results.bestMemberPosts[row[source]] == null ? 0 : results.bestMemberPosts[row[source]];
-      results.bestMemberPosts[row[source]] += 1;
-    }
-    else {
-      results.nonMembers += 1;
-      results.bestNonMemberPosts[row[source]] = results.bestNonMemberPosts[row[source]] == null ? 0 : results.bestNonMemberPosts[row[source]];
-      results.bestNonMemberPosts[row[source]] += 1;
-    }
+    results.posts[row[source]] = results.posts[row[source]] == null ? {} : results.posts[row[source]]
+    results.posts[row[source]][row[status]] = results.posts[row[source]][row[status]] == null ? 0 : results.posts[row[source]][row[status]];
+    results.posts[row[source]][row[status]] += 1
+
   });
-  //Sort the bests posts
+  // Sort the bests posts
   // Create items array
   function sortByValue(dict){
     var items = Object.keys(dict).map(function(key) {
-      return [key, dict[key]];
+      var sum = Object.values(dict[key]).reduce((a, b) => a + b, 0)
+      return [key, sum];
     });
     // Sort the array based on the second element
     items.sort(function(first, second) {
@@ -775,9 +771,13 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
     });
     return items;
   }
-  results.bestMemberPosts = sortByValue(results.bestMemberPosts);
-  results.bestNonMemberPosts = sortByValue(results.bestNonMemberPosts);
   
+  results.sortedPosts = sortByValue(results.posts).map(function(row){
+    var obj = {};
+    obj[row[0]] = results.posts[row[0]];
+    return obj;
+  });
+  Logger.log(JSON.stringify(results));
   return results
 }
 
