@@ -723,8 +723,6 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   const count = tableHeader.getColumnIndex('Counter');
   const status = tableHeader.getColumnIndex('Status');
   const source = tableHeader.getColumnIndex('Source');
-  
-  //example for accessing settings if (!programSettings(spreadSheetID)['sheetSettings'][sheetName].sortingEnabled){return;}
 
   var results = {
     "statuses": {},
@@ -749,7 +747,7 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   // Count the number of members and non members
   // Figure out the best non member and member post
 
-  cleanedData.forEach(row => {
+  values.forEach(row => {
     results.statuses[row[status]] = results.statuses[row[status]] == null ? 0 : results.statuses[row[status]];
     results.statuses[row[status]] += 1;
 
