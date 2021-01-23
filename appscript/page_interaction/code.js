@@ -4,11 +4,8 @@ var defaultSettings = {
   // Program variables
   headerRowNumber: 1,
   
-  // List of ad likes status
-  adLikesStatus : ["Select", "Pending", "Not Reached", "Left on Read", "Rejected", "Do Not Contact", "Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching", "Previously Contacted"],
-  
   // List of messages status
-  messagesStatus : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Missionary", "Non Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
+  statusList : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Missionary", "Non Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
   
   // Statuses to hide
   hiddenStatuses : ["Member", "Missionary", "Do Not Contact", "Rejected"],
@@ -23,10 +20,7 @@ var defaultSettings = {
   genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
   
   // Dictionary to map the ads ids to names
-  adIDMap : {"1234567890": "Ad Name here"},
-  
-  // Initial row length
-  initialRowLength : 1000,
+  //adIDMap : {"1234567890": "Ad Name here"},
   
   // Name of trigger functions
   triggerNames : ['doLogicPageMessages', 'updateSheet', 'everyHour'],
@@ -325,7 +319,7 @@ function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadshe
     // Make data validation rule for Status
     var enforceStatus = SpreadsheetApp.newDataValidation();
     
-    enforceStatus.requireValueInList(programSettings(spreadSheetID).messagesStatus, true);
+    enforceStatus.requireValueInList(programSettings(spreadSheetID).statusList, true);
 
     // Set the status range rule andd apply the rule
     sheet.getRange(2, tableHeader.getColumnIndex('Status')+1, sheet.getLastRow() - 1).setDataValidation(enforceStatus);
