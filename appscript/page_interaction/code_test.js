@@ -120,3 +120,18 @@ function test_analyzeSheet(){
     var results = analyzeSheet(spreadSheet);
     Logger.log(results)
 }
+
+function test_getScraperInput(){
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    var results = getScraperInput(spreadSheet);
+    Logger.log(results)
+}
+
+function test_updateProfiles(){
+    var test_data = {"Echo Booth": "https://www.facebook.com/echo.booth.5", "Bird Torres": "https://www.facebook.com/covidtbird", "Amy Allen Anderson": "https://www.facebook.com/amy.a.anderson.9", "Sandy Sage Carr": "https://www.facebook.com/sandy.s.carr.9", "Robin Newton": "https://www.facebook.com/robin.newton.3152", "Brian Pulliam": "https://www.facebook.com/brian.pulliam.965", "Morgan Julie": "https://www.facebook.com/morgan.julie.92754", "Melodie Ann": "https://www.facebook.com/melodieannie628", "Mele Mounga Lose Kauvaka": "https://www.facebook.com/moungakauvaka", "Joann Donley": "https://www.facebook.com/joann.donley.1"}
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    var results = updateProfiles(test_data, spreadSheet);
+    Logger.log(results)
+}
