@@ -49,7 +49,7 @@ var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().ge
   return settings;
 };
 
-function saveSettings(settings, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function saveProgramSettings(settings, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Write the settings to the database 
    * Takes an active spreadSheet
   */
@@ -115,7 +115,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   var doMerge = programSettings(spreadSheetID)['sheetSettings'][sheetName].mergingEnabled;
 
   // Get range of all data
-  var range = sheet.getDataRange().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow() - programSettings(spreadSheetID).headerRowNumber);
+  var range = sheet.getDataRange().getValues().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow() - programSettings(spreadSheetID).headerRowNumber);
   var values = range.getValues();
   
   // Read in the table header translate to in
@@ -270,7 +270,7 @@ function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSp
   // Hide Gender, PSID, Profile Link 
   sheet.hideColumns(tableHeader.getColumnIndex('Gender')+1);
   sheet.hideColumns(tableHeader.getColumnIndex('PSID')+1);
-  sheet.hideColumns(tableHeader.getColumnIndex('Profile Link')+1);
+  // sheet.hideColumns(tableHeader.getColumnIndex('Profile Link')+1);
   
   // Make conditional formatting rule to give the Assignments different colors
   programSettings(spreadSheetID).assignmentMap.forEach(function(assignmentPair){
@@ -495,7 +495,7 @@ function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
   */
   // Save default settings to sheet
-  saveSettings(defaultSettings, spreadSheet);
+  saveProgramSettings(defaultSettings, spreadSheet);
 
   // Clear any old possible sheets 
   tearDownSheet(spreadSheet);
@@ -683,7 +683,7 @@ function doPost(request){
     }
     var url = "https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(spreadsheetId) + "/values/" + encodeURIComponent(sheetName) + ":append?insertDataOption=INSERT_ROWS&valueInputOption=USER_ENTERED";
     var results = UrlFetchApp.fetch(url, options);
-
+    
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
   } catch (error) {
       Logger.log('error in doPost', (JSON.stringify(error), JSON.stringify(event)));
@@ -777,7 +777,6 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
     obj[row[0]] = results.posts[row[0]];
     return obj;
   });
-  Logger.log(JSON.stringify(results));
   return results
 }
 
@@ -786,6 +785,45 @@ function showAnalytics(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   var template = HtmlService.createTemplateFromFile('page_interaction/analytics');
   var page = template.evaluate().setTitle("Analytics");
   SpreadsheetApp.getUi().showSidebar(page);
+}
+
+function getScraperInput(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  // Creat a dict of posts and the names of the missing links
+  var sheet = spreadSheet.getActiveSheet();
+  var values = sheet.getDataRange().getValues();
+  tableHeader = new TableHeader(spreadSheet);
+  var header = values.shift();
+  const profileLink = tableHeader.getColumnIndex('Profile Link');
+  const name = tableHeader.getColumnIndex('Name');
+  const source = tableHeader.getColumnIndex('Source');
+
+  var programInput = {};
+  values.forEach(function(row){
+    if (row[profileLink] == ""){
+      programInput[row[source]] = programInput[row[source]] == null ? [] : programInput[row[source]];
+      programInput[row[source]].push(row[name]);
+    }
+  })
+  return programInput;
+}
+
+function updateProfiles(profileList, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  var sheet = spreadSheet.getActiveSheet();
+  var values = sheet.getDataRange().getValues();
+  tableHeader = new TableHeader(spreadSheet);
+  var header = values.shift();
+  const profileLink = tableHeader.getColumnIndex('Profile Link');
+  const name = tableHeader.getColumnIndex('Name');
+
+  values.forEach(function(row){
+    if (row[profileLink] == ""){
+      row[profileLink] = profileList[row[name]];
+    }
+  })
+
+  values.unshift(header);
+  sheet.getDataRange().setValues(values);
+
 }
 
 /**
@@ -801,9 +839,6 @@ function showAnalytics(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
 ["2021-01-10T06:00:00.000Z","Rich Bludorn","male","","3884149271650207","https://facebook.com/105691394435112_217704479900469","Ward 1","Member",false,false,"👍","",1],
 ["2021-01-10T06:00:00.000Z","Lori Jacobson","female","","3456223204487022","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1]]
  */
-
-// 
-
 
 // TODO remove page details by page_id in settings. Dropdown -> pages -> delete those page_id's deletePageDetails(page_id);
 
