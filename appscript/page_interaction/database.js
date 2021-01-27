@@ -76,6 +76,23 @@ function getPreference(sheet_id) {
     return preference;
 }
 
+/**
+ * Get all page_details for a page_id
+ */
+function getAllPreference() {
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var stmt = conn.prepareStatement('SELECT * '
+        + 'FROM preferences');
+    results = stmt.executeQuery();
+    var preference = {};
+    while (results.next()) {
+      preference[results.getString(1)] = JSON.parse(results.getString(2));
+    }
+    results.close();
+    stmt.close();
+    conn.close();
+    return preference;
+}
 
 /**
  * Delete preferences for a sheet_id
@@ -128,7 +145,7 @@ function getPageDetails(page_id) {
 /**
  * Get all page_details for a page_id
  */
-function getAllPageDetails(page_id) {
+function getAllPageDetails() {
     var conn = Jdbc.getConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('SELECT * '
         + 'FROM page_data');
