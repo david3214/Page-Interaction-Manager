@@ -15,12 +15,15 @@ RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requ
    && rm -rf /tmp/pip-tmp
 RUN pip install gunicorn[eventlet]
 
+COPY eighth-vehicle-287322-e7d0846e23f8.json /
+
 RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
 RUN chmod +x cloud_sql_proxy
 RUN sudo mkdir /cloudsql; sudo chmod 777 /cloudsql
-RUN cd / && ./cloud_sql_proxy -dir=/cloudsql -instances=eighth-vehicle-287322:us-central1:datab -credential_file=/workspaces/missionary-tools/appscript/***REMOVED***s/webserver-authentication/eighth-vehicle-287322-e7d0846e23f8.json &
+RUN cd / && ./cloud_sql_proxy -dir=/cloudsql -instances=eighth-vehicle-287322:us-central1:datab -credential_file=/eighth-vehicle-287322-e7d0846e23f8.json &
 
-CMD gunicorn -b :$PORT main:app --worker-class eventlet --workers 3
+COPY . /app/
+CMD cd /app && gunicorn -b :$PORT main:app --worker-class eventlet --workers 3
 
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
