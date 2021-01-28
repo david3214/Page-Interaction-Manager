@@ -1,7 +1,7 @@
 # See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.155.1/containers/python-3/.devcontainer/base.Dockerfile
 
 # [Choice] Python version: 3, 3.9, 3.8, 3.7, 3.6
-ARG VARIANT="3"
+ARG VARIANT=3.6
 FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
 
 # [Option] Install Node.js
@@ -20,6 +20,7 @@ ENV DB_PASS=***REMOVED***
 ENV DB_NAME=page_interaction_manager
 ENV CLOUD_SQL_CONNECTION_NAME=eighth-vehicle-287322:us-central1:datab
 ENV PORT=8080
+ENV OAUTHLIB_INSECURE_TRANSPORT=1
 
 COPY . /app/
 CMD cd /app && gunicorn -b :$PORT main:app --worker-class eventlet --workers 3
