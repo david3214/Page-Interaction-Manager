@@ -32,7 +32,7 @@ app.secret_key = 'REPLACE ME - this value is here as a placeholder.'
 
 def init_connection_engine():
     db_config = {
-        "pool_size": 1,
+        "pool_size": 5,
         "pool_timeout": 30,  # 30 seconds
         "pool_recycle": 1800,  # 30 minutes
 
@@ -126,12 +126,12 @@ def insert_user(id, id_token):
     return True
 
 @app.route('/')
-def index(request):
+def index():
   return print_index_table()
 
 
 @app.route('/test')
-def test_api_request(request):
+def test_api_request():
   if 'credentials' not in flask.session:
     return flask.redirect('authorize')
   
@@ -153,7 +153,7 @@ def test_api_request(request):
 
 
 @app.route('/authorize')
-def authorize(request):
+def authorize():
   # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
   flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
       CLIENT_SECRETS_FILE, scopes=SCOPES)
@@ -178,7 +178,7 @@ def authorize(request):
 
 
 @app.route('/oauth2callback')
-def oauth2callback(request):
+def oauth2callback():
   # Specify the state when creating the flow in the callback so that it can
   # verified in the authorization server response.
   state = flask.session['state']
@@ -206,7 +206,7 @@ def oauth2callback(request):
 
 
 @app.route('/revoke')
-def revoke(request):
+def revoke():
   if 'credentials' not in flask.session:
     return ('You need to <a href="/authorize">authorize</a> before ' +
             'testing the code to revoke credentials.')
@@ -226,7 +226,7 @@ def revoke(request):
 
 
 @app.route('/clear')
-def clear_credentials(request):
+def clear_credentials():
   if 'credentials' in flask.session:
     del flask.session['credentials']
   return ('Credentials have been cleared.<br><br>' +
@@ -241,7 +241,7 @@ def credentials_to_dict(credentials):
           'client_secret': credentials.client_secret,
           'scopes': credentials.scopes}
 
-def print_index_table(request):
+def print_index_table():
   return ('<table>' +
           '<tr><td><a href="/test">Test an API request</a></td>' +
           '<td>Submit an API request and see a formatted JSON response. ' +
