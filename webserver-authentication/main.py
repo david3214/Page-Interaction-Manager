@@ -126,7 +126,7 @@ def insert_user(id, id_token):
     return True
 
 @app.route('/')
-def index():
+def index(request):
   return print_index_table()
 
 
@@ -153,7 +153,7 @@ def test_api_request(request):
 
 
 @app.route('/authorize')
-def authorize():
+def authorize(request):
   # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
   flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
       CLIENT_SECRETS_FILE, scopes=SCOPES)
@@ -178,14 +178,14 @@ def authorize():
 
 
 @app.route('/oauth2callback')
-def oauth2callback():
+def oauth2callback(request):
   # Specify the state when creating the flow in the callback so that it can
   # verified in the authorization server response.
   state = flask.session['state']
 
   flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
       CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
-  flow.redirect_uri = flask.url_for('oauth2callback', _external=True)
+  flow.redirect_uri = flask.url_for('oauth2callback', _external=True, _scheme='https')
 
   # Use the authorization server's response to fetch the OAuth 2.0 tokens.
   authorization_response = flask.request.url
@@ -206,7 +206,7 @@ def oauth2callback():
 
 
 @app.route('/revoke')
-def revoke():
+def revoke(request):
   if 'credentials' not in flask.session:
     return ('You need to <a href="/authorize">authorize</a> before ' +
             'testing the code to revoke credentials.')
@@ -226,7 +226,7 @@ def revoke():
 
 
 @app.route('/clear')
-def clear_credentials():
+def clear_credentials(request):
   if 'credentials' in flask.session:
     del flask.session['credentials']
   return ('Credentials have been cleared.<br><br>' +
@@ -241,7 +241,7 @@ def credentials_to_dict(credentials):
           'client_secret': credentials.client_secret,
           'scopes': credentials.scopes}
 
-def print_index_table():
+def print_index_table(request):
   return ('<table>' +
           '<tr><td><a href="/test">Test an API request</a></td>' +
           '<td>Submit an API request and see a formatted JSON response. ' +
@@ -267,7 +267,7 @@ if __name__ == '__main__':
   # When running locally, disable OAuthlib's HTTPs verification.
   # ACTION ITEM for developers:
   #     When running in production *do not* leave this option enabled.
-  #os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+  os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
   # Specify a hostname and port that are set as a valid redirect URI
   # for your API project in the Google API Console.
