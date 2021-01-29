@@ -135,3 +135,9 @@ function test_updateProfiles(){
     var results = updateProfiles(test_data, spreadSheet);
     Logger.log(results)
 }
+
+function test_getRefreshToken(){
+    var userId = "112522451767020538355";
+    var refresh_token = getRefreshToken(userId);
+    Logger.log(refresh_token)
+}
