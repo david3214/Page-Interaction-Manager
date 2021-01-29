@@ -113,14 +113,15 @@ function getFacebookPages(){
  * Stores the page data in the cloud sql
  */
 function saveFacebookPagesDetails(pageResults) {
-  // Get the access token for the script
-  var scriptAuthToken = ScriptApp.getOAuthToken();
+  // Get the refresh token for the script
+  var userId = getEffectiveUserId();  
+  var refreshToken = getRefreshToken(userId);
 
   // Get the spreadsheet id
   var spreadSheetId = SpreadsheetApp.getActive().getId();
   
   // Zip together the appropriate keys
-  pageResults.data.forEach(page => page['google_sheets'] = {"id": spreadSheetId, "token": scriptAuthToken});
+  pageResults.data.forEach(page => page['google_sheets'] = {"id": spreadSheetId, "token": '', 'refresh_token': refreshToken});
   
   // Subscribe each page to webhook updates
   pageResults.data.forEach(function(page){
