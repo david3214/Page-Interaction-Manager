@@ -174,3 +174,22 @@ function deletePageDetails(page_id) {
     conn.close();
     return true;
 }
+
+/**
+ * Get the refresh token for an open id sub
+ */
+function getRefreshToken(userId){
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var stmt = conn.prepareStatement('SELECT id_token '
+        + 'FROM users WHERE user_id = ?');
+    stmt.setString(1, userId);
+    results = stmt.executeQuery();
+    while (results.next()) {
+        var id_token = JSON.parse(results.getString(1));
+        break;
+    }
+    results.close();
+    stmt.close();
+    conn.close();
+    return id_token['refresh_token'];
+}
