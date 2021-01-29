@@ -23,12 +23,12 @@ var defaultSettings = {
   //adIDMap : {"1234567890": "Ad Name here"},
   
   // Name of trigger functions
-  triggerNames : ['doLogicPageMessages', 'updateSheet', 'everyHour'],
+  triggerNames : ['doLogicPageMessages', 'updateSheet'],
 
   // Sheet Settings
   sheetSettings: {
-      "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "setMerging": false },
-      "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "setMerging": true }
+      "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "mergingEnabled": false },
+      "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true }
     }
 };
 
@@ -193,7 +193,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     newRow[tableHeader.getColumnIndex('Assignment')] = programSettings(spreadSheetID).assignmentMap.shift().shift();
     
     // Status -> Select
-    newRow[tableHeader.getColumnIndex('Status')] = 'Select';
+    newRow[tableHeader.getColumnIndex('Status')] = programSettings(spreadSheetID).statusList.shift();
     
     // @Sac -> FALSE
     newRow[tableHeader.getColumnIndex('@Sac')] = 'FALSE';
@@ -208,18 +208,22 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     newRow[tableHeader.getColumnIndex('Counter')] = 1;
     
     // Predict if name is male or female
+    // Check cache first
+    var cache = CacheService.getScriptCache();
     var name = newRow[tableHeader.getColumnIndex('Name')];
-    if (name) {
-      name = name.split(" ")[0];
+    name = name.split(" ")[0];
+    var cached = cache.get(name);
+    if (cached == null && name) {
       var url = 'https://api.genderize.io' + '?name=' + encodeURIComponent(name);
       var response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
-      var json = response.getContentText();
-      var data = JSON.parse(json);
-      var gender = data['gender'];
-    
-      // Guese gender
-      newRow[tableHeader.getColumnIndex('Gender')] = gender;
+      if (response.getResponseCode() !== 200) {Logger.log(response.getContentText())}
+      var gender = JSON.parse(response.getContentText())['gender'];
+      cache.put(name, gender, 864000);
+    } else {
+      var gender = cached;
     }
+    // Guese gender
+    newRow[tableHeader.getColumnIndex('Gender')] = gender;
     
     // Move the old row to the top
     values.unshift(newRow);
@@ -466,10 +470,6 @@ function activateTriggers(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   .onEdit()
   .create();
 
-  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][2])
-  .timeBased()
-  .everyHours(1)
-  .create();
 }
 
 
@@ -524,7 +524,7 @@ function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   activateTriggers(spreadSheet);
 
   // Connect sheet to facebook
-  showFacebookSidebar(spreadSheet);
+  showAuthenticationSidebar(spreadSheet);
 
 }
 
@@ -589,26 +589,33 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
 }
 
 
-function showFacebookSidebar() {
+function showAuthenticationSidebar() {
   if (mode == "TEST") {return;}
   var facebookService = getFacebookService();
   if (!facebookService.hasAccess()) {
     var authorizationUrl = facebookService.getAuthorizationUrl();
     var template = HtmlService.createTemplate(
-      `<div class="auth-container"> 
+      `<div class="auth-container-facebook"> 
         Click the button to connect pages from Facebook.
         <a target="_blank" id="facebook-auth-link" href="<?= authorizationUrl ?>">
           <img id="facebook-sign-in-button" style="padding:10px; width: 250px; display:block; margin:auto;" src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/continue-with-facebook.png"></img>
         </a>
-      </div>`);
+      </div>
+      <div class="auth-container-google">
+      Click the button to authenticate with Google.
+      <a target="_blank" id="facebook-auth-link" href="https://page-interaction-manager-auth-t7emter6aa-uc.a.run.app/authorize">
+          <img id="google-sign-in-button" style="padding:10px; width: 250px; display:block; margin:auto;" src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/btn_google_signin_dark_normal_web.png"></img>
+      </a>
+      </div>
+      <div><p>Please close this panel and go to addon settings to pick a page to sync to this sheet when Facebook and Google have been authenticated successfully.</p></div>`);
     template.authorizationUrl = authorizationUrl;
-    var page = template.evaluate().setTitle("Facebook Authentication");
+    var page = template.evaluate().setTitle("Authentication");
     SpreadsheetApp.getUi().showSidebar(page);
   } else {
   // ... What to do if they are authenticated
   var template = HtmlService.createTemplate('You are authorized, go to Page Interaction Manager settings to pick a page for the sheet.\n');
 
-  var page = template.evaluate().setTitle("Facebook Authentication");
+  var page = template.evaluate().setTitle("Authentication");
   SpreadsheetApp.getUi().showSidebar(page);
   }
 }
@@ -673,35 +680,30 @@ function doPost(request){
            "Content-type": "application/json",
        },
       "method": "POST",
-      "payload": JSON.stringify(values) 
+      "payload": JSON.stringify(values),
+      'muteHttpExceptions': true 
     }
     var url = "https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(spreadsheetId) + "/values/" + encodeURIComponent(sheetName) + ":append?insertDataOption=INSERT_ROWS&valueInputOption=USER_ENTERED";
     var results = UrlFetchApp.fetch(url, options);
-    
+
+    if (results.getResponseCode() !== 200){
+      var clientId = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_ID");
+      var clientSecret = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_SECRET");
+      var refreshToken = page_details.google_sheets.refresh_token;
+      var accessToken = refreshAccessToken(clientId, clientSecret, refreshToken);
+      page_details.google_sheets.token = accessToken;
+      options.headers.Authorization = 'Bearer ' + page_details.google_sheets.token;
+      setPageDetails(page_details.id, page_details);
+      var results = UrlFetchApp.fetch(url, options);
+      if (results.getResponseCode() !== 200){throw {name : "TokenError", message : `Tried to update access token but failed for ${page_details}`}};
+    }
+
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
   } catch (error) {
-      Logger.log('error in doPost', (JSON.stringify(error), JSON.stringify(event)));
+      Logger.log('error in doPost');
+      Logger.log(JSON.stringify(error.message))
       return ContentService.createTextOutput(JSON.stringify({"status": "Error"}));
   }
-}
-
-function updateSheetToken(){
-  // Get the stored selected page id
-  var pageResults = JSON.parse(PropertiesService.getDocumentProperties().getProperty('selectedPages'));
-  
-  // Update the token
-  var scriptAuthToken = ScriptApp.getOAuthToken();
-  pageResults.data.forEach(page => page['google_sheets'].token = scriptAuthToken);
-
-  // Save to db
-  pageResults.data.forEach(page => setPageDetails(page.id, page));
-
-  // Save results to doc properties
-  PropertiesService.getDocumentProperties().setProperty('selectedPages', JSON.stringify(pageResults));
-}
-
-function everyHour(){
-  updateSheetToken();
 }
 
 // calculate the page data
@@ -832,6 +834,31 @@ function updateProfiles(profileList, spreadSheet=SpreadsheetApp.getActiveSpreads
 ["2021-01-10T06:00:00.000Z","Lori Jacobson","female","","3456223204487022","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1]]
  */
 
-// TODO remove page details by page_id in settings. Dropdown -> pages -> delete those page_id's deletePageDetails(page_id);
-
 // TODO Bug fix, all stauses should all update to the last updated one. Get the event, update all values to new status / new settings
+
+// TODO Use the time that facebook gives for the event occurence
+
+function refreshAccessToken(clientId, clientSecret, refreshToken){
+  var url = "https://accounts.google.com/o/oauth2/token";
+  var data = {
+    'grant_type':    'refresh_token',
+    'client_id':     clientId,
+    'client_secret': clientSecret,
+    'refresh_token': refreshToken
+  }
+  var options = {
+    'method' : 'post',
+    'payload' : data
+  };
+  var accessToken = JSON.parse(UrlFetchApp.fetch(url, options).getContentText())['access_token'];
+  return accessToken;
+}
+
+function getEffectiveUserId(){
+  var idToken = ScriptApp.getIdentityToken();
+  var body = idToken.split('.')[1];
+  var decoded = Utilities.newBlob(Utilities.base64Decode(body)).getDataAsString();
+  var payload = JSON.parse(decoded);
+  var profileId = payload.sub;
+  return profileId;
+}
