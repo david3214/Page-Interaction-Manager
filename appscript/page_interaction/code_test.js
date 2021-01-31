@@ -141,3 +141,15 @@ function test_getRefreshToken(){
     var refresh_token = getRefreshToken(userId);
     Logger.log(refresh_token)
 }
+
+function test_updateExistingRows(){
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    var sheet = spreadSheet.getActiveSheet();
+    var e = {
+        value: "Tokyo",
+        range: sheet.getRange("G2"),
+    }
+    var results = updateExistingRows(e, spreadSheet);
+    Logger.log(results)
+}

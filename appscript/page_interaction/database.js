@@ -193,3 +193,5 @@ function getRefreshToken(userId){
     conn.close();
     return id_token['refresh_token'];
 }
+
+// TODO write code to update all the settings with the new editableRow settings
