@@ -3,17 +3,15 @@
 var defaultSettings = {
   // Program variables
   headerRowNumber: 1,
-  
-  // List of messages status
+
   statusList : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Missionary", "Non Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
   
-  // Statuses to hide
   hiddenStatuses : ["Member", "Missionary", "Do Not Contact", "Rejected"],
 
   // Dictionary to map reactions
   reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
   
-  // Dictionary to map wards to colors
+  // 2d list to map wards to colors
   assignmentMap : [['Ward 1', '#82C1EC'], ['Ward 2', '#F28530'], ['Ward 3', '#FCFBC2'], ['Ward 4', '#ECE3D4'], ['Ward 5', '#F9F85F']],
   
   // Dictionary to map gender to colors
@@ -21,15 +19,14 @@ var defaultSettings = {
   
   // Dictionary to map the ads ids to names
   //adIDMap : {"1234567890": "Ad Name here"},
-  
-  // Name of trigger functions
+
   triggerNames : ['doLogicPageMessages', 'updateSheet'],
 
-  // Sheet Settings
   sheetSettings: {
       "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "mergingEnabled": false },
       "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true }
-    }
+    },
+  editableColumns: ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Reaction', 'Notes']
 };
 
 var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().getId()){
@@ -234,6 +231,34 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   
   // End
   return;
+}
+
+function updateExistingRows(e, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  /**
+   * Update existing rows with the new event data
+   */
+  // If the row has the same psid as event then set the events new data to the current data
+  
+  // Reject if not a single cell change
+  if (!e.hasOwnProperty('value')){return;} 
+  // Reject if range is not in editableColumns
+
+  var sheet = spreadSheet.getActiveSheet();
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var tableHeader = new TableHeader(spreadSheet);
+  var spreadSheetID = spreadSheet.getId();
+  const PSID = tableHeader.getColumnIndex('PSID');
+  e.columnIndex = e.range.getColumn() - 1;
+  e.editedRow = e.range.getDataRegion(SpreadsheetApp.Dimension.COLUMNS).getValues().shift();
+  var settings = programSettings(spreadSheetID);
+  if (!settings.hasOwnProperty('editableColumns')){settings.editableColumns = ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Reaction', 'Notes']}
+  if (!settings.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).includes(e.columnIndex)){return}
+  values.forEach(function(row){
+    if (row[PSID] != e.editedRow[PSID]) {return;}
+    row[e.columnIndex] = e.value;
+  })
+  range.setValues(values);
 }
 
 function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
@@ -582,6 +607,7 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   var spreadSheet = e == undefined ? spreadSheet : e.source;
   var sheet = spreadSheet.getActiveSheet();
   if (sheet.getDataRange().getValues().length == 1) {return;}
+  updateExistingRows(e, spreadSheet);
   updateConditionalFormattingRules(spreadSheet);
   updateDataValidationRules(spreadSheet);
   highlightSheet(spreadSheet);
