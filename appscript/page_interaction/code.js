@@ -1,6 +1,6 @@
 /*jshint esversion: 6 */
 // Dictionary of program settings
-var defaultSettings = {
+var defaultUserSettings = {
   // Program variables
   headerRowNumber: 1,
 
@@ -26,7 +26,12 @@ var defaultSettings = {
       "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "mergingEnabled": false },
       "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true }
     },
-  editableColumns: ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Reaction', 'Notes']
+};
+
+// TODO Migrate internal variables in here
+var internalVariables = {
+  editableColumns: ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Notes'],
+  memberStatusList: ['Member', 'Missionary', 'Baptized']
 };
 
 var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().getId()){
@@ -80,7 +85,7 @@ function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSp
     case "INSERT_ROW":
       // Run logic to move row to top
       // Un-hide so we can see all the data
-      hideRows(spreadSheet=spreadSheet, active=false);
+      //hideRows(spreadSheet=spreadSheet, active=false);
       updateNewRow(spreadSheet=spreadSheet);
       updateSheet(e, spreadSheet=spreadSheet);
       break;  
@@ -120,15 +125,16 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   
   // List of PSID of members
   // Get rows where Member is true
-  var memberPSIDList = values.filter(row => row[tableHeader.getColumnIndex('Status')] == 'Member')
+  var memberPSIDList = values.filter(row => internalVariables.memberStatusList.includes(row[tableHeader.getColumnIndex('Status')]))
   .map(row => row[tableHeader.getColumnIndex('PSID')]);
   
   // List of PSID of non members who have messaged the page
   // Get rows where Member is false
-  var nonMemberPSIDList = values.filter(row => row[tableHeader.getColumnIndex('Status')] != 'Member')
+  var nonMemberPSIDList = values.filter(row => !internalVariables.memberStatusList.includes(row[tableHeader.getColumnIndex('Status')]))
   .map(row => row[tableHeader.getColumnIndex('PSID')]);
   
-  
+  var reactionOrMessage = sheetName == "Ad Likes" ? tableHeader.getColumnIndex("Reaction") : tableHeader.getColumnIndex("Message");
+
   // Case 1 member messaging the page for multiple times
   // PSID is in list of member PSIDs
   if (memberPSIDList.includes(newPSID)) {
@@ -145,32 +151,39 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     values.push(...blankArray);
     
     // Find the old entry and increment the counter
-    objIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
-    values[objIndex][tableHeader.getColumnIndex('Counter')] += 1 + difference;
+    oldRowIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
+    values[oldRowIndex][tableHeader.getColumnIndex('Counter')] += 1 + difference;
     
-    // Update the message for kicks
-    values[objIndex][tableHeader.getColumnIndex('Message')] = newRow[tableHeader.getColumnIndex('Message')];
+    // Update the reactionOrMessage for kicks
+    values[oldRowIndex][reactionOrMessage] = newRow[reactionOrMessage];
   }
   
   // Case 2 non member messaging page for the multiple times
   // PSID is in the non member list
-  else if (nonMemberPSIDList.includes(newPSID) && doMerge === true){
-    // Bump the old row to the top
-    // Get the old row
-    objIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
-    var oldRow = values.splice(objIndex, 1)[0];
-    
-    // Update the old row with the new row's time stamp and message and increment the counter
-    oldRow[tableHeader.getColumnIndex('Date')] = newRow[tableHeader.getColumnIndex('Date')];
-    oldRow[tableHeader.getColumnIndex('Message')] = newRow[tableHeader.getColumnIndex('Message')];
-    oldRow[tableHeader.getColumnIndex('Counter')] += 1;
-    
-    // Move the old row to the top
-    values.unshift(oldRow);
-    
-    // Add a blank row to keep the length the same
-    var blankArray = new Array(oldRow.length);
-    values.push(blankArray);
+  else if (nonMemberPSIDList.includes(newPSID)){
+    // Get the index of the first matching item with the same PSID
+    oldRowIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
+    if (doMerge == true ){
+      // Bump the old row to the top
+      // Get the old row
+      var oldRow = values.splice(oldRowIndex, 1)[0];
+      // Update the old row with the new row's time stamp and message and increment the counter
+      oldRow[tableHeader.getColumnIndex('Date')] = newRow[tableHeader.getColumnIndex('Date')];
+      oldRow[reactionOrMessage] = newRow[reactionOrMessage];
+      oldRow[tableHeader.getColumnIndex('Counter')] += 1;      
+      // Move the old row to the top
+      values.unshift(oldRow);
+      // Add a blank row to keep the length the same
+      var blankArray = new Array(oldRow.length);
+      values.push(blankArray);
+    }
+    else {
+      // Copy values from last row the new row
+      internalVariables.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).forEach(columnIndex => {
+        newRow[columnIndex] = values[oldRowIndex][columnIndex];
+      })
+      values.unshift(newRow);
+    }
   }
   
   // Case 3 member or non member first time messaging page
@@ -225,7 +238,8 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     // Move the old row to the top
     values.unshift(newRow);
   }
-  
+  if (doMerge == true ){ values = mergeData(values, spreadSheet);}
+
   //Write the values back to the sheet
   range.setValues(values);
   
@@ -239,21 +253,18 @@ function updateExistingRows(e, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()
    */
   // If the row has the same psid as event then set the events new data to the current data
   
-  // Reject if not a single cell change
+  // Reject if range changed
   if (!e.hasOwnProperty('value')){return;} 
-  // Reject if range is not in editableColumns
 
   var sheet = spreadSheet.getActiveSheet();
   var range = sheet.getDataRange();
   var values = range.getValues();
   var tableHeader = new TableHeader(spreadSheet);
-  var spreadSheetID = spreadSheet.getId();
   const PSID = tableHeader.getColumnIndex('PSID');
   e.columnIndex = e.range.getColumn() - 1;
   e.editedRow = e.range.getDataRegion(SpreadsheetApp.Dimension.COLUMNS).getValues().shift();
-  var settings = programSettings(spreadSheetID);
-  if (!settings.hasOwnProperty('editableColumns')){settings.editableColumns = ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Reaction', 'Notes']}
-  if (!settings.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).includes(e.columnIndex)){return}
+  // Reject if not editable
+  if (!internalVariables.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).includes(e.columnIndex)){return}
   values.forEach(function(row){
     if (row[PSID] != e.editedRow[PSID]) {return;}
     row[e.columnIndex] = e.value;
@@ -514,7 +525,7 @@ function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
   */
   // Save default settings to sheet
-  saveProgramSettings(defaultSettings, spreadSheet);
+  saveProgramSettings(defaultUserSettings, spreadSheet);
 
   // Clear any old possible sheets 
   tearDownSheet(spreadSheet);
@@ -607,11 +618,12 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   var spreadSheet = e == undefined ? spreadSheet : e.source;
   var sheet = spreadSheet.getActiveSheet();
   if (sheet.getDataRange().getValues().length == 1) {return;}
-  updateExistingRows(e, spreadSheet);
+  if (e) {updateExistingRows(e, spreadSheet)};
+  sortSheet(spreadSheet);
   updateConditionalFormattingRules(spreadSheet);
   updateDataValidationRules(spreadSheet);
   highlightSheet(spreadSheet);
-  hideRows(spreadSheet=spreadSheet, active=true);
+  //hideRows(spreadSheet=spreadSheet, active=true);
 }
 
 
@@ -860,7 +872,66 @@ function updateProfiles(profileList, spreadSheet=SpreadsheetApp.getActiveSpreads
 ["2021-01-10T06:00:00.000Z","Lori Jacobson","female","","3456223204487022","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1]]
  */
 
-// TODO Bug fix, all stauses should all update to the last updated one. Get the event, update all values to new status / new settings
+ function mergeData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+   /**
+    * Ensures all rows are unique, will lost past history
+    */
+  var initialLength = values.length;
+  var tableHeader = new TableHeader(spreadSheet);
+  const PSID = tableHeader.getColumnIndex('PSID');
+  const count = tableHeader.getColumnIndex('Counter');
+  var results = {};
+  values.forEach(row => {
+    if (results[row[PSID]] == null){
+      results[row[PSID]] = {};
+      results[row[PSID]].data = row;
+    } else {
+      results[row[PSID]].data[count] += row[count];
+    }
+  });
+  values = Object.values(results).map(key => key.data);
+  var finalLength = values.length;
+  var difference = Math.abs(finalLength - initialLength);
+  var blankArray = [...Array(difference)].map(x=>Array(values.first().length));
+  values.push(...blankArray);
+  return values
+ }
+
+function sortSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  var sheet = spreadSheet.getActiveSheet();
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var header = values.shift();
+  values = sortData(values, spreadSheet);
+  values.unshift(header);
+  range.setValues(values);
+}
+
+ function sortData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  /**
+   * Sort and group the data
+   */
+  // Group data status
+  var tableHeader = new TableHeader(spreadSheet);
+  var status = tableHeader.getColumnIndex('Status');
+  var assignment = tableHeader.getColumnIndex('Assignment');
+  var PSID = tableHeader.getColumnIndex('PSID');
+  var date = tableHeader.getColumnIndex('Date');
+  const _ = LodashGS.load();
+  var groups = _.groupBy(values, status);
+  var results = [];
+  _.forEach(groups, function(value, key1) {
+    groups[key1] = _.groupBy(groups[key1], assignment);
+    _.forEach(groups[key1], function(value, key2){
+      groups[key1][key2] = _.groupBy(groups[key1][key2], PSID);
+      _.forEach(groups[key1][key2], function(value, key3){
+        groups[key1][key2][key3] = _.sortBy(groups[key1][key2][key3], date);
+        results = _.concat(results, groups[key1][key2][key3]);
+      })
+    })
+  });
+  return results
+}
 
 // TODO Use the time that facebook gives for the event occurence
 
@@ -888,3 +959,15 @@ function getEffectiveUserId(){
   var profileId = payload.sub;
   return profileId;
 }
+
+Object.defineProperty(Array.prototype, 'first', {
+  value() {
+    return this.find(e => true);
+  }
+});
+
+// TODO compute the has from facebook.
+
+// Figure out why the dates are wierd.
+
+// Split the member columns to the bottom
