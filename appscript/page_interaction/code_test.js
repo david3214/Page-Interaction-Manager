@@ -65,32 +65,20 @@ function testFacebookWebhookUpdate(){
    });
     
 }
-function test_sheet_creation(){
-    mode = "TEST";
-    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
-    setUpSheet(spreadSheet);
-}
 
 function testSheetFunctions(){
     QUnit.test("Test sheet", function(assert){
-        function test_doLogicPageMessages(){
-            /* Test the sheet is working */
-            setPreference(test_data.sample_page_details_property.google_sheets.id, test_data.sample_sheet_settings);
-            var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
-            var sheet = spreadSheet.getSheetByName("Ad Likes");
-            sheet.appendRow(["1",	"tom",	"male",	"a",	"2",	"a",	"Assignment",	"a",	"a",	"👍",	"3",	"3",	"3"]);
-            var e = JSON.parse('{ "authMode": "FULL", "changeType": "INSERT_ROW", "source": {}, "triggerUid": "502test6549", "user": { "email": "test.test@test.org", "nickname": "test.test" }}');
-            doLogicPageMessages(e, spreadSheet);
-        }
         assert.ok(test_doLogicPageMessages, "Should see a new line get inserted");
-
-        function test_sheet_creation(){
-            mode = "TEST";
-            var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
-            setUpSheet(spreadSheet);
-        }
         assert.ok(test_sheet_creation, "Should re create the sheet");
-
+        assert.ok(test_updateNewRow, "Should be ok");
+        assert.ok(test_analyzeSheet, "Should be ok");
+        assert.ok(test_getScraperInput, "Should be ok");
+        assert.ok(test_updateProfiles, "Should be ok");
+        assert.ok(test_getRefreshToken, "Should be ok");
+        assert.ok(test_updateExistingRows, "Should be ok");
+        assert.ok(test_mergeData, "Should be ok");
+        assert.ok(test_sortData, "Should be ok");
+        assert.ok(test_sortSheet, "Should be ok");
     });
     const _ = LodashGS.load();
     QUnit.test("Test database preferences", function(assert){
@@ -105,12 +93,25 @@ function testSheetFunctions(){
         assert.ok(getAllPageDetails(), "Can list all page details");
     });
 }
+function test_doLogicPageMessages(){
+    /* Test the sheet is working */
+    setPreference(test_data.sample_page_details_property.google_sheets.id, test_data.sample_sheet_settings);
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    var sheet = spreadSheet.getSheetByName("Ad Likes");
+    sheet.appendRow(["1",	"tom",	"male",	"a",	"2",	"a",	"Assignment",	"a",	"a",	"👍",	"3",	"3",	"3"]);
+    var e = JSON.parse('{ "authMode": "FULL", "changeType": "INSERT_ROW", "source": {}, "triggerUid": "502test6549", "user": { "email": "test.test@test.org", "nickname": "test.test" }}');
+    doLogicPageMessages(e, spreadSheet);
+}
 
+function test_sheet_creation(){
+    mode = "TEST";
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    setUpSheet(spreadSheet);
+}
 function test_updateNewRow(){
     mode = "TEST";
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
     spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
-
     updateNewRow(spreadSheet);
 }
 
@@ -152,4 +153,39 @@ function test_updateExistingRows(){
     }
     var results = updateExistingRows(e, spreadSheet);
     Logger.log(results)
+}
+
+function test_mergeData(){
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    var values = [["Date","Name","Gender","Profile Link","PSID","Source","Assignment","Status","@Sac","On Date","Reaction","Notes","Counter"],
+    ["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_213783213625929","Ward 1","missionary",false,false,"👍","",1],
+    ["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_216371783367072","Ward 1","missionary",false,false,"👍","",1],
+    ["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_189586012712316","Ward 1","missionary",false,false,"👍","",1],
+    ["2021-01-12T06:00:00.000Z","Jake Steimle","","","4514114971962822","https://facebook.com/105691394435112_216425196695064","Ward 4","Member",false,false,"👍","",1],
+    ["2021-01-11T06:00:00.000Z","Kime Kinikini","male","","4081260035237352","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"❤️","",1],
+    ["2021-01-11T06:00:00.000Z","Rich Bludorn","","","3884149271650207","https://facebook.com/105691394435112_216371783367072","Ward 1","Member",false,false,"👍","",1],
+    ["2021-01-11T06:00:00.000Z","Rylee Rampton","","","4519182614818927","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1],
+    ["2021-01-10T06:00:00.000Z","Philip Henley","","","3855437887855173","https://facebook.com/105691394435112_211399640530953","Ward 1","Member",false,false,"👍","",1],
+    ["2021-01-10T06:00:00.000Z","Rich Bludorn","male","","3884149271650207","https://facebook.com/105691394435112_217704479900469","Ward 1","Member",false,false,"👍","",1],
+    ["2021-01-10T06:00:00.000Z","Lori Jacobson","female","","3456223204487022","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1]];
+    var results = mergeData(values, spreadSheet);
+    Logger.log(results)
+}
+
+function test_sortData(){
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    var range = spreadSheet.getActiveSheet().getDataRange()
+    var values = range.getValues();
+    var results = sortData(values, spreadSheet);
+    range.setValues(results);
+    Logger.log(results)
+
+}
+
+function test_sortSheet(){
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    sortSheet(spreadSheet);
 }
