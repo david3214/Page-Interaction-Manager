@@ -858,21 +858,8 @@ function updateProfiles(profileList, spreadSheet=SpreadsheetApp.getActiveSpreads
 
 }
 
-/**
-[["Date","Name","Gender","Profile Link","PSID","Source","Assignment","Status","@Sac","On Date","Reaction","Notes","Counter"],
-["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_213783213625929","Ward 1","missionary",false,false,"👍","",1],
-["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_216371783367072","Ward 1","missionary",false,false,"👍","",1],
-["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_189586012712316","Ward 1","missionary",false,false,"👍","",1],
-["2021-01-12T06:00:00.000Z","Jake Steimle","","","4514114971962822","https://facebook.com/105691394435112_216425196695064","Ward 4","Member",false,false,"👍","",1],
-["2021-01-11T06:00:00.000Z","Kime Kinikini","male","","4081260035237352","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"❤️","",1],
-["2021-01-11T06:00:00.000Z","Rich Bludorn","","","3884149271650207","https://facebook.com/105691394435112_216371783367072","Ward 1","Member",false,false,"👍","",1],
-["2021-01-11T06:00:00.000Z","Rylee Rampton","","","4519182614818927","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1],
-["2021-01-10T06:00:00.000Z","Philip Henley","","","3855437887855173","https://facebook.com/105691394435112_211399640530953","Ward 1","Member",false,false,"👍","",1],
-["2021-01-10T06:00:00.000Z","Rich Bludorn","male","","3884149271650207","https://facebook.com/105691394435112_217704479900469","Ward 1","Member",false,false,"👍","",1],
-["2021-01-10T06:00:00.000Z","Lori Jacobson","female","","3456223204487022","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1]]
- */
 
- function mergeData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function mergeData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
    /**
     * Ensures all rows are unique, will lost past history
     */
@@ -886,7 +873,7 @@ function updateProfiles(profileList, spreadSheet=SpreadsheetApp.getActiveSpreads
       results[row[PSID]] = {};
       results[row[PSID]].data = row;
     } else {
-      results[row[PSID]].data[count] += row[count];
+      results[row[PSID]].data[count] = int(results[row[PSID]].data[count]) + int(row[count]);
     }
   });
   values = Object.values(results).map(key => key.data);
@@ -894,8 +881,8 @@ function updateProfiles(profileList, spreadSheet=SpreadsheetApp.getActiveSpreads
   var difference = Math.abs(finalLength - initialLength);
   var blankArray = [...Array(difference)].map(x=>Array(values.first().length));
   values.push(...blankArray);
-  return values
- }
+  return values;
+}
 
 function sortSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   var sheet = spreadSheet.getActiveSheet();
