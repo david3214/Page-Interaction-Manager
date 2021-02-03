@@ -146,13 +146,13 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     
     // Measure difference and add the blanks in
     var finalLength = values.length;
-    var difference = (finalLength - initialLength) * -1;
+    var difference = Math.abs(finalLength - initialLength);
     var blankArray = [...Array(difference + 1)].map(x=>Array(newRow.length));
     values.push(...blankArray);
     
     // Find the old entry and increment the counter
     oldRowIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
-    values[oldRowIndex][tableHeader.getColumnIndex('Counter')] += 1 + difference;
+    values[oldRowIndex][tableHeader.getColumnIndex('Counter')] = int(values[oldRowIndex][tableHeader.getColumnIndex('Counter')]) + 1 + int(difference);
     
     // Update the reactionOrMessage for kicks
     values[oldRowIndex][reactionOrMessage] = newRow[reactionOrMessage];
@@ -170,7 +170,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
       // Update the old row with the new row's time stamp and message and increment the counter
       oldRow[tableHeader.getColumnIndex('Date')] = newRow[tableHeader.getColumnIndex('Date')];
       oldRow[reactionOrMessage] = newRow[reactionOrMessage];
-      oldRow[tableHeader.getColumnIndex('Counter')] += 1;      
+      oldRow[tableHeader.getColumnIndex('Counter')] = int(oldRow[tableHeader.getColumnIndex('Counter')]) + 1;      
       // Move the old row to the top
       values.unshift(oldRow);
       // Add a blank row to keep the length the same
@@ -215,7 +215,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     newRow[tableHeader.getColumnIndex('Notes')] = "";
     
     // Counter -> 1
-    newRow[tableHeader.getColumnIndex('Counter')] = 1;
+    newRow[tableHeader.getColumnIndex('Counter')] = int(1);
     
     // Predict if name is male or female
     // Check cache first
@@ -618,7 +618,7 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   var spreadSheet = e == undefined ? spreadSheet : e.source;
   var sheet = spreadSheet.getActiveSheet();
   if (sheet.getDataRange().getValues().length == 1) {return;}
-  if (e) {updateExistingRows(e, spreadSheet)};
+  if (e != undefined) {updateExistingRows(e, spreadSheet)};
   sortSheet(spreadSheet);
   updateConditionalFormattingRules(spreadSheet);
   updateDataValidationRules(spreadSheet);
