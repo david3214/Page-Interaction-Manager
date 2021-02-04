@@ -31,7 +31,8 @@ var defaultUserSettings = {
 // TODO Migrate internal variables in here
 var internalVariables = {
   editableColumns: ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Notes'],
-  memberStatusList: ['Member', 'Missionary', 'Baptized']
+  memberStatusList: ['Member', 'Missionary', 'Baptized'],
+  headerEnum: {'Date':0, 'Name':1, 'Gender':2, 'Profile Link':3, 'PSID':4, 'Source':5, 'Assignment':6, 'Status':7, '@Sac':8, 'On Date':9, 'Reaction':10, 'Notes':11, 'Counter':12}
 };
 
 var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().getId()){
@@ -60,10 +61,13 @@ function saveProgramSettings(settings, spreadSheet=SpreadsheetApp.getActiveSprea
 */
 var TableHeader = function(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   /* Translate page header */
-  var spreadSheetID = spreadSheet.getId();
-  var sheet = spreadSheet.getActiveSheet();
+  // var spreadSheetID = spreadSheet.getId();
+  // var sheet = spreadSheet.getActiveSheet();
+  // TODO Fix this, it will break with messages as it is specific to reactions
+  // also it is taking to many api calls
   var header = {
-    headerData: sheet.getRange(programSettings(spreadSheetID).headerRowNumber, 1, 1, sheet.getLastColumn()).getValues()[0],
+    // headerData: sheet.getRange(programSettings(spreadSheetID).headerRowNumber, 1, 1, sheet.getLastColumn()).getValues()[0],
+    headerData: ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Reaction', 'Notes', 'Counter'],
     getColumnIndex(columnName) {return this.headerData.indexOf(columnName);}
   };
   return header;
@@ -152,7 +156,9 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     var initialLength = values.length;
     
     // Remove all matching rows from sheet except the checked one
-    values = values.filter(row => row[tableHeader.getColumnIndex('PSID')] != newPSID || (row[tableHeader.getColumnIndex('PSID')] == newPSID && row[tableHeader.getColumnIndex('Status')] == 'Member'));
+    values = values.filter(row => row[tableHeader.getColumnIndex('PSID')] != newPSID 
+    || (row[tableHeader.getColumnIndex('PSID')] == newPSID 
+    && internalVariables.memberStatusList.includes(row[tableHeader.getColumnIndex('Status')])));
     
     // Measure difference and add the blanks in
     var finalLength = values.length;
@@ -272,14 +278,15 @@ function updateExistingRows(e, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()
   var tableHeader = new TableHeader(spreadSheet);
   const PSID = tableHeader.getColumnIndex('PSID');
   e.columnIndex = e.range.getColumn() - 1;
-  e.editedRow = e.range.getDataRegion(SpreadsheetApp.Dimension.COLUMNS).getValues().shift();
+  e.editedRow = values[e.range.getRowIndex() -1]
   // Reject if not editable
   if (!internalVariables.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).includes(e.columnIndex)){return}
   values.forEach(function(row){
-    if (row[PSID] != e.editedRow[PSID]) {return;}
+    if (row[PSID] != e.editedRow[PSID]) {return}
     row[e.columnIndex] = e.value;
   })
   range.setValues(values);
+  return true;
 }
 
 function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
