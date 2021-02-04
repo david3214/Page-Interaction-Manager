@@ -20,7 +20,7 @@
         </select>
         <button class="btn btn-primary" @click="submitFacebookPageSelection">Submit</button>
         <button class="btn btn-danger" @click="removeFacebookPageSelection">Delete</button>
-        <div v-if="isExperimental==true">
+        <div v-if="JSON.parse(programSettings).hasOwnProperty('experimental')">
             <h1>Profile Link Tool</h1>
             <p>Copy the program input to input file</p>
             <textarea style="display: block; margin-bottom:10px;" v-model="scraperInput"></textarea>
@@ -34,11 +34,11 @@
         new Vue({
             el: '#app',
             data: {
-                programSettings: '',
+                programSettings: '{}',
                 facebookPages:[],
                 selected:[],
                 scraperInput: '',
-                profileList: ''
+                profileList: '',
             },
             methods: {
                 saveProgramSettings: function(){
@@ -72,11 +72,6 @@
                 updateScraperInput: function(scraperInput){
                     this.scraperInput = JSON.stringify(scraperInput);
                 },
-            },
-            computed: {
-                isExperimental: function(){
-                    if (this.programSettings.hasOwnProperty('experimental')){return true} else {return false}
-                }
             },
             created: function(){
                 google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();
