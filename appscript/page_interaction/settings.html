@@ -20,8 +20,7 @@
         </select>
         <button class="btn btn-primary" @click="submitFacebookPageSelection">Submit</button>
         <button class="btn btn-danger" @click="removeFacebookPageSelection">Delete</button>
-        <!-- 
-        <div>
+        <div v-if="isExperimental==true">
             <h1>Profile Link Tool</h1>
             <p>Copy the program input to input file</p>
             <textarea style="display: block; margin-bottom:10px;" v-model="scraperInput"></textarea>
@@ -29,7 +28,6 @@
             <textarea style="display: block; margin-bottom:10px;" v-model="profileList"></textarea>            
             <button class="btn btn-primary" @click="updateSheetProfileLinks">Submit</button>
         </div>
-        -->
     </div>
 
       <script>
@@ -74,6 +72,11 @@
                 updateScraperInput: function(scraperInput){
                     this.scraperInput = JSON.stringify(scraperInput);
                 },
+            },
+            computed: {
+                isExperimental: function(){
+                    if (this.programSettings.hasOwnProperty('experimental')){return true} else {return false}
+                }
             },
             created: function(){
                 google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();

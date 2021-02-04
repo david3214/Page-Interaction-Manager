@@ -95,6 +95,16 @@ function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSp
   }
 }
 
+function onRowInsert(spreadSheet=SpreadsheetApp.getActiveSheet()){
+  const _ = LodashGS.load();
+  var sheet = spreadSheet.getActiveSheet();
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var header = values.shift();
+  var newRow = values.pop();
+
+}
+
 function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
 /*
   Run the sort logic when a new row is added
@@ -152,7 +162,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     
     // Find the old entry and increment the counter
     oldRowIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
-    values[oldRowIndex][tableHeader.getColumnIndex('Counter')] = int(values[oldRowIndex][tableHeader.getColumnIndex('Counter')]) + 1 + int(difference);
+    values[oldRowIndex][tableHeader.getColumnIndex('Counter')] = parseInt(values[oldRowIndex][tableHeader.getColumnIndex('Counter')]) + 1 + parseInt(difference);
     
     // Update the reactionOrMessage for kicks
     values[oldRowIndex][reactionOrMessage] = newRow[reactionOrMessage];
@@ -170,7 +180,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
       // Update the old row with the new row's time stamp and message and increment the counter
       oldRow[tableHeader.getColumnIndex('Date')] = newRow[tableHeader.getColumnIndex('Date')];
       oldRow[reactionOrMessage] = newRow[reactionOrMessage];
-      oldRow[tableHeader.getColumnIndex('Counter')] = int(oldRow[tableHeader.getColumnIndex('Counter')]) + 1;      
+      oldRow[tableHeader.getColumnIndex('Counter')] = parseInt(oldRow[tableHeader.getColumnIndex('Counter')]) + 1;      
       // Move the old row to the top
       values.unshift(oldRow);
       // Add a blank row to keep the length the same
@@ -215,7 +225,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
     newRow[tableHeader.getColumnIndex('Notes')] = "";
     
     // Counter -> 1
-    newRow[tableHeader.getColumnIndex('Counter')] = int(1);
+    newRow[tableHeader.getColumnIndex('Counter')] = 1;
     
     // Predict if name is male or female
     // Check cache first
@@ -872,7 +882,7 @@ function mergeData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
       results[row[PSID]] = {};
       results[row[PSID]].data = row;
     } else {
-      results[row[PSID]].data[count] = int(results[row[PSID]].data[count]) + int(row[count]);
+      results[row[PSID]].data[count] = parseInt(results[row[PSID]].data[count]) + parseInt(row[count]);
     }
   });
   values = Object.values(results).map(key => key.data);
@@ -952,8 +962,7 @@ Object.defineProperty(Array.prototype, 'first', {
   }
 });
 
-// TODO compute the has from facebook.
 
 // Figure out why the dates are wierd.
 
-// Split the member columns to the bottom
+// TODO Split the member columns to the bottom
