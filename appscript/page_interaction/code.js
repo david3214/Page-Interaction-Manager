@@ -89,7 +89,7 @@ function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSp
     case "INSERT_ROW":
       // Run logic to move row to top
       // Un-hide so we can see all the data
-      //hideRows(spreadSheet=spreadSheet, active=false);
+      hideRows(spreadSheet=spreadSheet, active=false);
       updateNewRow(spreadSheet=spreadSheet);
       updateSheet(e, spreadSheet=spreadSheet);
       break;
@@ -641,7 +641,7 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   updateConditionalFormattingRules(spreadSheet);
   updateDataValidationRules(spreadSheet);
   highlightSheet(spreadSheet);
-  //hideRows(spreadSheet=spreadSheet, active=true);
+  hideRows(spreadSheet=spreadSheet, active=true);
 }
 
 
@@ -994,6 +994,7 @@ Object.defineProperty(Array.prototype, 'first', {
 });
 
 
-// Figure out why the dates are wierd.
+// Figure out why the dates are wierd. ensure consistent sorting for the groups
+// 
 
 // TODO Split the member columns to the bottom
