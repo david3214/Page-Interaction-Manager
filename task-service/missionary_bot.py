@@ -18,6 +18,10 @@ import requests
 from bs4 import BeautifulSoup
 from google.cloud import storage
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import jwt
 
 # Redis
@@ -44,7 +48,7 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    self.chrome_options.add_argument("--headless")
+    # self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-gpu")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
@@ -53,10 +57,11 @@ class MissionaryBot:
     self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
     # self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
     self.chrome_options.add_argument("--log-level=3")
-    self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
-    self.wd.set_window_size(1920, 1080)
-    self.wd.implicitly_wait(30)
-    self.wd.set_script_timeout(30)
+    # self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
+    self.wd = webdriver.Remote("http://127.0.0.1:4444/wd/hub", DesiredCapabilities.CHROME)
+    # self.wd.set_window_size(1920, 1080)
+    # self.wd.implicitly_wait(30)
+    # self.wd.set_script_timeout(30)
 
 
   """
@@ -331,6 +336,41 @@ class MissionaryBot:
         upload_blob_from_png(os.environ.get('BUCKET_NAME'), picture_log[key]['screen_shot'], file_name + '.png')
         upload_blob_from_html(os.environ.get('BUCKET_NAME'), picture_log[key]['html'], file_name + '.html')
 
+  def scrape_post_reactions_for_people(self, post_url, people):
+    """
+    Get a dictionary of the names and profile links of a list of people for a post
+    """
+    self.authenticate_with_facebook()
+    language = "japanese-kansai"
+    facebook_paths = {
+      "japanese-kansai":{
+        "reactions_button": "//div[contains(@aria-label, 'ええやん')]",
+        "reactions_all_tab": "//span[text()='全部'",
+        "reactions_box":"//div[@aria-label='リアクション']",
+
+      }
+    }
+    results = {}
+    self.set_status('Scraping post')
+    self.wd.get(post_url)
+    reaction_button = self.wd.find_element_by_xpath(facebook_paths[language]["reactions_button"]) # open the reaction box
+    self.wd.execute_script("arguments[0].click();", reaction_button)
+    element = WebDriverWait(self.wd, 10).until(EC.presence_of_element_located((By.XPATH, facebook_paths[language]["reactions_all_tab"])))
+    element.click()
+
+    while len(people != 0):
+      links = self.wd.find_element_by_xpath(facebook_paths[language]['reactions_box']).find_elements_by_tag_name('a')
+      for link in links:
+        if link.text in people:
+          results[link.href] = link.text
+      self.wd.find_element_by_xpath(facebook_paths[language]['reactions_box'])
+    """
+    click => aria-label="誰が反応してくれたんやろ"
+    click span tag with inner text 全部
+    select all links and see if the link text is equal to any of the names for this post
+    scroll down to check for more 
+    """
+
 
   def scrape_area_book_for_people(self):
     """
@@ -504,3 +544,10 @@ gender_map = {
   'F': "Female",
   'U': "Not Recorded"
 }
+
+if __name__ == "__main__":
+  bot = MissionaryBot(facebook_username="***REMOVED***", facebook_password="***REMOVED***")
+  data = {"https://facebook.com/112513540416434_415578043083894" : ["Graham Harrison"],
+          "https://facebook.com/112513540416434_167587564909031": ["Graham Harrison"]}
+  for url in data:
+    bot.scrape_post_reactions_for_people(url, data[url])
