@@ -23,7 +23,7 @@ var defaultUserSettings = {
   triggerNames : ['doLogicPageMessages', 'updateSheet'],
 
   sheetSettings: {
-      "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "mergingEnabled": false },
+      "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "mergingEnabled": true },
       "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true }
     },
 };
