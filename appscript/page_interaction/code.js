@@ -198,6 +198,7 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
       internalVariables.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).forEach(columnIndex => {
         newRow[columnIndex] = values[oldRowIndex][columnIndex];
       })
+      newRow[tableHeader.getColumnIndex('Counter')] = 1;   
       values.unshift(newRow);
     }
   }
@@ -796,11 +797,12 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   results.uniquePeople = set.size   // Count the number of unique people
   // Count the number of members and non members
   // Figure out the best non member and member post
-
-  values.forEach(row => {
+  cleanedData.forEach(row => {
     results.statuses[row[status]] = results.statuses[row[status]] == null ? 0 : results.statuses[row[status]];
     results.statuses[row[status]] += 1;
+  })
 
+  values.forEach(row => {
     results.posts[row[source]] = results.posts[row[source]] == null ? {} : results.posts[row[source]]
     results.posts[row[source]][row[status]] = results.posts[row[source]][row[status]] == null ? 0 : results.posts[row[source]][row[status]];
     results.posts[row[source]][row[status]] += 1
