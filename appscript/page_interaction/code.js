@@ -42,7 +42,7 @@ var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().ge
     return JSON.parse(cached);
   }
   var settings = getPreference(sheet_id);
-  cache.put(`programSettings:${sheet_id}`, JSON.stringify(settings), 60);
+  cache.put(`programSettings:${sheet_id}`, JSON.stringify(settings), 6000);
   return settings;
 };
 
@@ -53,7 +53,7 @@ function saveProgramSettings(settings, spreadSheet=SpreadsheetApp.getActiveSprea
   var sheet_id = spreadSheet.getId();
   setPreference(sheet_id, settings);
   var cache = CacheService.getScriptCache();
-  cache.put(`programSettings:${sheet_id}`, JSON.stringify(settings), 60);
+  cache.put(`programSettings:${sheet_id}`, JSON.stringify(settings), 6000);
 }
 
 /*
@@ -92,7 +92,7 @@ function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSp
       //hideRows(spreadSheet=spreadSheet, active=false);
       updateNewRow(spreadSheet=spreadSheet);
       updateSheet(e, spreadSheet=spreadSheet);
-      break;  
+      break;
     case "EDIT":
       return;
     default:
@@ -636,6 +636,7 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   var sheet = spreadSheet.getActiveSheet();
   if (sheet.getDataRange().getValues().length == 1) {return;}
   if (e != undefined) {updateExistingRows(e, spreadSheet)};
+  mergeSheet(spreadSheet);
   sortSheet(spreadSheet);
   updateConditionalFormattingRules(spreadSheet);
   updateDataValidationRules(spreadSheet);
@@ -876,28 +877,49 @@ function updateProfiles(profileList, spreadSheet=SpreadsheetApp.getActiveSpreads
 
 }
 
+function mergeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  var spreadSheetID = spreadSheet.getId();
+  var sheet = spreadSheet.getActiveSheet();
+  var sheetName = sheet.getName();
+  var doMerge = programSettings(spreadSheetID)['sheetSettings'][sheetName].mergingEnabled;
+  if (doMerge == true ){ 
+    var range = sheet.getDataRange().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow() - programSettings(spreadSheetID).headerRowNumber);
+    var values = range.getValues();
+    values = mergeData(values, spreadSheet);
+    range.setValues(values);
+  }
+}
 
 function mergeData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
    /**
     * Ensures all rows are unique, will lost past history
+    * return the values in 2d array form
     */
   var initialLength = values.length;
   var tableHeader = new TableHeader(spreadSheet);
   const PSID = tableHeader.getColumnIndex('PSID');
   const count = tableHeader.getColumnIndex('Counter');
+  const status = tableHeader.getColumnIndex('Status');
   var results = {};
+  var unMerged = [];
+  var spreadSheetID = spreadSheet.getId();
+  const statusToMerge = programSettings(spreadSheetID)['hiddenStatuses'];
+  const rowLength = values.first().length;
+
   values.forEach(row => {
+    if (!statusToMerge.includes(row[status])) {unMerged.push(row);return}
     if (results[row[PSID]] == null){
       results[row[PSID]] = {};
       results[row[PSID]].data = row;
     } else {
+      results[row[PSID]].data[count] = results[row[PSID]].data[count] == "" ? 1 : results[row[PSID]].data[count];
       results[row[PSID]].data[count] = parseInt(results[row[PSID]].data[count]) + parseInt(row[count]);
     }
   });
-  values = Object.values(results).map(key => key.data);
+  values = Object.values(results).map(key => key.data).concat(unMerged);
   var finalLength = values.length;
   var difference = Math.abs(finalLength - initialLength);
-  var blankArray = [...Array(difference)].map(x=>Array(values.first().length));
+  var blankArray = [...Array(difference)].map(x=>Array(rowLength));
   values.push(...blankArray);
   return values;
 }
