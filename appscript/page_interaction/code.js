@@ -940,15 +940,15 @@ function sortSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
    */
   // Group data status
   var tableHeader = new TableHeader(spreadSheet);
-  var status = tableHeader.getColumnIndex('Status');
   var assignment = tableHeader.getColumnIndex('Assignment');
+  var status = tableHeader.getColumnIndex('Status');
   var PSID = tableHeader.getColumnIndex('PSID');
   var date = tableHeader.getColumnIndex('Date');
   const _ = LodashGS.load();
-  var groups = _.groupBy(values, status);
+  var groups = _.groupBy(values, assignment);
   var results = [];
   _.forEach(groups, function(value, key1) {
-    groups[key1] = _.groupBy(groups[key1], assignment);
+    groups[key1] = _.groupBy(groups[key1], status);
     _.forEach(groups[key1], function(value, key2){
       groups[key1][key2] = _.groupBy(groups[key1][key2], PSID);
       _.forEach(groups[key1][key2], function(value, key3){
