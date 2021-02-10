@@ -944,7 +944,10 @@ function sortSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   var status = tableHeader.getColumnIndex('Status');
   var PSID = tableHeader.getColumnIndex('PSID');
   var date = tableHeader.getColumnIndex('Date');
+  var memberStatuses = internalVariables.memberStatusList;
   const _ = LodashGS.load();
+  var hidden = _.filter(values, function(row){return _.includes(memberStatuses, row[status])});
+  var values = _.filter(values, function(row){return !_.includes(memberStatuses, row[status])});
   var groups = _.groupBy(values, assignment);
   var results = [];
   _.forEach(groups, function(value, key1) {
@@ -957,6 +960,7 @@ function sortSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
       })
     })
   });
+  results = _.concat(results, hidden)
   return results
 }
 
