@@ -16,6 +16,8 @@ function onOpen() {
             .addItem('Analytics', 'showAnalytics')
             .addItem('Settings', 'showSettings'))
       .addToUi();
+
+    addUserToDB();
 }
 
 // Make the menu appear after installing it
