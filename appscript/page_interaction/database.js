@@ -195,3 +195,15 @@ function getRefreshToken(userId){
 }
 
 // TODO write code to update all the settings with the new editableRow settings
+/**
+ * Get all page_details for a page_id
+ */
+function updateDB(){
+    var preferenceDict = getAllPreference();
+    var cache = CacheService.getScriptCache();
+    Object.keys(preferenceDict).forEach(key => {
+        preferenceDict[key]["statusToMerge"] = ["Member", "Missionary", "Do Not Contact", "Rejected"];
+        setPreference(key, preferenceDict[key]);
+        cache.put(`programSettings:${key}`, JSON.stringify(preferenceDict[key]), 6000);
+    })
+}
