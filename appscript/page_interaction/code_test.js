@@ -189,3 +189,9 @@ function test_sortSheet(){
     spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
     sortSheet(spreadSheet);
 }
+
+function test_healSheet(){
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    healSheet(spreadSheet);
+}
