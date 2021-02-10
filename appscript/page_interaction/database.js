@@ -194,10 +194,10 @@ function getRefreshToken(userId){
     return id_token['refresh_token'];
 }
 
-// TODO write code to update all the settings with the new editableRow settings
+
 /**
- * Get all page_details for a page_id
- */
+ * update all rows of db
+*/
 function updateDB(){
     var preferenceDict = getAllPreference();
     var cache = CacheService.getScriptCache();
@@ -207,3 +207,4 @@ function updateDB(){
         cache.put(`programSettings:${key}`, JSON.stringify(preferenceDict[key]), 6000);
     })
 }
+ 
