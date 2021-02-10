@@ -177,8 +177,12 @@ function deletePageDetails(page_id) {
 
 /**
  * Get the refresh token for an open id sub
- */
+*/
 function getRefreshToken(userId){
+    return getUser(userId)['refresh_token'];
+}
+
+function getUser(userId){
     var conn = Jdbc.getConnection(dbUrl, user, userPwd);
     var stmt = conn.prepareStatement('SELECT id_token '
         + 'FROM users WHERE user_id = ?');
@@ -191,7 +195,32 @@ function getRefreshToken(userId){
     results.close();
     stmt.close();
     conn.close();
-    return id_token['refresh_token'];
+    return id_token;
+}
+
+function setUser(user_id, id_token){
+    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var stmt = conn.prepareStatement('REPLACE INTO users '
+        + '(user_id, id_token) values (?, ?)');
+    stmt.setString(1, user_id);
+    stmt.setString(2, JSON.stringify(id_token));
+    stmt.executeUpdate();
+    stmt.close();
+    conn.close();
+    return true;
+}
+
+/**
+ * Add users to db
+ */
+function addUserToDB(){
+    var userIdentityToken = getIdentityToken();
+    var userId = getEffectiveUserId();
+    var user = getUser(userId);
+    user = user == undefined ? {} : user;
+    user['name'] = userIdentityToken['name'];
+    user['email'] = userIdentityToken['email'];
+    setUser(userId, user);
 }
 
 
@@ -207,4 +236,3 @@ function updateDB(){
         cache.put(`programSettings:${key}`, JSON.stringify(preferenceDict[key]), 6000);
     })
 }
- 

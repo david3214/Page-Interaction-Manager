@@ -181,28 +181,11 @@ function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   else if (nonMemberPSIDList.includes(newPSID)){
     // Get the index of the first matching item with the same PSID
     oldRowIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
-    if (doMerge == true ){
-      // Bump the old row to the top
-      // Get the old row
-      var oldRow = values.splice(oldRowIndex, 1)[0];
-      // Update the old row with the new row's time stamp and message and increment the counter
-      oldRow[tableHeader.getColumnIndex('Date')] = newRow[tableHeader.getColumnIndex('Date')];
-      oldRow[reactionOrMessage] = newRow[reactionOrMessage];
-      oldRow[tableHeader.getColumnIndex('Counter')] = parseInt(oldRow[tableHeader.getColumnIndex('Counter')]) + 1;      
-      // Move the old row to the top
-      values.unshift(oldRow);
-      // Add a blank row to keep the length the same
-      var blankArray = new Array(oldRow.length);
-      values.push(blankArray);
-    }
-    else {
-      // Copy values from last row the new row
-      internalVariables.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).forEach(columnIndex => {
-        newRow[columnIndex] = values[oldRowIndex][columnIndex];
-      })
-      newRow[tableHeader.getColumnIndex('Counter')] = 1;   
-      values.unshift(newRow);
-    }
+    internalVariables.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).forEach(columnIndex => {
+      newRow[columnIndex] = values[oldRowIndex][columnIndex];
+    })
+    newRow[tableHeader.getColumnIndex('Counter')] = 1;   
+    values.unshift(newRow);
   }
   
   // Case 3 member or non member first time messaging page
@@ -984,12 +967,16 @@ function refreshAccessToken(clientId, clientSecret, refreshToken){
   return accessToken;
 }
 
-function getEffectiveUserId(){
+function getIdentityToken(){
   var idToken = ScriptApp.getIdentityToken();
   var body = idToken.split('.')[1];
   var decoded = Utilities.newBlob(Utilities.base64Decode(body)).getDataAsString();
   var payload = JSON.parse(decoded);
-  var profileId = payload.sub;
+  return payload;
+}
+
+function getEffectiveUserId(){
+  var profileId = getIdentityToken().sub;
   return profileId;
 }
 

@@ -79,6 +79,9 @@ function testSheetFunctions(){
         assert.ok(test_mergeData, "Should be ok");
         assert.ok(test_sortData, "Should be ok");
         assert.ok(test_sortSheet, "Should be ok");
+        assert.ok(test_healSheet, "Should be ok");
+        assert.ok(test_addUserToDB, "Should be ok");
+
     });
     const _ = LodashGS.load();
     QUnit.test("Test database preferences", function(assert){
@@ -194,4 +197,8 @@ function test_healSheet(){
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
     spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
     healSheet(spreadSheet);
+}
+
+function test_addUserToDB(){
+    addUserToDB();
 }
