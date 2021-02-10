@@ -200,7 +200,7 @@ def oauth2callback():
   id_info = id_token.verify_oauth2_token(
     credentials.id_token, request, flow.client_config['client_id'])
   if credentials.refresh_token:
-    insert_user(id_info['sub'], {'refresh_token': credentials.refresh_token, 'email':credentials.email})
+    insert_user(id_info['sub'], {'refresh_token': credentials.refresh_token, 'email':credentials.email, 'name': credentials.name})
 
   return flask.redirect(flask.url_for('test_api_request'))
 
