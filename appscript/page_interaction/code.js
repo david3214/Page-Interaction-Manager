@@ -993,6 +993,41 @@ Object.defineProperty(Array.prototype, 'first', {
   }
 });
 
+function healSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  // Make sure the triggers are installed
+  deactivateTrigger(spreadSheet);
+  activateTriggers(spreadSheet);
+  
+  // Make sure the collumns are the right length
+  var sheet = spreadSheet.getActiveSheet();
+  var spreadSheetID = spreadSheet.getId();
+  var tableHeader = new TableHeader(spreadSheet);
+  var headerLength = tableHeader.headerData.length;
+  var deleteColumns = sheet.getMaxColumns() - headerLength;
+  if (deleteColumns != 0){sheet.deleteColumns((headerLength +1), deleteColumns)}
+
+  // Fill in null or blank  vallues with defaults
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  values.forEach(row => {
+    row[0] = row[0] == "" ? "" : row[0]; // Date
+    row[1] = row[1] == "" ? "" : row[1]; // Name
+    row[2] = row[2] == "" ? "" : row[2]; // Gender
+    row[3] = row[3] == "" ? "" : row[3]; // Profile Link
+    row[4] = row[4] == "" ? "" : row[4]; // PSID
+    row[5] = row[5] == "" ? "" : row[5]; // Source
+    row[6] = row[6] == "" ? programSettings(spreadSheetID).assignmentMap.shift().shift() : row[6]; // Assignment
+    row[7] = row[7] == "" ? programSettings(spreadSheetID).statusList.shift() : row[7]; // Status
+    row[8] = row[8] == "" ? "FALSE" : row[8]; // Sac
+    row[9] = row[9] == "" ? "FALSE" : row[9]; // Date
+    row[10] = row[10] == "" ? "" : row[10]; // Reaction
+    row[11] = row[11] == "" ? "" : row[11]; // Notes
+    row[12] = row[12] == "" ? 1 : row[12]; // Counter
+  })
+
+  // Keep all the data
+  range.setValues(values);
+}
 
 // Figure out why the dates are wierd. ensure consistent sorting for the groups
 // 

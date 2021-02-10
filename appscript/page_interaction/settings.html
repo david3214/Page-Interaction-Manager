@@ -28,6 +28,10 @@
             <textarea style="display: block; margin-bottom:10px;" v-model="profileList"></textarea>            
             <button class="btn btn-primary" @click="updateSheetProfileLinks">Submit</button>
         </div>
+        <div>
+            <h1>Heal Button</h1>
+            <button class="btn btn-primary" @click="fireHealFunction">Heal</button>
+        </div>
     </div>
 
       <script>
@@ -72,6 +76,10 @@
                 updateScraperInput: function(scraperInput){
                     this.scraperInput = JSON.stringify(scraperInput);
                 },
+                fireHealFunction: function(){
+                    google.script.run.withSuccessHandler().healSheet();
+                    google.script.run.withSuccessHandler().updateSheet();
+                }
             },
             created: function(){
                 google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();
