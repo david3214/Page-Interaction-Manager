@@ -8,6 +8,8 @@ var defaultUserSettings = {
   
   hiddenStatuses : ["Member", "Missionary", "Do Not Contact", "Rejected"],
 
+  statusToMerge: ["Member", "Missionary", "Do Not Contact", "Rejected"],
+
   // Dictionary to map reactions
   reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
   
@@ -903,7 +905,7 @@ function mergeData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   var results = {};
   var unMerged = [];
   var spreadSheetID = spreadSheet.getId();
-  const statusToMerge = programSettings(spreadSheetID)['hiddenStatuses'];
+  const statusToMerge = programSettings(spreadSheetID)['statusToMerge'];
   const rowLength = values.first().length;
 
   values.forEach(row => {
@@ -1034,6 +1036,3 @@ function healSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
 }
 
 // Figure out why the dates are wierd. ensure consistent sorting for the groups
-// 
-
-// TODO Split the member columns to the bottom
