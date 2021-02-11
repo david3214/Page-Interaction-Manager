@@ -33,21 +33,3 @@ function getEffectiveUserEmail() {
     //Put user email into html when it loads for determining whether user is the authorized user
     return Session.getEffectiveUser().getEmail();
 }
-
-function onOpen(e) {
-    var menu = SpreadsheetApp.getUi().createAddonMenu(); // Or DocumentApp.
-    if (e && e.authMode == ScriptApp.AuthMode.NONE) {
-      // Add a normal menu item (works in all authorization modes).
-      menu.addItem('Start workflow', 'startWorkflow');
-    } else {
-      // Add a menu item based on properties (doesn't work in AuthMode.NONE).
-      var properties = PropertiesService.getDocumentProperties();
-      var workflowStarted = properties.getProperty('workflowStarted');
-      if (workflowStarted) {
-        menu.addItem('Check workflow status', 'checkWorkflow');
-      } else {
-        menu.addItem('Start workflow', 'startWorkflow');
-      }
-    }
-    menu.addToUi();
-  }
