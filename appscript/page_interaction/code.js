@@ -91,7 +91,7 @@ function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSp
     case "INSERT_ROW":
       // Run logic to move row to top
       // Un-hide so we can see all the data
-      hideRows(spreadSheet=spreadSheet, active=false);
+      //hideRows(spreadSheet=spreadSheet, active=false);
       updateNewRow(spreadSheet=spreadSheet);
       updateSheet(e, spreadSheet=spreadSheet);
       break;
@@ -617,6 +617,7 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   // Update the sheet rules, formatting and, coloring
   // Called every time an edit happens
   // Return if no data
+  //
   var spreadSheet = e == undefined ? spreadSheet : e.source;
   var sheet = spreadSheet.getActiveSheet();
   if (sheet.getDataRange().getValues().length == 1) {return;}
@@ -626,7 +627,7 @@ function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadshee
   updateConditionalFormattingRules(spreadSheet);
   updateDataValidationRules(spreadSheet);
   highlightSheet(spreadSheet);
-  hideRows(spreadSheet=spreadSheet, active=true);
+  //hideRows(spreadSheet=spreadSheet, active=true);
 }
 
 
@@ -1016,6 +1017,7 @@ function healSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
     row[10] = row[10] == "" ? "" : row[10]; // Reaction
     row[11] = row[11] == "" ? "" : row[11]; // Notes
     row[12] = row[12] == "" ? 1 : row[12]; // Counter
+    row[12] = row[12] == "#NUM!" ? 1 : row[12];
   })
 
   // Keep all the data
