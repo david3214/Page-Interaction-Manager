@@ -4,7 +4,7 @@
 
 var baseURL = "https://api-dot-eighth-vehicle-287322.uc.r.appspot.com/"; // Don't forget last slash
 
-function onOpen() {
+function onOpen(e) {
     SpreadsheetApp.getUi() 
       .createMenu('Missionary Tools')
       .addSubMenu(SpreadsheetApp.getUi().createMenu('Find member profiles')
