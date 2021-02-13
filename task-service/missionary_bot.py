@@ -18,10 +18,14 @@ import requests
 from bs4 import BeautifulSoup
 from google.cloud import storage
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from urllib.parse import urlparse, parse_qs
 import jwt
 
 # Redis
@@ -30,13 +34,16 @@ r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
 context = pa.default_serialization_context()
 
 class MissionaryBot:
-  def __init__(self, church_username=None, church_password=None, facebook_username=None, facebook_password=None):
+  def __init__(self, church_username=None, church_password=None, facebook_username=None, facebook_password=None, language=None):
     self.logger = logging.getLogger(__name__)
     self.logger.setLevel(logging.DEBUG)
     self.church_username = church_username
     self.church_password = church_password
     self.facebook_username = facebook_username
     self.facebook_password = facebook_password
+    self.language = language
+    with open('facebook_paths.json') as f:
+      self.facebook_paths = json.load(f)
     self.set_status('Intializing')
 
     self.church_auth_url = "https://areabook.churchofjesuschrist.org/services/auth"
@@ -54,11 +61,12 @@ class MissionaryBot:
     self.chrome_options.add_argument("--no-sandbox")
     self.chrome_options.add_argument("--silent")
     self.chrome_options.add_argument("--incognito")
+    self.chrome_options.add_argument("--disable-notifications")
     self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
     # self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
     self.chrome_options.add_argument("--log-level=3")
     # self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
-    self.wd = webdriver.Remote("http://127.0.0.1:4444/wd/hub", DesiredCapabilities.CHROME)
+    self.wd = webdriver.Remote("http://127.0.0.1:4444/wd/hub", DesiredCapabilities.CHROME, options=self.chrome_options)
     # self.wd.set_window_size(1920, 1080)
     # self.wd.implicitly_wait(30)
     # self.wd.set_script_timeout(30)
@@ -220,6 +228,11 @@ class MissionaryBot:
     try: # Loggin in
       self.set_status(f"Starting Authentication with Facebook")
       self.wd.get("https://www.facebook.com/")
+      try: # Check for facebook version 2
+        if self.wd.find_element_by_xpath(self.facebook_paths[self.language]["home_button"]):
+          return
+      except:
+        self.set_status("Not on version 2")
       picture_log = {}
       picture_log[f"1"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
       if self.wd.find_element_by_name("email"):
@@ -229,7 +242,7 @@ class MissionaryBot:
         picture_log[f"2-email"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
       try: # Check if we are allowed in imediately
         try: # Check for facebook version 2
-          if self.wd.find_element_by_xpath('//a[@aria-label="Home"]'):
+          if self.wd.find_element_by_xpath(self.facebook_paths[self.language]["home_button"]):
             picture_log[f"v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
             return
         except:
@@ -312,7 +325,7 @@ class MissionaryBot:
             break
       # Check if successfully logged in
       try:
-        if self.wd.find_element_by_xpath('//a[@aria-label="Home"]'):
+        if self.wd.find_element_by_xpath(self.facebook_paths[self.language]["home_button"]):
           picture_log[f"v2-search"] = {'screen_shot': self.wd.get_screenshot_as_png(), 'html': self.wd.page_source}
           self.set_status('Done authentication with Facebook version 2')
           return
@@ -340,36 +353,54 @@ class MissionaryBot:
     """
     Get a dictionary of the names and profile links of a list of people for a post
     """
-    self.authenticate_with_facebook()
-    language = "japanese-kansai"
-    facebook_paths = {
-      "japanese-kansai":{
-        "reactions_button": "//div[contains(@aria-label, 'ええやん')]",
-        "reactions_all_tab": "//span[text()='全部'",
-        "reactions_box":"//div[@aria-label='リアクション']",
-
-      }
-    }
+    def clean_facebook_profile_url(url):
+      o = urlparse(url)
+      if o.path == '/profile.php':
+        return o.scheme + "://" + o.netloc + o.path + "?id=" + parse_qs(o.query)['id'][0]
+      elif o.scheme == 'https':
+        return o.scheme + "://" + o.netloc + o.path
+        
     results = {}
-    self.set_status('Scraping post')
-    self.wd.get(post_url)
-    reaction_button = self.wd.find_element_by_xpath(facebook_paths[language]["reactions_button"]) # open the reaction box
-    self.wd.execute_script("arguments[0].click();", reaction_button)
-    element = WebDriverWait(self.wd, 10).until(EC.presence_of_element_located((By.XPATH, facebook_paths[language]["reactions_all_tab"])))
-    element.click()
+    if post_url == '' or len(people) == 0:
+      self.logger.info(f"Skiping {post_url} of length {len(people)}")
+      return results
+    try:
+      self.set_status('Scraping for profile_id')
+      self.wd.get(post_url)
+      reaction_button = self.wd.find_elements_by_xpath(self.facebook_paths[self.language]["reactions_button"])[0] # open the reaction box
+      reaction_button.click()
+      previous_links = None
+      while len(people) != 0:
+        links = WebDriverWait(self.wd, 10).until(EC.presence_of_element_located((By.XPATH, self.facebook_paths[self.language]['reactions_box']))).find_elements_by_tag_name('a')
+        for link in links:
+          if link.text in people:
+            cleaned_url = clean_facebook_profile_url(link.get_attribute('href'))
+            results[link.text] = cleaned_url
+            people.remove(link.text)
+          if len(people) == 0:
+            return results
+        if links == previous_links:
+          return results
+        else:
+          previous_links = links
 
-    while len(people != 0):
-      links = self.wd.find_element_by_xpath(facebook_paths[language]['reactions_box']).find_elements_by_tag_name('a')
-      for link in links:
-        if link.text in people:
-          results[link.href] = link.text
-      self.wd.find_element_by_xpath(facebook_paths[language]['reactions_box'])
-    """
-    click => aria-label="誰が反応してくれたんやろ"
-    click span tag with inner text 全部
-    select all links and see if the link text is equal to any of the names for this post
-    scroll down to check for more 
-    """
+        box = self.wd.find_element_by_xpath(self.facebook_paths[self.language]['reactions_scroll_bar'])
+        actions = ActionChains(self.wd)
+        actions.move_to_element(box)
+        actions.click(box)
+        actions.key_down(Keys.CONTROL)
+        actions.key_down(Keys.END)
+        actions.key_up(Keys.CONTROL)
+        actions.key_up(Keys.END)
+        actions.perform()
+        locator = (By.XPATH, self.facebook_paths[self.language]['reactions_box_list'])
+        length = len(self.wd.find_elements_by_xpath(self.facebook_paths[self.language]['reactions_box_list']))
+        condition = elements_length_changes(locator, length)
+        WebDriverWait(self.wd, 5, 1).until(condition)
+    except:
+      return results
+    finally:
+      return results
 
 
   def scrape_area_book_for_people(self):
@@ -545,9 +576,85 @@ gender_map = {
   'U': "Not Recorded"
 }
 
-if __name__ == "__main__":
+class elements_length_changes(object):
+  """An expectation for checking that an elements has changes.
+
+  locator - used to find the element
+  returns the WebElement once the length has changed
+  """
+  def __init__(self, locator, length):
+    self.locator = locator
+    self.length = length
+
+  def __call__(self, driver):
+    element = driver.find_elements(*self.locator)
+    element_count = len(element)
+    if element_count > self.length:
+      return element
+    else:
+      return False
+
+
+
+import threading, queue
+import multiprocessing
+from alive_progress import alive_bar
+
+def worker():
   bot = MissionaryBot(facebook_username="***REMOVED***", facebook_password="***REMOVED***")
-  data = {"https://facebook.com/112513540416434_415578043083894" : ["Graham Harrison"],
-          "https://facebook.com/112513540416434_167587564909031": ["Graham Harrison"]}
-  for url in data:
-    bot.scrape_post_reactions_for_people(url, data[url])
+  bot.language = "japanese-kansai"
+  bot.authenticate_with_facebook()
+  while True:
+    item = q.get()
+    print(f'Working on {item}')
+    for name in item[1]:
+      if name in merged.keys():
+        item[1].remove(name)
+    profile_links = bot.scrape_post_reactions_for_people(item[0], item[1])
+    results.put(profile_links)
+    print(f'Finished {item}')
+    q.task_done()
+    if q.empty():
+      bot.wd.quit()
+      break
+
+def progress_bar(queue):
+  with alive_bar(queue.qsize()) as bar:
+    size = queue.qsize()
+    while not queue.empty():
+      for _ in range(size - queue.qsize()):
+        size = queue.qsize()
+        bar()
+      time.sleep(1)
+
+
+def merge_results(queue):
+  global merged
+  while True:
+    obj = queue.get()
+    if obj is not None:
+      merged = {**merged, **obj}
+
+if __name__ == "__main__":
+  q = queue.Queue()
+  results = queue.Queue()
+  merged = {}
+
+  with open('input.json') as json_file:
+    data = json.load(json_file)
+
+  for key, value in data.items():
+    q.put([key, value])
+  print('All task requests sent\n', end='')
+  threading.Thread(target=progress_bar, daemon=True, args=[q], name="Q Monitor").start()
+  threading.Thread(target=merge_results, daemon=True, args=[results], name="Merge Results").start()
+
+  for _ in range(multiprocessing.cpu_count()):
+    threading.Thread(target=worker, daemon=True, name=f"Profile_worker_{_}").start()
+    time.sleep(5)
+  
+  q.join()
+  print('All work completed')
+  
+  with open('results.json', 'w') as outfile:
+    json.dump(merged, outfile)
