@@ -10,3 +10,5 @@ __pycache__
 */env
 .pytest_cache
 */.pytest_cache
+task-service/results.json
+task-service/input.json
