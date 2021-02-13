@@ -1,0 +1,13 @@
+{
+    "japanese-kansai":{
+      "home_button": "//a[@aria-label='Home']",
+      "reactions_button": "//span[contains(@aria-label, '誰が反応してくれたんやろ')]/following-sibling::div",
+      "reactions_box":"//div[@aria-label='リアクション']",
+      "reactions_scroll_area": "//div[@aria-label='リアクション']/div[last()]",
+      "reactions_scroll_bar": "//div[@aria-label='リアクション']/div[last()]/div[2]",
+      "reactions_box_list": "//div[@aria-label='リアクション']/div[last()]/div[1]/div"
+    },
+    "english":{
+      "home_button": "//a[@aria-label='Home']"
+    }
+}
