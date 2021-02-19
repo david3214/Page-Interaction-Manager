@@ -3,6 +3,7 @@
  */
 
 var baseURL = "https://api-dot-eighth-vehicle-287322.uc.r.appspot.com/"; // Don't forget last slash
+const _ = LodashGS.load();
 
 function onOpen(e) {
     SpreadsheetApp.getUi() 
@@ -14,11 +15,14 @@ function onOpen(e) {
       .addSubMenu(SpreadsheetApp.getUi().createMenu('Page interaction manager')
             .addItem('Create', 'setUpSheet')
             .addItem('Analytics', 'showAnalytics')
+            .addItem('Debug', 'showDebugSidebar')
             .addItem('Settings', 'showSettings'))
       .addToUi();
-    if (e && e.authMode != ScriptApp.AuthMode.NONE) {
+    /*
+      if (e && e.authMode != ScriptApp.AuthMode.NONE) {
         addUserToDB();
     }
+    */
 }
 
 // Make the menu appear after installing it

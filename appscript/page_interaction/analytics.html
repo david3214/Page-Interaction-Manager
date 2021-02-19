@@ -8,8 +8,14 @@
 <body>
     <div id="app">
         <h1>Page Analytics</h1>
-        <h3>Status Summary</h3>
-        <p v-for="(value, name) in results.statuses" style="margin:0">{{ name }} : {{ value }}</p> 
+        <h3>Status Summary (unique : total)</h3>
+        <p v-for="(value, name) in results.statuses" style="margin:0">{{ name }} : {{ value[0] }} : {{ value[1] }}</p> 
+        <table><thead><th></th><th>Member</th><th>Non Member</th></thead><tbody>
+            <tr><td>Unique</td><td>{{ results.members[0] }}</td><td>{{ results.nonMembers[0] }}</td></tr>
+            <tr><td>Total</td><td>{{ results.members[1] }}</td><td>{{ results.nonMembers[1] }}</td></tr>
+        </tbody>
+        </table>
+        <p>Total People: {{results.uniquePeople}} </p>
         <h3>Posts</h3>
         <table>
             <tbody >

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>Debug</h1>
+        <h3>Status Summary</h3>
+        <p v-for="(val, key) in debug_functions">
+            <button v-on:click="callFunc(val)">
+                {{ val }}
+            </button></p> 
+    </div>
+      <script>
+        new Vue({
+            el: '#app',
+            data: {
+                debug_functions: ["trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet", "sortData", "test_doLogicPageMessages", "formatSheet",
+                                    "setUpSheet", "updateNewRow", "analyzeSheet", "getScraperInput",
+                                    "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
+                                    "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
+            },
+            methods: {
+                callFunc: function(funcName){
+                    google.script.run.withSuccessHandler().executeFunctionByName(funcName);
+                },
+            },
+        })
+        </script>
+</body>
+
+</html>
