@@ -2,40 +2,38 @@
 // Dictionary of program settings
 var defaultUserSettings = {
   // Program variables
-  headerRowNumber: 1,
-
-  statusList : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Member", "Missionary", "Non Member", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
-  
+  statusList : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Outside Mission", "Member", "Missionary", "Non Member", "Sent Friend Request", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
   hiddenStatuses : ["Member", "Missionary", "Do Not Contact", "Rejected"],
-
   statusToMerge: ["Member", "Missionary", "Do Not Contact", "Rejected"],
-
-  // Dictionary to map reactions
-  reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
-  
-  // 2d list to map wards to colors
-  assignmentMap : [['Ward 1', '#82C1EC'], ['Ward 2', '#F28530'], ['Ward 3', '#FCFBC2'], ['Ward 4', '#ECE3D4'], ['Ward 5', '#F9F85F']],
-  
-  // Dictionary to map gender to colors
-  genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
-  
-  // Dictionary to map the ads ids to names
-  //adIDMap : {"1234567890": "Ad Name here"},
-
-  triggerNames : ['doLogicPageMessages', 'updateSheet'],
-
+  assignmentMap : [['Unassigned', '#82C1EC'], ['Ward 1', '#F28530'], ['Ward 2', '#FCFBC2'], ['Ward 3', '#ECE3D4'], ['Ward 4', '#F9F85F']],
+  adIDMap : {"Source Link Here": "Ad Name here"},
   sheetSettings: {
       "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "mergingEnabled": true },
       "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true }
     },
 };
 
-// TODO Migrate internal variables in here
 var internalVariables = {
+  reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
+  genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
+  triggerNames : ['doLogicPageMessages', 'updateSheet'],
   editableColumns: ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Notes'],
   memberStatusList: ['Member', 'Missionary', 'Baptized'],
-  headerEnum: {'Date':0, 'Name':1, 'Gender':2, 'Profile Link':3, 'PSID':4, 'Source':5, 'Assignment':6, 'Status':7, '@Sac':8, 'On Date':9, 'Reaction':10, 'Notes':11, 'Counter':12}
+  genericHeader: ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Data', 'Notes', 'Counter']
 };
+
+// TODO figure out a good spot for this
+function updateSource(context=openContext()){
+  // If a row has a profile url then change the source to the name
+  var profileLink = context.header.get('Profile Link');
+  var source = context.header.get('Source');
+  _.forEach(context.values, function(row){
+    if (row[profileLink] != ""){
+      row[source] = context.settings.adIDMap[row[source]];
+    }
+  })
+  return context;
+}
 
 var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().getId()){
   var cache = CacheService.getScriptCache();
@@ -48,208 +46,93 @@ var programSettings = function(sheet_id=SpreadsheetApp.getActiveSpreadsheet().ge
   return settings;
 };
 
-function saveProgramSettings(settings, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function saveProgramSettings(settings, context=openContext()){
   /* Write the settings to the database 
    * Takes an active spreadSheet
   */
-  var sheet_id = spreadSheet.getId();
-  setPreference(sheet_id, settings);
+  setPreference(context.spreadSheetID, settings);
   var cache = CacheService.getScriptCache();
-  cache.put(`programSettings:${sheet_id}`, JSON.stringify(settings), 6000);
+  cache.put(`programSettings:${context.spreadSheetID}`, JSON.stringify(settings), 6000);
 }
 
-/*
-  Intakes a spreadsheet
-*/
-var TableHeader = function(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
-  /* Translate page header */
-  // var spreadSheetID = spreadSheet.getId();
-  // var sheet = spreadSheet.getActiveSheet();
-  // TODO Fix this, it will break with messages as it is specific to reactions
-  // also it is taking to many api calls
-  var header = {
-    // headerData: sheet.getRange(programSettings(spreadSheetID).headerRowNumber, 1, 1, sheet.getLastColumn()).getValues()[0],
-    headerData: ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Reaction', 'Notes', 'Counter'],
-    getColumnIndex(columnName) {return this.headerData.indexOf(columnName);}
-  };
-  return header;
-};
 
 var Rule = function(){
     return {'create': undefined};
 };
 
-function doLogicPageMessages(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
+function doLogicPageMessages(e=undefined, context=openContext()) {
   /*
   Main function for the program
   Runs from the onChange trigger
   */
 
- var spreadSheet = e == undefined ? spreadSheet : e.source;
+  var lock = LockService.getUserLock();
+  lock.waitLock(30000);
+
+  var context = e == undefined ? context : openContext(e.source);
   // Determine what type of onChange event it is
   switch (e.changeType){
     case "INSERT_ROW":
-      // Run logic to move row to top
-      // Un-hide so we can see all the data
-      //hideRows(spreadSheet=spreadSheet, active=false);
-      updateNewRow(spreadSheet=spreadSheet);
-      updateSheet(e, spreadSheet=spreadSheet);
+      updateNewRow(context);
+      updateSheet(e=undefined, context);
+      //formatSheet(context);
       break;
     case "EDIT":
       return;
     default:
   }
+  // Release the lock so that other processes can continue.
+  SpreadsheetApp.flush();
+  lock.releaseLock();
 }
 
-function onRowInsert(spreadSheet=SpreadsheetApp.getActiveSheet()){
-  const _ = LodashGS.load();
-  var sheet = spreadSheet.getActiveSheet();
-  var range = sheet.getDataRange();
-  var values = range.getValues();
-  var header = values.shift();
-  var newRow = values.pop();
-
-}
-
-function updateNewRow(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
+function updateNewRow(context=openContext()) {
 /*
-  Run the sort logic when a new row is added
+  Update new row with prexisting or new values
 */
-  var sheet = spreadSheet.getActiveSheet();
-  var spreadSheetID = spreadSheet.getId();
-  // Get the current active sheet
-  var sheetName = sheet.getName();
+  var newRow = context.values.pop();
+  var PSID = context.header.get('PSID');
+  var newPSID = newRow[PSID];
+  var PSIDList = context.values.map(row => row[PSID])
 
-  // Check if sortingEnabled is true for this sheet
-  if (!programSettings(spreadSheetID)['sheetSettings'][sheetName].sortingEnabled){return;}
-  
-  // Check if allowed to merge rows
-  var doMerge = programSettings(spreadSheetID)['sheetSettings'][sheetName].mergingEnabled;
-
-  // Get range of all data
-  var range = sheet.getDataRange().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow() - programSettings(spreadSheetID).headerRowNumber);
-  var values = range.getValues();
-  
-  // Read in the table header translate to in
-  tableHeader = new TableHeader(spreadSheet);
-  
-  // Get the new entry row
-  var newRow = values.pop();
-  
-  // Get the new entry PSID
-  var newPSID = newRow[tableHeader.getColumnIndex('PSID')];
-  
-  // List of PSID of members
-  // Get rows where Member is true
-  var memberPSIDList = values.filter(row => internalVariables.memberStatusList.includes(row[tableHeader.getColumnIndex('Status')]))
-  .map(row => row[tableHeader.getColumnIndex('PSID')]);
-  
-  // List of PSID of non members who have messaged the page
-  // Get rows where Member is false
-  var nonMemberPSIDList = values.filter(row => !internalVariables.memberStatusList.includes(row[tableHeader.getColumnIndex('Status')]))
-  .map(row => row[tableHeader.getColumnIndex('PSID')]);
-  
-  var reactionOrMessage = sheetName == "Ad Likes" ? tableHeader.getColumnIndex("Reaction") : tableHeader.getColumnIndex("Message");
-
-  // Case 1 member messaging the page for multiple times
-  // PSID is in list of member PSIDs
-  if (memberPSIDList.includes(newPSID)) {
-    // Need to measure the length of array so we know how many blank rows to put back in
-    var initialLength = values.length;
-    
-    // Remove all matching rows from sheet except the checked one
-    values = values.filter(row => row[tableHeader.getColumnIndex('PSID')] != newPSID 
-    || (row[tableHeader.getColumnIndex('PSID')] == newPSID 
-    && internalVariables.memberStatusList.includes(row[tableHeader.getColumnIndex('Status')])));
-    
-    // Measure difference and add the blanks in
-    var finalLength = values.length;
-    var difference = Math.abs(finalLength - initialLength);
-    var blankArray = [...Array(difference + 1)].map(x=>Array(newRow.length));
-    values.push(...blankArray);
-    
-    // Find the old entry and increment the counter
-    oldRowIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
-    values[oldRowIndex][tableHeader.getColumnIndex('Counter')] = parseInt(values[oldRowIndex][tableHeader.getColumnIndex('Counter')]) + 1 + parseInt(difference);
-    
-    // Update the reactionOrMessage for kicks
-    values[oldRowIndex][reactionOrMessage] = newRow[reactionOrMessage];
-  }
-  
-  // Case 2 non member messaging page for the multiple times
-  // PSID is in the non member list
-  else if (nonMemberPSIDList.includes(newPSID)){
+  if (PSIDList.includes(newPSID)){
+    var otherRow = _.find(context.values, [PSID, newPSID]);
     // Get the index of the first matching item with the same PSID
-    oldRowIndex = values.findIndex(obj => obj[tableHeader.getColumnIndex('PSID')] == newPSID);
-    internalVariables.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).forEach(columnIndex => {
-      newRow[columnIndex] = values[oldRowIndex][columnIndex];
+    internalVariables.editableColumns.map(columnName => context.header.get(columnName)).forEach(columnIndex => {
+      newRow[columnIndex] = otherRow[columnIndex];
     })
-    newRow[tableHeader.getColumnIndex('Counter')] = 1;   
-    values.unshift(newRow);
+    newRow[context.header.get('Counter')] = 1;   
   }
-  
-  // Case 3 member or non member first time messaging page
-  // PSID is not in list of non member or member PDIDs
   else {
-    // Add default values
-    // If no time is added, insert it
-    // newRow[tableHeader.getColumnIndex('Date')] = Utilities.formatDate(newRow[tableHeader.getColumnIndex('Date')], "GMT-6", "MM/dd/yyyy");
-    
-    // Reaction -> map word to emoji
-    // newRow[tableHeader.getColumnIndex('Reaction')] = reactionsMap[newRow[tableHeader.getColumnIndex('Reaction')].toUpperCase()];
-    
-    // Source -> map number to an ad
-    // newRow[tableHeader.getColumnIndex('Source')] = adIDMap[newRow[tableHeader.getColumnIndex('Source')]] == undefined ? newRow[tableHeader.getColumnIndex('Source')] : adIDMap[newRow[tableHeader.getColumnIndex('Source')]];
-    
-    // Assignment -> Default to first key
-    newRow[tableHeader.getColumnIndex('Assignment')] = programSettings(spreadSheetID).assignmentMap.shift().shift();
-    
-    // Status -> Select
-    newRow[tableHeader.getColumnIndex('Status')] = programSettings(spreadSheetID).statusList.shift();
-    
-    // @Sac -> FALSE
-    newRow[tableHeader.getColumnIndex('@Sac')] = 'FALSE';
-    
-    // On Date -> FALSE
-    newRow[tableHeader.getColumnIndex('On Date')] = 'FALSE';
-    
-    // Spot for Notes
-    newRow[tableHeader.getColumnIndex('Notes')] = "";
-    
-    // Counter -> 1
-    newRow[tableHeader.getColumnIndex('Counter')] = 1;
-    
-    // Predict if name is male or female
-    // Check cache first
-    var cache = CacheService.getScriptCache();
-    var name = newRow[tableHeader.getColumnIndex('Name')];
-    name = name.split(" ")[0];
-    var cached = cache.get(name);
-    if (cached == null && name) {
-      var url = 'https://api.genderize.io' + '?name=' + encodeURIComponent(name);
-      var response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
-      if (response.getResponseCode() !== 200) {Logger.log(response.getContentText())}
-      var gender = JSON.parse(response.getContentText())['gender'];
-      cache.put(name, gender, 864000);
-    } else {
-      var gender = cached;
-    }
-    // Guese gender
-    newRow[tableHeader.getColumnIndex('Gender')] = gender;
-    
-    // Move the old row to the top
-    values.unshift(newRow);
+    newRow[context.header.get('Assignment')] = context.settings.assignmentMap.shift().shift();
+    newRow[context.header.get('Status')] = context.settings.statusList.shift();
+    newRow[context.header.get('@Sac')] = 'FALSE';
+    newRow[context.header.get('On Date')] = 'FALSE';
+    newRow[context.header.get('Notes')] = "";
+    newRow[context.header.get('Counter')] = 1;
+    newRow[context.header.get('Gender')] = guessGender(newRow[context.header.get('Name')]);
   }
-  if (doMerge == true ){ values = mergeData(values, spreadSheet);}
-
-  //Write the values back to the sheet
-  range.setValues(values);
-  
-  // End
-  return;
+  context.values.unshift(newRow);
+  return context;
 }
 
-function updateExistingRows(e, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function guessGender(name){
+  var cache = CacheService.getScriptCache();
+  name = name.split(" ")[0];
+  var cached = cache.get(name);
+  if (cached == null && name) {
+    var url = 'https://api.genderize.io' + '?name=' + encodeURIComponent(name);
+    var response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
+    if (response.getResponseCode() !== 200) {Logger.log(response.getContentText())}
+    var gender = JSON.parse(response.getContentText())['gender'];
+    cache.put(name, gender, 864000);
+  } else {
+    var gender = cached;
+  }
+  return gender
+}
+
+function updateExistingRows(e, context=openContext()){
   /**
    * Update existing rows with the new event data
    */
@@ -257,59 +140,51 @@ function updateExistingRows(e, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()
   
   // Reject if range changed
   if (!e.hasOwnProperty('value')){return;} 
-
-  var sheet = spreadSheet.getActiveSheet();
-  var range = sheet.getDataRange();
-  var values = range.getValues();
-  var tableHeader = new TableHeader(spreadSheet);
-  const PSID = tableHeader.getColumnIndex('PSID');
+  const PSID = context.header.get('PSID')
   e.columnIndex = e.range.getColumn() - 1;
   e.editedRow = values[e.range.getRowIndex() -1]
   // Reject if not editable
-  if (!internalVariables.editableColumns.map(columnName => tableHeader.getColumnIndex(columnName)).includes(e.columnIndex)){return}
-  values.forEach(function(row){
+  if (!internalVariables.editableColumns.map(columnName => context.header.get(columnName)).includes(e.columnIndex)){return}
+  context.values.forEach(function(row){
     if (row[PSID] != e.editedRow[PSID]) {return}
     row[e.columnIndex] = e.value;
   })
-  range.setValues(values);
-  return true;
+
+  return context;
 }
 
-function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function updateConditionalFormattingRules(context=openContext()){
   /*
   Adjust the conditional formating rules to cover the sheet data
   */
-  var spreadSheetID = spreadSheet.getId();
-  var sheet = spreadSheet.getActiveSheet();
-
-  // Read in the table header translate to in
-  tableHeader = new TableHeader(spreadSheet);
   
   // Track the conditional formatting
   var sheetConditionalFormatRules = [];
 
+  var sheet = context.sheet;
+
   // Get 'Name' column
-  var name = sheet.getRange(2, tableHeader.getColumnIndex('Name')+1, sheet.getLastRow() - 1);
+  var name = sheet.getRange(2, context.header.get('Name')+1, context.values.length);
   
   // Get 'Assignment' column
-  var assignment = sheet.getRange(2, tableHeader.getColumnIndex('Assignment')+1, sheet.getLastRow() - 1);
+  var assignment = sheet.getRange(2, context.header.get('Assignment')+1, context.values.length);
   
   // Make conditional formatting rule to give the different genders
-  Object.keys(programSettings(spreadSheetID).genderMap).forEach(function(key){
+  Object.keys(internalVariables.genderMap).forEach(function(key){
     var genderConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied(`=C2="${key}"`)
-    .setBackground(programSettings(spreadSheetID).genderMap[key])
+    .setBackground(internalVariables.genderMap[key])
     .setRanges([name])
     .build();
     sheetConditionalFormatRules.push(genderConditionalFormatRule);
   });
   
   // Hide Gender, PSID, Profile Link 
-  sheet.hideColumns(tableHeader.getColumnIndex('Gender')+1);
-  sheet.hideColumns(tableHeader.getColumnIndex('PSID')+1);
+  sheet.hideColumns(context.header.get('Gender')+1);
+  sheet.hideColumns(context.header.get('PSID')+1);
   
   // Make conditional formatting rule to give the Assignments different colors
-  programSettings(spreadSheetID).assignmentMap.forEach(function(assignmentPair){
+  context.settings.assignmentMap.forEach(function(assignmentPair){
     var assignmentConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
     .whenTextEqualTo(assignmentPair[0])
     .setBackground(assignmentPair[1])
@@ -322,19 +197,15 @@ function updateConditionalFormattingRules(spreadSheet=SpreadsheetApp.getActiveSp
   sheet.setConditionalFormatRules(sheetConditionalFormatRules);
 }
 
-function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function updateDataValidationRules(context=openContext()){
   /*
   Function is reponsible for apply page wide data validation rules
   */ 
   // Get the current active sheet
-  var spreadSheetID = spreadSheet.getId();
-  var sheet = spreadSheet.getActiveSheet();
-
-  // Read in the table header translate to in
-  tableHeader = new TableHeader(spreadSheet);
-  
+  var sheet = context.sheet
+ 
   // Clear previous rules
-  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).setDataValidation(null);
+  sheet.getRange(1, 1, sheet.getMaxRows(), context.maxColumns).setDataValidation(null);
   
   // Dictionary to hold all of our rules
   var rules = {};
@@ -345,12 +216,12 @@ function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadshe
     
     // Make data validation rule for Assignment
     var enforceAssignment = SpreadsheetApp.newDataValidation();
-    var assigment_vals = programSettings(spreadSheetID).assignmentMap.map(pair => pair[0]);
+    var assigment_vals = context.settings.assignmentMap.map(pair => pair[0]);
     enforceAssignment.requireValueInList(assigment_vals, true);
     enforceAssignment.build();
     
     // Set the assignment range rule
-    sheet.getRange(2, tableHeader.getColumnIndex('Assignment')+1, sheet.getLastRow() - 1).setDataValidation(enforceAssignment);
+    sheet.getRange(2, context.header.get('Assignment')+1, context.values.length).setDataValidation(enforceAssignment);
   };
   rules["Assignment"] = assignment;
   
@@ -361,10 +232,10 @@ function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadshe
     // Make data validation rule for Status
     var enforceStatus = SpreadsheetApp.newDataValidation();
     
-    enforceStatus.requireValueInList(programSettings(spreadSheetID).statusList, true);
+    enforceStatus.requireValueInList(context.settings.statusList, true);
 
     // Set the status range rule andd apply the rule
-    sheet.getRange(2, tableHeader.getColumnIndex('Status')+1, sheet.getLastRow() - 1).setDataValidation(enforceStatus);
+    sheet.getRange(2, context.header.get('Status')+1, context.values.length).setDataValidation(enforceStatus);
   };
   rules["Status"] = status;
   
@@ -379,7 +250,7 @@ function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadshe
     enforceCheckbox.build();
     
     // Get the atSac range and apply data validation check boxes
-    sheet.getRange(2, tableHeader.getColumnIndex('@Sac')+1, sheet.getLastRow() - 1).setDataValidation(enforceCheckbox);
+    sheet.getRange(2, context.header.get('@Sac')+1, context.values.length).setDataValidation(enforceCheckbox);
   };
   rules["@Sac"] = atSac;
   
@@ -394,86 +265,53 @@ function updateDataValidationRules(spreadSheet=SpreadsheetApp.getActiveSpreadshe
     enforceCheckbox.build();
     
     // Get the 'On Date' range and apply data validation check boxes
-    sheet.getRange(2, tableHeader.getColumnIndex('On Date')+1, sheet.getLastRow() - 1).setDataValidation(enforceCheckbox);
+    sheet.getRange(2, context.header.get('On Date')+1, context.values.length).setDataValidation(enforceCheckbox);
   };
   rules["On Date"] = onDate;
-  
-  // Make a 'Reaction' rule
-  var reaction = new Rule();
-  reaction.create = function(){
-    
-    // Make data validation rule for Reaction
-    var enforceReaction = SpreadsheetApp.newDataValidation();
-    enforceReaction.requireValueInList(Object.values(programSettings(spreadSheetID).reactionsMap), true);
-    enforceReaction.build();
-    
-    // Get the reaction range and apply data validation rule for reaction
-    sheet.getRange(2, tableHeader.getColumnIndex('Reaction')+1, sheet.getLastRow() - 1).setDataValidation(enforceReaction);
-  };
-  rules["Reaction"] = reaction;
-  
+
   // Build the rules on for the current sheet
-  tableHeader.headerData.forEach(function(columnName){
+  context.header.headerData.forEach(function(columnName){
     if (rules.hasOwnProperty(columnName)){
       rules[columnName].create(sheet);
     }
   });
 }
 
-function highlightSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function highlightSheet(context=openContext()){
   /*
   Ensure acurate highlighting on the sheet
   */
-  var spreadSheetID = spreadSheet.getId();
-  var sheet = spreadSheet.getActiveSheet();
-
-  // Load initial data
-  var sheetName = sheet.getName();
-
   // Check if highlighting is enabled
-  if (!programSettings(spreadSheetID)['sheetSettings'][sheetName].highlightEnabled){ return; }
-  
-  // Clear previous highlighting
-  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).setBackground("white");
-  
-  // Highlight the rows in red that contain a matching PSID and have a default status
-  // Get the values from the sheet
-  var range = sheet.getDataRange().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow());
-  var values = range.getValues();
-  
-  // Read in the table header translate to in
-  var tableHeader = new TableHeader(spreadSheet);
+  if (!context.settings.sheetSettings[context.sheetName].highlightEnabled){ return; }
+  var values = context.getWritableValues();
   
   // Filter the values and get all PSID where status == select
-  var selectPSID = values.filter(row => row[tableHeader.getColumnIndex('Status')] == 'Select').map(row => row[tableHeader.getColumnIndex('PSID')]);
+  var status = context.header.get('Status');
+  var PSID = context.header.get('PSID');
+  var selectPSID = values.filter(row => row[status] == 'Select').map(row => row[PSID]);
   
-  // Map the values if PSID is in previous filter results then mark the line red
+  // Map the values, if PSID is in previous filter results then mark the line red
   var colorRow = function(row){
     /* Color a specific cell in a row */
-    if (selectPSID.includes(row[tableHeader.getColumnIndex('PSID')])) {
+    if (selectPSID.includes(row[PSID])) {
       var res = new Array(row.length).fill("red");
     } else {
-      var res = new Array(row.length);
+      var res = new Array(row.length).fill("white");
     }
     return res;
   };
   var results = values.map(colorRow);
   
   // Write back the results to google sheets
-  range.setBackgrounds(results);
-  
+  context.range.setBackgrounds(results);
 }
 
-function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet(), active=true){
+function hideRows(context=openContext(), active=true){
   /* Hide rows with specific statuses */
-  var spreadSheetID = spreadSheet.getId();
-  var sheet = spreadSheet.getActiveSheet();
-
   // Get inital data
-  var range = sheet.getDataRange();
-  var values = range.getValues();
-  var hiddenStatuses = programSettings(spreadSheetID).hiddenStatuses;
-  var tableHeader = new TableHeader(spreadSheet);
+  var sheet = context.sheet;
+  var range = context.range;
+  var hiddenStatuses = context.settings.hiddenStatuses;
 
   // Unhide all the rows
   sheet.unhideRow(range);
@@ -481,41 +319,40 @@ function hideRows(spreadSheet=SpreadsheetApp.getActiveSpreadsheet(), active=true
 
   // Get a list of indexes where the row status is in hidden status
   // Filter the values and get all PSID where status is in hiddenStatuses
-  var PSIDsToHide = values.filter(row => hiddenStatuses.includes(row[tableHeader.getColumnIndex('Status')])).map(row => row[tableHeader.getColumnIndex('PSID')]);
+  var PSIDsToHide = context.values.filter(row => hiddenStatuses.includes(row[context.header.get('Status')])).map(row => row[context.header.get('PSID')]);
 
   // Hides the rows in results
   var hideMatchingPSID = function(row, index){
-    var currentPSID = row[tableHeader.getColumnIndex('PSID')];
+    var currentPSID = row[context.header.get('PSID')];
     if (PSIDsToHide.includes(currentPSID)) {
       sheet.hideRows(index+1, 1);
     }
   };
-  values.forEach(hideMatchingPSID);
-
+  context.values.forEach(hideMatchingPSID);
 }
 
-function activateTriggers(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function activateTriggers(context=openContext()){
   /* Create the project triggers */ 
   // Enable a trigger to run the page logic
-  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][0])
-  .forSpreadsheet(spreadSheet.getId())
+  ScriptApp.newTrigger(internalVariables.triggerNames[0])
+  .forSpreadsheet(context.spreadSheetID)
   .onChange()
   .create();
   
   // Enable a triger to run on edit to do the highlights
-  ScriptApp.newTrigger(programSettings(spreadSheet.getId())['triggerNames'][1])
-  .forSpreadsheet(spreadSheet.getId())
+  ScriptApp.newTrigger(internalVariables.triggerNames[1])
+  .forSpreadsheet(context.spreadSheetID)
   .onEdit()
   .create();
 
 }
 
 
-function deactivateTrigger(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function deactivateTriggers(){
   /* Remove our project triggers */
   var triggers = ScriptApp.getProjectTriggers();
    var removeOurTriggers = function(trigger) {
-     if (programSettings(spreadSheet.getId()).triggerNames.includes(trigger.getHandlerFunction())) {
+     if (internalVariables.triggerNames.includes(trigger.getHandlerFunction())) {
        ScriptApp.deleteTrigger(trigger);
      }
    };
@@ -523,53 +360,29 @@ function deactivateTrigger(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
 }
 
 
-function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
+function setUpSheet(context=openContext()) {
   /*
+  Create sheets, open auth pannel
   */
-  // Save default settings to sheet
-  saveProgramSettings(defaultUserSettings, spreadSheet);
-
-  // Clear any old possible sheets 
-  tearDownSheet(spreadSheet);
-
-  // Create ad likes sheet
-  var adLikesHeaders = ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Reaction', 'Notes', 'Counter'];
-  var sheetName = "Ad Likes";
-  
-  // Write headers
-  var newSheet = spreadSheet.insertSheet(sheetName);
-  newSheet.getRange(1,1,1, adLikesHeaders.length).setValues([adLikesHeaders]);
-  
-  // Trim to length
-  var deleteColumns = newSheet.getMaxColumns() - newSheet.getLastColumn();
-  newSheet.deleteColumns((newSheet.getLastColumn() +1), deleteColumns);
-  
-  // Create 'Page Messages' sheet
-  var pageMessagHeaders = ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Message', 'Notes', 'Counter'];
-  var sheetName = "Page Messages";
-  
-  // Insert sheet
-  var newSheet = spreadSheet.insertSheet(sheetName);
-
-  // Write headers
-  newSheet.getRange(1,1,1, pageMessagHeaders.length).setValues([pageMessagHeaders]);
-
-  // Trim columns
-  var deleteColumns = newSheet.getMaxColumns() - newSheet.getLastColumn();
-  newSheet.deleteColumns((newSheet.getLastColumn() +1), deleteColumns);
-
-  // Activate triggers
-  activateTriggers(spreadSheet);
-
-  // Connect sheet to facebook
-  showAuthenticationSidebar(spreadSheet);
-
+  saveProgramSettings(defaultUserSettings, context);
+  tearDownSheet(context);
+  var genericHeader = internalVariables.genericHeader;
+  var sheetNames = ["Ad Likes", "Page Messages"];
+  _.forEach(sheetNames, function(name){
+    var newSheet = context.spreadSheet.insertSheet(name);
+    newSheet.getRange(1,1,1, genericHeader.length).setValues([genericHeader]);
+    var deleteColumns = newSheet.getMaxColumns() - newSheet.getLastColumn();
+    newSheet.deleteColumns((newSheet.getLastColumn() +1), deleteColumns);
+  })
+  activateTriggers(context);
+  showAuthenticationSidebar(context);
 }
 
-function tearDownSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
+function tearDownSheet(context=openContext()) {
   /* Remove our sheets */
   // Uninstaill the triggers
-  deactivateTrigger(spreadSheet);
+  var spreadSheet = context.spreadSheet;
+  deactivateTriggers();
 
   // Get app installed page_id's, remove them from database
 
@@ -613,23 +426,101 @@ function showSettings(){
     .showModalDialog(html, 'Program Settings');
 }
 
-function updateSheet(e=undefined, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function openContext(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+  // Create a context to be shared by all executions
+  var spreadSheetID = spreadSheet.getId();
+  var sheet = spreadSheet.getActiveSheet();
+  var sheetName = sheet.getName();
+  var settings = programSettings(spreadSheetID);
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var headerArray = values.shift();
+  var header = {headerData: headerArray, get(columnName) {return this.headerData.indexOf(columnName);}};
+  var lastRow = sheet.getLastRow();
+  var maxColumns = sheet.getMaxColumns();
+  return {
+    spreadSheet:spreadSheet,
+    sheet: sheet,
+    spreadSheetID:spreadSheetID,
+    sheetName: sheetName,
+    settings:settings,
+    range:range,
+    header: header,
+    values: values,
+    lastRow: lastRow,
+    maxColumns: maxColumns,
+    allValues: function(){return [this.header.headerData].concat(this.values)},
+    getWritableValues: function(){
+      var allValues = this.allValues();
+      var initialHeight = this.range.getHeight();
+      var currentHeight = allValues.length;
+      var difference = Math.abs(currentHeight - initialHeight);
+      const rowLength = this.header.headerData.length;
+      var blankArray = [...Array(difference)].map(x=>Array(rowLength));
+      allValues = _.concat(allValues, blankArray);
+      return allValues;
+    },
+    writeRange: function(){
+      var allValues = this.getWritableValues();
+      this.range.setValues(allValues);
+    }
+  }
+}
+
+function trimSheet(context=openContext()){
+  // Cut sheet width and height to length
+  var sheet = context.sheet;
+  var start = context.allValues().length + 1;
+  var howManyToDelete = sheet.getMaxRows() - start + 1;
+  if (howManyToDelete > 0){sheet.deleteRows(start, howManyToDelete);}
+
+  var headerLength = context.header.headerData.length;
+  var deleteColumns = context.maxColumns - headerLength;
+  if (deleteColumns > 0){sheet.deleteColumns((headerLength +1), deleteColumns)}
+
+}
+function removeBadRows(context=openContext()){
+  _.remove(context.values, _.matches(["", "", "", "", "", "", "", "", false, false, "", "", ""]));
+}
+
+function formatSheet(context=openContext()){
+  updateConditionalFormattingRules(context);
+  updateDataValidationRules(context);
+  highlightSheet(context);
+  trimSheet(context);
+
+  // =$H2="Select"
+  // =AND($H2="Select",$G2="Unassigned")
+  // TODO build a conditional formating rule to highlight the sheet
+}
+
+function updateSheet(e=undefined, context=openContext()){
   // Update the sheet rules, formatting and, coloring
   // Called every time an edit happens
   // Return if no data
-  //
-  var spreadSheet = e == undefined ? spreadSheet : e.source;
-  var sheet = spreadSheet.getActiveSheet();
-  if (sheet.getDataRange().getValues().length == 1) {return;}
-  if (e != undefined) {updateExistingRows(e, spreadSheet)};
-  mergeSheet(spreadSheet);
-  sortSheet(spreadSheet);
-  updateConditionalFormattingRules(spreadSheet);
-  updateDataValidationRules(spreadSheet);
-  highlightSheet(spreadSheet);
-  //hideRows(spreadSheet=spreadSheet, active=true);
+  //var lock = LockService.getDocumentLock();
+  var context = e == undefined ? context : openContext(e.source);
+  //lock.waitLock(30000);
+  if (context.values.length == 0) {return;}
+  if (e != undefined) {updateExistingRows(e, context)};
+  mergeData(context);
+  sortData(context);
+  removeBadRows(context);
+  context.writeRange();
+  //SpreadsheetApp.flush()
+  //lock.releaseLock();
 }
 
+function showDebugSidebar() {
+  var html = HtmlService.createTemplateFromFile('page_interaction/debug');
+  html = html.evaluate()
+    .setTitle('Debug')
+    .setWidth(600)
+    .setHeight(600);
+  SpreadsheetApp.getUi()
+  .showSidebar(html);
+
+}
 
 function showAuthenticationSidebar() {
   if (mode == "TEST") {return;}
@@ -670,7 +561,7 @@ function doPost(request){
     if (event.entry[0].messaging) {var event_type = 'message'} else if (event.entry[0].changes[0].value.item) {var event_type = 'reaction'}
     var event_type = mode == "TEST" ? "reaction" : event_type;
     var eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'};
-    var reactionsMap = {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'};
+    var reactionsMap = internalVariables.reactionsMap;
     var page_id = undefined;
     var page_details = undefined;
     if (event_type == "reaction"){
@@ -748,26 +639,21 @@ function doPost(request){
   }
 }
 
-// calculate the page data
-function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+// calculate the page data TODO calculate totals as well as unique
+function analyzeSheet(context=openContext()){
   // Get initial data
-  var sheet = spreadSheet.getActiveSheet();
-  var sheetName = sheet.getName();
-  var spreadSheetID = spreadSheet.getId();
-  var values = sheet.getDataRange().getValues();
-  tableHeader = new TableHeader(spreadSheet);
-  values.shift()
-  const PSID = tableHeader.getColumnIndex('PSID');
-  const count = tableHeader.getColumnIndex('Counter');
-  const status = tableHeader.getColumnIndex('Status');
-  const source = tableHeader.getColumnIndex('Source');
+  var values = context.values
+  const PSID = context.header.get('PSID');
+  const count = context.header.get('Counter');
+  const status = context.header.get('Status');
+  const source = context.header.get('Source');
 
   var results = {
     "statuses": {},
     "PSID": [],
     "uniquePeople": 0,
-    "members": 0,
-    "nonMembers": 0,
+    "members": [0,0],
+    "nonMembers": [0,0],
     "posts": {},
     "sortedPosts": []
   };
@@ -784,9 +670,11 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   results.uniquePeople = set.size   // Count the number of unique people
   // Count the number of members and non members
   // Figure out the best non member and member post
+  var unique = 0;
+  var total = 1;
   cleanedData.forEach(row => {
-    results.statuses[row[status]] = results.statuses[row[status]] == null ? 0 : results.statuses[row[status]];
-    results.statuses[row[status]] += 1;
+    results.statuses[row[status]] = results.statuses[row[status]] == null ? [0,0] : results.statuses[row[status]];
+    results.statuses[row[status]][unique] += 1;
   })
 
   values.forEach(row => {
@@ -794,7 +682,20 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
     results.posts[row[source]][row[status]] = results.posts[row[source]][row[status]] == null ? 0 : results.posts[row[source]][row[status]];
     results.posts[row[source]][row[status]] += 1
 
+    results.statuses[row[status]] = results.statuses[row[status]] == null ? [0,0] : results.statuses[row[status]];
+    results.statuses[row[status]][total] += row[count];
   });
+
+  _.forEach(results.statuses, function(val, key){
+    if (_.includes(internalVariables.memberStatusList, key)){
+      results.members[unique] += val[unique];
+      results.members[total] += val[total];
+    } else {
+      results.nonMembers[unique] += val[unique];
+      results.nonMembers[total] += val[total];
+    }
+  })
+
   // Sort the bests posts
   // Create items array
   function sortByValue(dict){
@@ -817,25 +718,21 @@ function analyzeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   return results
 }
 
-function showAnalytics(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
+function showAnalytics(context=openContext()) {
   if (mode == "TEST") {return;}
   var template = HtmlService.createTemplateFromFile('page_interaction/analytics');
   var page = template.evaluate().setTitle("Analytics");
   SpreadsheetApp.getUi().showSidebar(page);
 }
 
-function getScraperInput(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function getScraperInput(context=openContext()){
   // Creat a dict of posts and the names of the missing links
-  var sheet = spreadSheet.getActiveSheet();
-  var values = sheet.getDataRange().getValues();
-  tableHeader = new TableHeader(spreadSheet);
-  var header = values.shift();
-  const profileLink = tableHeader.getColumnIndex('Profile Link');
-  const name = tableHeader.getColumnIndex('Name');
-  const source = tableHeader.getColumnIndex('Source');
+  const profileLink = context.header.get('Profile Link');
+  const name = context.header.get('Name');
+  const source = context.header.get('Source');
 
   var programInput = {};
-  values.forEach(function(row){
+  context.values.forEach(function(row){
     if (row[profileLink] == ""){
       programInput[row[source]] = programInput[row[source]] == null ? [] : programInput[row[source]];
       programInput[row[source]].push(row[name]);
@@ -844,55 +741,32 @@ function getScraperInput(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
   return programInput;
 }
 
-function updateProfiles(profileList, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
-  var sheet = spreadSheet.getActiveSheet();
-  var values = sheet.getDataRange().getValues();
-  tableHeader = new TableHeader(spreadSheet);
-  var header = values.shift();
-  const profileLink = tableHeader.getColumnIndex('Profile Link');
-  const name = tableHeader.getColumnIndex('Name');
-
-  values.forEach(function(row){
+function updateProfiles(profileList, context=openContext()){
+  // Add in the profile list into the sheet
+  const profileLink = context.header.get('Profile Link');
+  const name = context.header.get('Name');
+  context.values.forEach(function(row){
     if (row[profileLink] == ""){
       row[profileLink] = profileList[row[name]];
     }
   })
-
-  values.unshift(header);
-  sheet.getDataRange().setValues(values);
-
+  context.writeRange();
 }
 
-function mergeSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
-  var spreadSheetID = spreadSheet.getId();
-  var sheet = spreadSheet.getActiveSheet();
-  var sheetName = sheet.getName();
-  var doMerge = programSettings(spreadSheetID)['sheetSettings'][sheetName].mergingEnabled;
-  if (doMerge == true ){ 
-    var range = sheet.getDataRange().offset(programSettings(spreadSheetID).headerRowNumber, 0, sheet.getLastRow() - programSettings(spreadSheetID).headerRowNumber);
-    var values = range.getValues();
-    values = mergeData(values, spreadSheet);
-    range.setValues(values);
-  }
-}
 
-function mergeData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function mergeData(context=openContext()){
    /**
     * Ensures all rows are unique, will lost past history
     * return the values in 2d array form
     */
-  var initialLength = values.length;
-  var tableHeader = new TableHeader(spreadSheet);
-  const PSID = tableHeader.getColumnIndex('PSID');
-  const count = tableHeader.getColumnIndex('Counter');
-  const status = tableHeader.getColumnIndex('Status');
+  if (!context.settings.sheetSettings[context.sheetName].mergingEnabled) {return};
+  const PSID = context.header.get('PSID');
+  const count = context.header.get('Counter');
+  const status = context.header.get('Status');
   var results = {};
   var unMerged = [];
-  var spreadSheetID = spreadSheet.getId();
-  const statusToMerge = programSettings(spreadSheetID)['statusToMerge'];
-  const rowLength = values.first().length;
-
-  values.forEach(row => {
+  const statusToMerge = context.settings.statusToMerge;
+  context.values.forEach(row => {
     if (!statusToMerge.includes(row[status])) {unMerged.push(row);return}
     if (results[row[PSID]] == null){
       results[row[PSID]] = {};
@@ -902,52 +776,32 @@ function mergeData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
       results[row[PSID]].data[count] = parseInt(results[row[PSID]].data[count]) + parseInt(row[count]);
     }
   });
-  values = Object.values(results).map(key => key.data).concat(unMerged);
-  var finalLength = values.length;
-  var difference = Math.abs(finalLength - initialLength);
-  var blankArray = [...Array(difference)].map(x=>Array(rowLength));
-  values.push(...blankArray);
-  return values;
+  context.values = Object.values(results).map(key => key.data).concat(unMerged);
+  return context;
 }
 
-function sortSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
-  var sheet = spreadSheet.getActiveSheet();
-  var range = sheet.getDataRange();
-  var values = range.getValues();
-  var header = values.shift();
-  values = sortData(values, spreadSheet);
-  values.unshift(header);
-  range.setValues(values);
+function shuffle(context=openContext()){
+  context.values = _.shuffle(context.values);
+  context.writeRange();
 }
 
- function sortData(values, spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+ function sortData(context=openContext()){
   /**
-   * Sort and group the data
-   */
-  // Group data status
-  var tableHeader = new TableHeader(spreadSheet);
-  var assignment = tableHeader.getColumnIndex('Assignment');
-  var status = tableHeader.getColumnIndex('Status');
-  var PSID = tableHeader.getColumnIndex('PSID');
-  var date = tableHeader.getColumnIndex('Date');
+   * Sort and group the data, memberish rows are moved to the end
+  */
+  if (!context.settings.sheetSettings[context.sheetName].sortingEnabled){return;}
+  var assignment = context.header.get('Assignment');
+  var status = context.header.get('Status');
+  var PSID = context.header.get('PSID');
+  var date = context.header.get('Date');
   var memberStatuses = internalVariables.memberStatusList;
-  const _ = LodashGS.load();
-  var hidden = _.filter(values, function(row){return _.includes(memberStatuses, row[status])});
-  var values = _.filter(values, function(row){return !_.includes(memberStatuses, row[status])});
-  var groups = _.groupBy(values, assignment);
-  var results = [];
-  _.forEach(groups, function(value, key1) {
-    groups[key1] = _.groupBy(groups[key1], status);
-    _.forEach(groups[key1], function(value, key2){
-      groups[key1][key2] = _.groupBy(groups[key1][key2], PSID);
-      _.forEach(groups[key1][key2], function(value, key3){
-        groups[key1][key2][key3] = _.sortBy(groups[key1][key2][key3], date);
-        results = _.concat(results, groups[key1][key2][key3]);
-      })
-    })
-  });
-  results = _.concat(results, hidden)
-  return results
+  var hidden = _.filter(context.values, function(row){return _.includes(memberStatuses, row[status])});
+  var values = _.filter(context.values, function(row){return !_.includes(memberStatuses, row[status])});
+  values = _.orderBy(values, [assignment, status, PSID, date], ['asc','asc','asc','desc']);
+  hidden = _.orderBy(hidden, [assignment, status, PSID, date], ['asc','asc','asc','desc']);
+  var finalResults = _.concat(values, hidden)
+  context.values = finalResults
+  return context
 }
 
 // TODO Use the time that facebook gives for the event occurence
@@ -987,31 +841,22 @@ Object.defineProperty(Array.prototype, 'first', {
   }
 });
 
-function healSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function healSheet(context=openContext()){
   // Make sure the triggers are installed
-  deactivateTrigger(spreadSheet);
-  activateTriggers(spreadSheet);
-  
-  // Make sure the collumns are the right length
-  var sheet = spreadSheet.getActiveSheet();
-  var spreadSheetID = spreadSheet.getId();
-  var tableHeader = new TableHeader(spreadSheet);
-  var headerLength = tableHeader.headerData.length;
-  var deleteColumns = sheet.getMaxColumns() - headerLength;
-  if (deleteColumns != 0){sheet.deleteColumns((headerLength +1), deleteColumns)}
+  deactivateTriggers(context);
+  activateTriggers(context);
+  trimSheet(context);
 
-  // Fill in null or blank  vallues with defaults
-  var range = sheet.getDataRange();
-  var values = range.getValues();
-  values.forEach(row => {
+  // Fill in null or blank values with defaults
+  context.values.forEach(row => {
     row[0] = row[0] == "" ? "" : row[0]; // Date
     row[1] = row[1] == "" ? "" : row[1]; // Name
     row[2] = row[2] == "" ? "" : row[2]; // Gender
     row[3] = row[3] == "" ? "" : row[3]; // Profile Link
     row[4] = row[4] == "" ? "" : row[4]; // PSID
     row[5] = row[5] == "" ? "" : row[5]; // Source
-    row[6] = row[6] == "" ? programSettings(spreadSheetID).assignmentMap.shift().shift() : row[6]; // Assignment
-    row[7] = row[7] == "" ? programSettings(spreadSheetID).statusList.shift() : row[7]; // Status
+    row[6] = row[6] == "" ? context.settings.assignmentMap.shift().shift() : row[6]; // Assignment
+    row[7] = row[7] == "" ? context.settings.statusList.shift() : row[7]; // Status
     row[8] = row[8] == "" ? "FALSE" : row[8]; // Sac
     row[9] = row[9] == "" ? "FALSE" : row[9]; // Date
     row[10] = row[10] == "" ? "" : row[10]; // Reaction
@@ -1019,9 +864,15 @@ function healSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
     row[12] = row[12] == "" ? 1 : row[12]; // Counter
     row[12] = row[12] == "#NUM!" ? 1 : row[12];
   })
-
-  // Keep all the data
-  range.setValues(values);
+  context.writeRange();
 }
 
-// Figure out why the dates are wierd. ensure consistent sorting for the groups
+function executeFunctionByName(functionName, context=this /*, args */) {
+  var args = Array.prototype.slice.call(arguments, 2);
+  var namespaces = functionName.split(".");
+  var func = namespaces.pop();
+  for(var i = 0; i < namespaces.length; i++) {
+    context = context[namespaces[i]];
+  }
+  return context[func].apply(context, args);
+}
