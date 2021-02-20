@@ -236,3 +236,17 @@ function updateDB(){
         cache.put(`programSettings:${key}`, JSON.stringify(preferenceDict[key]), 6000);
     })
 }
+
+function findMissingRefreshTokens(){
+    var pageDataList = getAllPageDetails();
+    var missingList = [];
+    var all = [];
+    Object.values(pageDataList).forEach(function(val){
+        if (!val.google_sheets.refresh_token){
+            missingList.push(val.name);
+        }
+        all.push(val.name);
+    })
+    console.log(`Missing ${_.toString(missingList)}`);
+    console.log(`All ${_.toString(all)}`)
+}

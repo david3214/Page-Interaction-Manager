@@ -146,6 +146,20 @@ function test_updateSheetNoEvent(){
     console.log(`updateSheet(e, context); ${t1-t0}`);
 }
 
+function test_updateSheetEvent(){
+    mode = "TEST";
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    var e={source:spreadSheet};
+    var context = openContext(spreadSheet);
+    const t0 = Date.now();
+    updateSheet(e, context);
+    const t1 = Date.now();
+    console.log(`updateSheet(e, context); ${t1-t0}`);
+}
+
+
+
 function test_analyzeSheet(){
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
     spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
@@ -260,6 +274,12 @@ function test_tearDownSheet(){
     tearDownSheet(context);
 }
 
+function test_formatSheet(){
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    var context = openContext(spreadSheet);
+    formatSheet(context);
+}
 
 function time_functions() {
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
