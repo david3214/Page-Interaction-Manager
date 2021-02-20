@@ -3,43 +3,60 @@
 
 <head>
     <base target="_top">
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
 </head>
 <body>
     <div id="app">
         <h1>Page Analytics</h1>
-        <h3>Status Summary (unique : total)</h3>
-        <p v-for="(value, name) in results.statuses" style="margin:0">{{ name }} : {{ value[0] }} : {{ value[1] }}</p> 
-        <table><thead><th></th><th>Member</th><th>Non Member</th></thead><tbody>
+        <h3>Status Summary</h3>
+        <table v-if="results.statuses"><thead><th>Status</th><th>Unique</th><th>Total</th></thead><tbody>
+            <tr v-for="(value, name) in results.statuses" style="margin:0">
+                <td>{{ name }}</td><td>{{ value[0] }}</td><td>{{ value[1] }}</td>
+            </tr> 
+        </tbody>
+        </table>
+        <table v-if="results.members"><thead><th></th><th>Member</th><th>Non Member</th></thead><tbody>
             <tr><td>Unique</td><td>{{ results.members[0] }}</td><td>{{ results.nonMembers[0] }}</td></tr>
             <tr><td>Total</td><td>{{ results.members[1] }}</td><td>{{ results.nonMembers[1] }}</td></tr>
         </tbody>
+        <tfoot>
+            <td>Total People: {{results.uniquePeople}} </td>
+        </tfoot>
         </table>
-        <p>Total People: {{results.uniquePeople}} </p>
+
         <h3>Posts</h3>
         <table>
-            <tbody >
+            <tbody>
                 <thead>
                     <th>Results</th><th>Post link</th>
                 </thead>
                 <tr v-for="item in results.sortedPosts">
                     <td style="border: 1px solid black;"><p style="margin:0" v-for="(value, name) in Object.values(item).shift()">{{ name }}: {{value}}</p></td>
-                    <td><a v-bind:href="Object.keys(item).shift()">Post Link</a></td> 
+                    <td><a v-bind:href="Object.keys(item).shift()">{{convertUrl(Object.keys(item).shift())}}</a></td> 
                 </tr>
             </tbody>
         </table>
     </div>
-
       <script>
         new Vue({
             el: '#app',
             data: {
-                results: {}, //{"statuses":{"Select":18,"Member":18,"Currently Messaging":24,"Rejected":2,"Left on Read":2},"PSID":["3589674921140884","3823878997642722","3874530552599068","3559568250823116","3567460156668355","3360716240724317","3744058705658775","3506367959478426","3619485438132587","3610055209085381","3457068791078513","5211888895495841","3193961897370497","3271277392973789","3930811456930291","3647346535355477","2653859671405928","3589371201150739","3616580241760134","3627918880609805","4071194959575322","3515235088587769","3906513506025349","3571032656357966","3549493645120423","4114209698607063","3314595508650289","3706849689353344","3413235222118277","4888146344543928","4800268840013736","3834451099955364","3555558744510127","3606093336148202","4892472750823554","4845241742184532","3686184414795575",3863208350403410,"3732134340141827","4728333963908483","3413177822143396","3942268882470044","3720941767970232","2991613727608427","3559570734125013","5459352510748962","4276080035740086","4974096555965586","4801015189970101",5521056507967170,"3575032799278605","5519116791494475","3787385554703713","5518321534860761","3560462777354487","3629144230476002","4743908182351317","4929931753716182","3926495314069802","3461585710545979","3855429747814576","4107948882564846","5028545603829891","4002131749814333"],"uniquePeople":64,"members":0,"nonMembers":0,"posts":{"https://facebook.com/107674490900712_194331142235046":{"Select":1},"https://facebook.com/107674490900712_202260334775460":{"Select":1},"https://facebook.com/107674490900712_224750852526408":{"Member":3},"https://facebook.com/107674490900712_209561060712054":{"Select":2},"https://facebook.com/107674490900712_221658839502276":{"Currently Messaging":1},"https://facebook.com/107674490900712_221659859502174":{"Rejected":1,"Select":2,"Currently Messaging":2},"https://facebook.com/107674490900712_214606833540810":{"Select":7,"Currently Messaging":11,"Rejected":1},"https://facebook.com/107674490900712_223513899316770":{"Select":1},"https://facebook.com/107674490900712_221688249499335":{"Member":1},"https://facebook.com/107674490900712_220463766288450":{"Select":2,"Member":4,"Currently Messaging":1},"https://facebook.com/107674490900712_219145533086940":{"Select":1},"https://facebook.com/107674490900712_214606120207548":{"Currently Messaging":4,"Left on Read":1},"https://facebook.com/107674490900712_215883873413106":{"Member":8,"Currently Messaging":2},"https://facebook.com/107674490900712_217028826631944":{"Member":1},"https://facebook.com/107674490900712_214597440208416":{"Currently Messaging":1},"https://facebook.com/107674490900712_212980010370159":{"Select":1},"https://facebook.com/107674490900712_206443864357107":{"Left on Read":1},"https://facebook.com/107674490900712_205658481102312":{"Member":1,"Currently Messaging":1},"fburl://facebook.com/107674490900712_409140773562142":{"Currently Messaging":1}},"sortedPosts":[{"https://facebook.com/107674490900712_214606833540810":{"Select":7,"Currently Messaging":11,"Rejected":1}},{"https://facebook.com/107674490900712_215883873413106":{"Member":8,"Currently Messaging":2}},{"https://facebook.com/107674490900712_220463766288450":{"Select":2,"Member":4,"Currently Messaging":1}},{"https://facebook.com/107674490900712_221659859502174":{"Rejected":1,"Select":2,"Currently Messaging":2}},{"https://facebook.com/107674490900712_214606120207548":{"Currently Messaging":4,"Left on Read":1}},{"https://facebook.com/107674490900712_224750852526408":{"Member":3}},{"https://facebook.com/107674490900712_209561060712054":{"Select":2}},{"https://facebook.com/107674490900712_205658481102312":{"Member":1,"Currently Messaging":1}},{"https://facebook.com/107674490900712_194331142235046":{"Select":1}},{"https://facebook.com/107674490900712_202260334775460":{"Select":1}},{"https://facebook.com/107674490900712_221658839502276":{"Currently Messaging":1}},{"https://facebook.com/107674490900712_223513899316770":{"Select":1}},{"https://facebook.com/107674490900712_221688249499335":{"Member":1}},{"https://facebook.com/107674490900712_219145533086940":{"Select":1}},{"https://facebook.com/107674490900712_217028826631944":{"Member":1}},{"https://facebook.com/107674490900712_214597440208416":{"Currently Messaging":1}},{"https://facebook.com/107674490900712_212980010370159":{"Select":1}},{"https://facebook.com/107674490900712_206443864357107":{"Left on Read":1}},{"fburl://facebook.com/107674490900712_409140773562142":{"Currently Messaging":1}}]},
+                results: {},
             },
             methods: {
                 onSuccess: function(results){
-                    this.results = results;
+                    this.results = JSON.parse(results);
                 },
+                convertUrl: function(url){
+                    var id = url.slice("https://facebook.com/".length);
+                    var name = this.results.postMap[id];
+                    if (!name){
+                        return "Link"
+                    } else {
+                        return name.slice(0,25);
+                    }
+                }
             },
             created: function(){
                 google.script.run.withSuccessHandler(this.onSuccess).analyzeSheet();

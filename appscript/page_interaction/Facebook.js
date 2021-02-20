@@ -135,6 +135,9 @@ function saveFacebookPagesDetails(pageResults) {
   // Save results to db
   pageResults.data.forEach(page => setPageDetails(page.id, page));
 
+  // Insert feed data -ree db cant hold values this big
+  getFacebookPagePosts(pageResults);
+
   // Save results to doc properties
   PropertiesService.getDocumentProperties().setProperty('selectedPages', JSON.stringify(pageResults));
 }
@@ -145,4 +148,15 @@ function deleteFacebookPagesDetails(pageResults) {
 
   // Remove from doc properties
   PropertiesService.getDocumentProperties().deleteProperty('selectedPages');
+}
+
+function getFacebookPagePosts(pageResults){
+  pageResults.data.forEach(function(page){
+    var options = {
+      'method': 'get',
+    }
+    var FBurl = `https://graph.facebook.com/v9.0/${page.id}/feed?access_token=${page.access_token}`;
+    var results = JSON.parse(UrlFetchApp.fetch(FBurl, options));
+    page['feed'] = results;
+  })
 }

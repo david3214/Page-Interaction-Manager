@@ -6,7 +6,6 @@ var defaultUserSettings = {
   hiddenStatuses : ["Member", "Missionary", "Do Not Contact", "Rejected"],
   statusToMerge: ["Member", "Missionary", "Do Not Contact", "Rejected"],
   assignmentMap : [['Unassigned', '#82C1EC'], ['Ward 1', '#F28530'], ['Ward 2', '#FCFBC2'], ['Ward 3', '#ECE3D4'], ['Ward 4', '#F9F85F']],
-  adIDMap : {"Source Link Here": "Ad Name here"},
   sheetSettings: {
       "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "mergingEnabled": true },
       "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true }
@@ -16,7 +15,7 @@ var defaultUserSettings = {
 var internalVariables = {
   reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
   genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
-  triggerNames : ['doLogicPageMessages', 'updateSheet'],
+  triggerNames : ['doLogicPageMessages', 'updateSheet', 'everyHour'],
   editableColumns: ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Notes'],
   memberStatusList: ['Member', 'Missionary', 'Baptized'],
   genericHeader: ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Data', 'Notes', 'Counter']
@@ -27,9 +26,14 @@ function updateSource(context=openContext()){
   // If a row has a profile url then change the source to the name
   var profileLink = context.header.get('Profile Link');
   var source = context.header.get('Source');
+  var postMap = getPostMap();
   _.forEach(context.values, function(row){
     if (row[profileLink] != ""){
-      row[source] = context.settings.adIDMap[row[source]];
+      var id = row[source].slice("https://facebook.com/".length);
+      var title = postMap[id];
+      if (title){
+        row[source] = title
+      }
     }
   })
   return context;
@@ -55,7 +59,6 @@ function saveProgramSettings(settings, context=openContext()){
   cache.put(`programSettings:${context.spreadSheetID}`, JSON.stringify(settings), 6000);
 }
 
-
 var Rule = function(){
     return {'create': undefined};
 };
@@ -75,14 +78,12 @@ function doLogicPageMessages(e=undefined, context=openContext()) {
     case "INSERT_ROW":
       updateNewRow(context);
       updateSheet(e=undefined, context);
-      //formatSheet(context);
       break;
     case "EDIT":
       return;
     default:
   }
   // Release the lock so that other processes can continue.
-  SpreadsheetApp.flush();
   lock.releaseLock();
 }
 
@@ -104,8 +105,8 @@ function updateNewRow(context=openContext()) {
     newRow[context.header.get('Counter')] = 1;   
   }
   else {
-    newRow[context.header.get('Assignment')] = context.settings.assignmentMap.shift().shift();
-    newRow[context.header.get('Status')] = context.settings.statusList.shift();
+    newRow[context.header.get('Assignment')] = _.head(_.head(context.settings.assignmentMap));
+    newRow[context.header.get('Status')] = _.head(context.settings.statusList);
     newRow[context.header.get('@Sac')] = 'FALSE';
     newRow[context.header.get('On Date')] = 'FALSE';
     newRow[context.header.get('Notes')] = "";
@@ -142,7 +143,7 @@ function updateExistingRows(e, context=openContext()){
   if (!e.hasOwnProperty('value')){return;} 
   const PSID = context.header.get('PSID')
   e.columnIndex = e.range.getColumn() - 1;
-  e.editedRow = values[e.range.getRowIndex() -1]
+  e.editedRow = context.values[e.range.getRowIndex() -1]
   // Reject if not editable
   if (!internalVariables.editableColumns.map(columnName => context.header.get(columnName)).includes(e.columnIndex)){return}
   context.values.forEach(function(row){
@@ -158,7 +159,8 @@ function updateConditionalFormattingRules(context=openContext()){
   Adjust the conditional formating rules to cover the sheet data
   */
   
-  // Track the conditional formatting
+ if (context.values.length <= 0) {return}
+ // Track the conditional formatting
   var sheetConditionalFormatRules = [];
 
   var sheet = context.sheet;
@@ -201,6 +203,7 @@ function updateDataValidationRules(context=openContext()){
   /*
   Function is reponsible for apply page wide data validation rules
   */ 
+ if (context.values.length <= 0) {return}
   // Get the current active sheet
   var sheet = context.sheet
  
@@ -345,6 +348,10 @@ function activateTriggers(context=openContext()){
   .onEdit()
   .create();
 
+  ScriptApp.newTrigger(internalVariables.triggerNames[2])
+      .timeBased()
+      .everyHours(1)
+      .create();
 }
 
 
@@ -484,6 +491,7 @@ function removeBadRows(context=openContext()){
 }
 
 function formatSheet(context=openContext()){
+  updateSheet(e=undefined, context);
   updateConditionalFormattingRules(context);
   updateDataValidationRules(context);
   highlightSheet(context);
@@ -498,17 +506,17 @@ function updateSheet(e=undefined, context=openContext()){
   // Update the sheet rules, formatting and, coloring
   // Called every time an edit happens
   // Return if no data
-  //var lock = LockService.getDocumentLock();
+  var lock = LockService.getDocumentLock() == null ? LockService.getUserLock() : LockService.getDocumentLock();
+  lock.waitLock(30000);
   var context = e == undefined ? context : openContext(e.source);
-  //lock.waitLock(30000);
   if (context.values.length == 0) {return;}
   if (e != undefined) {updateExistingRows(e, context)};
   mergeData(context);
   sortData(context);
   removeBadRows(context);
   context.writeRange();
-  //SpreadsheetApp.flush()
-  //lock.releaseLock();
+  SpreadsheetApp.flush();
+  lock.releaseLock();
 }
 
 function showDebugSidebar() {
@@ -521,7 +529,14 @@ function showDebugSidebar() {
   .showSidebar(html);
 
 }
-
+function getAuthorizationUrl(){
+  // Get authorization url if not authorized
+  var facebookService = getFacebookService();
+  if (!facebookService.hasAccess()) {
+    var authorizationUrl = facebookService.getAuthorizationUrl();
+    return authorizationUrl;
+  }
+}
 function showAuthenticationSidebar() {
   if (mode == "TEST") {return;}
   var facebookService = getFacebookService();
@@ -639,7 +654,6 @@ function doPost(request){
   }
 }
 
-// calculate the page data TODO calculate totals as well as unique
 function analyzeSheet(context=openContext()){
   // Get initial data
   var values = context.values
@@ -647,7 +661,7 @@ function analyzeSheet(context=openContext()){
   const count = context.header.get('Counter');
   const status = context.header.get('Status');
   const source = context.header.get('Source');
-
+  var postMap = getPostMap();
   var results = {
     "statuses": {},
     "PSID": [],
@@ -655,9 +669,10 @@ function analyzeSheet(context=openContext()){
     "members": [0,0],
     "nonMembers": [0,0],
     "posts": {},
-    "sortedPosts": []
+    "sortedPosts": [],
+    "postMap": postMap
   };
-
+   
   // Clean data
   // Get the most recent and unique rows by PSID
   var set = new Set();
@@ -683,16 +698,16 @@ function analyzeSheet(context=openContext()){
     results.posts[row[source]][row[status]] += 1
 
     results.statuses[row[status]] = results.statuses[row[status]] == null ? [0,0] : results.statuses[row[status]];
-    results.statuses[row[status]][total] += row[count];
+    results.statuses[row[status]][total] += parseInt(row[count]);
   });
 
   _.forEach(results.statuses, function(val, key){
     if (_.includes(internalVariables.memberStatusList, key)){
-      results.members[unique] += val[unique];
-      results.members[total] += val[total];
+      results.members[unique] += parseInt(val[unique]);
+      results.members[total] += parseInt(val[total]);
     } else {
-      results.nonMembers[unique] += val[unique];
-      results.nonMembers[total] += val[total];
+      results.nonMembers[unique] += parseInt(val[unique]);
+      results.nonMembers[total] += parseInt(val[total]);
     }
   })
 
@@ -715,7 +730,7 @@ function analyzeSheet(context=openContext()){
     obj[row[0]] = results.posts[row[0]];
     return obj;
   });
-  return results
+  return JSON.stringify(results);
 }
 
 function showAnalytics(context=openContext()) {
@@ -805,6 +820,7 @@ function shuffle(context=openContext()){
 }
 
 // TODO Use the time that facebook gives for the event occurence
+// TODO convert that time to the timezone of the sheet
 
 function refreshAccessToken(clientId, clientSecret, refreshToken){
   var url = "https://accounts.google.com/o/oauth2/token";
@@ -835,36 +851,29 @@ function getEffectiveUserId(){
   return profileId;
 }
 
-Object.defineProperty(Array.prototype, 'first', {
-  value() {
-    return this.find(e => true);
-  }
-});
 
 function healSheet(context=openContext()){
   // Make sure the triggers are installed
+  // Make sure the sheets have correct authentication levels
+  // 
+  var authInfo = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
+  var authUrl = authInfo.getAuthorizationUrl();
+  if(authUrl){
+    context.spreadSheet.toast(`Authentication needed. ${authUrl}`, 'Authentication', 15);
+    return;
+  } else if (!_.head(getSelectedPages().data).google_sheets.refresh_token) {
+    var htmlOutput = HtmlService
+      .createHtmlOutput(`<a target="_blank" href="https://page-interaction-manager-auth-t7emter6aa-uc.a.run.app/authorize">Click here</a> to fix data not showing up in the sheet.`)
+      .setWidth(300)
+      .setHeight(100);
+    SpreadsheetApp.getUi().showModalDialog(htmlOutput, "Missing Authentication!");
+    return;
+  }
   deactivateTriggers(context);
   activateTriggers(context);
-  trimSheet(context);
-
-  // Fill in null or blank values with defaults
-  context.values.forEach(row => {
-    row[0] = row[0] == "" ? "" : row[0]; // Date
-    row[1] = row[1] == "" ? "" : row[1]; // Name
-    row[2] = row[2] == "" ? "" : row[2]; // Gender
-    row[3] = row[3] == "" ? "" : row[3]; // Profile Link
-    row[4] = row[4] == "" ? "" : row[4]; // PSID
-    row[5] = row[5] == "" ? "" : row[5]; // Source
-    row[6] = row[6] == "" ? context.settings.assignmentMap.shift().shift() : row[6]; // Assignment
-    row[7] = row[7] == "" ? context.settings.statusList.shift() : row[7]; // Status
-    row[8] = row[8] == "" ? "FALSE" : row[8]; // Sac
-    row[9] = row[9] == "" ? "FALSE" : row[9]; // Date
-    row[10] = row[10] == "" ? "" : row[10]; // Reaction
-    row[11] = row[11] == "" ? "" : row[11]; // Notes
-    row[12] = row[12] == "" ? 1 : row[12]; // Counter
-    row[12] = row[12] == "#NUM!" ? 1 : row[12];
-  })
-  context.writeRange();
+  updateSheet(e=undefined, context);
+  formatSheet(context);
+  insertMissingDefaultValues(context);
 }
 
 function executeFunctionByName(functionName, context=this /*, args */) {
@@ -875,4 +884,41 @@ function executeFunctionByName(functionName, context=this /*, args */) {
     context = context[namespaces[i]];
   }
   return context[func].apply(context, args);
+}
+
+function getPostMap(){
+  // create a dictionary of post ids to post titles
+  var pageData = getSelectedPages();
+  var feed = _.head(pageData.data).feed.data;
+  var postMap = _.mapValues(_.keyBy(feed, 'id'), 'message');
+  return postMap;
+}
+
+function insertMissingDefaultValues(context=openContext()){
+  // Fill in null or blank values with defaults
+  context.values.forEach(row => {
+    row[0] = row[0] == "" ? "" : row[0]; // Date
+    row[1] = row[1] == "" ? "" : row[1]; // Name
+    row[2] = row[2] == "" ? "" : row[2]; // Gender
+    row[3] = row[3] == "" ? "" : row[3]; // Profile Link
+    row[4] = row[4] == "" ? "" : row[4]; // PSID
+    row[5] = row[5] == "" ? "" : row[5]; // Source
+    row[6] = row[6] == "" ? _.head(_.head(context.settings.assignmentMap)): row[6]; // Assignment
+    row[7] = row[7] == "" ? _.head(context.settings.statusList): row[7]; // Status
+    row[8] = row[8] == "" ? "FALSE" : row[8]; // Sac
+    row[9] = row[9] == "" ? "FALSE" : row[9]; // Date
+    row[10] = row[10] == "" ? "" : row[10]; // Reaction
+    row[11] = row[11] == "" ? "" : row[11]; // Notes
+    row[12] = row[12] == "" ? 1 : row[12]; // Counter
+    row[12] = row[12] == "#NUM!" ? 1 : row[12];
+  })
+  context.writeRange();
+}
+
+function everyHour(e=undefined, context=openContext()){
+  Logger.log(JSON.stringify(e))
+  var context = e == undefined ? context : openContext(e.source);
+  formatSheet(context)
+  updateSheet(e=undefined, context);
+  insertMissingDefaultValues(context);
 }
