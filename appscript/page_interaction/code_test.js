@@ -138,7 +138,7 @@ function test_updateSheetNoEvent(){
     mode = "TEST";
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
     spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
-    var e=undefined
+    var e=undefined;
     var context = openContext(spreadSheet);
     const t0 = Date.now();
     updateSheet(e, context);
