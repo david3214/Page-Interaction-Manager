@@ -143,7 +143,7 @@ function updateExistingRows(e, context=openContext()){
   if (!e.hasOwnProperty('value')){return;} 
   const PSID = context.header.get('PSID')
   e.columnIndex = e.range.getColumn() - 1;
-  e.editedRow = context.values[e.range.getRowIndex() -1]
+  e.editedRow = context.values[e.range.getRowIndex() - 2]; // removing 2 to adjust for position vs index and missing header
   // Reject if not editable
   if (!internalVariables.editableColumns.map(columnName => context.header.get(columnName)).includes(e.columnIndex)){return}
   context.values.forEach(function(row){
@@ -918,7 +918,8 @@ function insertMissingDefaultValues(context=openContext()){
 function everyHour(e=undefined, context=openContext()){
   Logger.log(JSON.stringify(e))
   var context = e == undefined ? context : openContext(e.source);
-  formatSheet(context)
+  context.spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+  formatSheet(context);
   updateSheet(e=undefined, context);
   insertMissingDefaultValues(context);
 }
