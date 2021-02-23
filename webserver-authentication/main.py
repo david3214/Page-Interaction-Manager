@@ -233,6 +233,10 @@ def clear_credentials():
           print_index_table())
 
 
+@app.route('/google46b0d5ef2ffda0c5.html')
+def google_verification():
+  return render_template('google46b0d5ef2ffda0c5.html')
+
 def credentials_to_dict(credentials):
   return {'token': credentials.token,
           'refresh_token': credentials.refresh_token,

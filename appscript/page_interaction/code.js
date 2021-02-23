@@ -491,7 +491,6 @@ function removeBadRows(context=openContext()){
 }
 
 function formatSheet(context=openContext()){
-  updateSheet(e=undefined, context);
   updateConditionalFormattingRules(context);
   updateDataValidationRules(context);
   highlightSheet(context);
