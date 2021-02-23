@@ -3,6 +3,7 @@
 from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
 import json
+import flask
 
 # recieve post request and create a task
 def index(request):
@@ -11,7 +12,7 @@ def index(request):
             if not request.args.get("hub.verify_token") == 'hambone':
                 return "Verification token mismatch", 403
             return request.args["hub.challenge"], 200
-        return "Hello world", 200    
+        return flask.render_template("index.html")
 
     if request.method == "POST":
         # Create a client.
