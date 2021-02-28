@@ -1,7 +1,3 @@
-/**
- * @OnlyCurrentDoc
- */
-
 var baseURL = "https://api-dot-eighth-vehicle-287322.uc.r.appspot.com/"; // Don't forget last slash
 const _ = LodashGS.load();
 
