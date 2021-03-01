@@ -221,6 +221,7 @@ function updateDataValidationRules(context=openContext()){
     var enforceAssignment = SpreadsheetApp.newDataValidation();
     var assigment_vals = context.settings.assignmentMap.map(pair => pair[0]);
     enforceAssignment.requireValueInList(assigment_vals, true);
+    enforceAssignment.setAllowInvalid(true);
     enforceAssignment.build();
     
     // Set the assignment range rule
@@ -647,8 +648,7 @@ function doPost(request){
 
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
   } catch (error) {
-      Logger.log('error in doPost');
-      Logger.log(JSON.stringify(error.message))
+      Logger.log(`error in doPost ${JSON.stringify(error.message)}, ${JSON.stringify(request)}`);
       return ContentService.createTextOutput(JSON.stringify({"status": "Error"}));
   }
 }
@@ -822,6 +822,7 @@ function shuffle(context=openContext()){
 // TODO convert that time to the timezone of the sheet
 
 function refreshAccessToken(clientId, clientSecret, refreshToken){
+  // todo deep six the token if it is bad
   var url = "https://accounts.google.com/o/oauth2/token";
   var data = {
     'grant_type':    'refresh_token',
@@ -915,10 +916,48 @@ function insertMissingDefaultValues(context=openContext()){
 }
 
 function everyHour(e=undefined, context=openContext()){
-  Logger.log(JSON.stringify(e))
-  var context = e == undefined ? context : openContext(e.source);
-  context.spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
-  formatSheet(context);
-  updateSheet(e=undefined, context);
-  insertMissingDefaultValues(context);
+  try {
+    Logger.log(`Running every hour ${JSON.stringify(e)}`);
+    var context = e == undefined ? context : openContext(e.source);
+    var foo = _.mapKeys(e, function(key){return key});
+    Logger.log(foo)
+    Logger.log(JSON.stringify(context));
+    context.spreadSheet.setActiveSheet(context.spreadSheet.getSheetByName("Ad Likes"));
+    formatSheet(context);
+    updateSheet(e=undefined, context);
+    insertMissingDefaultValues(context);
+
+  } catch (e) {
+    if (e instanceof TypeError) {
+      // statements to handle TypeError exceptions
+
+    } else if (e instanceof RangeError) {
+      // statements to handle RangeError exceptions
+    } else if (e instanceof EvalError) {
+      // statements to handle EvalError exceptions
+    } else {
+      // statements to handle any unspecified exceptions
+      Logger.log(e); // pass exception object to error handler
+    }
+  }
 }
+
+function toastSheetInfo(context=openContext()){
+  var triggers = ScriptApp.getProjectTriggers();
+  var installedTriggers = _.map(triggers, function(trigger){return trigger.getHandlerFunction()});
+  Logger.log(installedTriggers);
+  context.spreadSheet.toast(`${installedTriggers.toString()}`, 'Debug info', 30);
+}
+
+// TODO Fix analytics not opening
+// FIX post map, storing the post data some where
+// fix the every hour issue not being able to get settings or do any update
+// set highlighting to false in every ones settings?
+// add a forward and back button to the find member profiles
+// store the member profile data locally instead of on redis, just pull from redis, check if can store in rows 50k character limit
+// get profiles to load automattically - put job in queue for automatic execution
+// find way to connect the web and desktop client together
+// message people automatticaly and update the sheet that it has been done.
+// stream all events into backup database for history and reliability
+// make the profiles global accross all google sheets so if one missionary marks a profile as member all missionaries get that data
+// 
