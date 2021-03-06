@@ -102,11 +102,11 @@ function test_doLogicPageMessages(){
     /* Test the sheet is working */
     setPreference(test_data.sample_page_details_property.google_sheets.id, test_data.sample_sheet_settings);
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
-    var sheet = spreadSheet.getSheetByName("Ad Likes");
+    var sheet = spreadSheet.getSheetByName("Page Messages");
     sheet.appendRow(["1/21/2021", "Masashi-Ikkaku", "male", "https://www.facebook.com/masashi.ikkaku", "3.68E+15", "https://facebook.com/106403761078808_265436205175562", "Unassigned", "Select", "FALSE", "FALSE", "😮", "", "1"]);
     var e = JSON.parse('{ "authMode": "FULL", "changeType": "INSERT_ROW", "source": {}, "triggerUid": "502test6549", "user": { "email": "test.test@test.org", "nickname": "test.test" }}');
     e.source = spreadSheet;
-    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
+    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Page Messages"));
     var context = openContext(spreadSheet);
     const t0 = Date.now();
     doLogicPageMessages(e, context);
@@ -116,13 +116,13 @@ function test_doLogicPageMessages(){
 
 function test_setUpSheet(){
     mode = "TEST";
-    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
-    var context = openContext(spreadSheet);
+    var spreadSheet = SpreadsheetApp.openById("1rG8CuJFGyu8sRnXHo-ORbmhbcm5HPvZNq6sQY_ZDGQQ");
     const t0 = Date.now();
-    setUpSheet(context);
+    setUpSheet(spreadSheet);
     const t1 = Date.now();
     console.log(`setUpSheet(context); ${t1-t0}`);
 }
+
 function test_updateNewRow(){
     mode = "TEST";
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
@@ -158,7 +158,15 @@ function test_updateSheetEvent(){
     console.log(`updateSheet(e, context); ${t1-t0}`);
 }
 
-
+function test_everyHour(){
+    mode = "TEST";
+    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
+    var e={source:spreadSheet};
+    const t0 = Date.now();
+    everyHour(e);
+    const t1 = Date.now();
+    console.log(`everyHour(e, context); ${t1-t0}`);
+}
 
 function test_analyzeSheet(){
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
@@ -222,23 +230,14 @@ function test_updateExistingRows(){
 function test_mergeData(){
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
     spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
-    var values = [["Date","Name","Gender","Profile Link","PSID","Source","Assignment","Status","@Sac","On Date","Reaction","Notes","Counter"],
-    ["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_213783213625929","Ward 1","missionary",false,false,"👍","",1],
-    ["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_216371783367072","Ward 1","missionary",false,false,"👍","",1],
-    ["2021-01-13T06:00:00.000Z","Jeremy Bird","male","",3568458856574110,"https://facebook.com/105691394435112_189586012712316","Ward 1","missionary",false,false,"👍","",1],
-    ["2021-01-12T06:00:00.000Z","Jake Steimle","","","4514114971962822","https://facebook.com/105691394435112_216425196695064","Ward 4","Member",false,false,"👍","",1],
-    ["2021-01-11T06:00:00.000Z","Kime Kinikini","male","","4081260035237352","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"❤️","",1],
-    ["2021-01-11T06:00:00.000Z","Rich Bludorn","","","3884149271650207","https://facebook.com/105691394435112_216371783367072","Ward 1","Member",false,false,"👍","",1],
-    ["2021-01-11T06:00:00.000Z","Rylee Rampton","","","4519182614818927","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1],
-    ["2021-01-10T06:00:00.000Z","Philip Henley","","","3855437887855173","https://facebook.com/105691394435112_211399640530953","Ward 1","Member",false,false,"👍","",1],
-    ["2021-01-10T06:00:00.000Z","Rich Bludorn","male","","3884149271650207","https://facebook.com/105691394435112_217704479900469","Ward 1","Member",false,false,"👍","",1],
-    ["2021-01-10T06:00:00.000Z","Lori Jacobson","female","","3456223204487022","https://facebook.com/105691394435112_216425196695064","Ward 1","Member",false,false,"👍","",1]];
     var context = openContext(spreadSheet);
+    //context.values = test_data.sample_page_reaction_values;
     const t0 = Date.now();
-    var results = mergeData(values, context);
+    var results = mergeData(context);
     const t1 = Date.now();
-    console.log(`var results = mergeData(values, context); ${t1-t0}`);
-    Logger.log(results)
+    console.log(`var results = mergeData(context); ${t1-t0}`);
+    context.writeRange();
+    Logger.log(results.values);
 }
 
 function test_sortData(){
