@@ -18,7 +18,8 @@ var internalVariables = {
   triggerNames : ['doLogicPageMessages', 'updateSheet', 'everyHour'],
   editableColumns: ['Gender', 'Profile Link', 'Assignment', 'Status', '@Sac', 'On Date', 'Notes'],
   memberStatusList: ['Member', 'Missionary', 'Baptized'],
-  genericHeader: ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Data', 'Notes', 'Counter']
+  genericHeader: ['Date', 'Name', 'Gender', 'Profile Link', 'PSID', 'Source', 'Assignment', 'Status', '@Sac', 'On Date', 'Data', 'Notes', 'Counter'],
+  sheetNames: ["Ad Likes", "Page Messages"]
 };
 
 // TODO figure out a good spot for this
@@ -235,8 +236,8 @@ function updateDataValidationRules(context=openContext()){
     
     // Make data validation rule for Status
     var enforceStatus = SpreadsheetApp.newDataValidation();
-    
     enforceStatus.requireValueInList(context.settings.statusList, true);
+    enforceStatus.setAllowInvalid(true);
 
     // Set the status range rule andd apply the rule
     sheet.getRange(2, context.header.get('Status')+1, context.values.length).setDataValidation(enforceStatus);
@@ -250,7 +251,7 @@ function updateDataValidationRules(context=openContext()){
     // Make data validation rule for check boxes
     var enforceCheckbox = SpreadsheetApp.newDataValidation();
     enforceCheckbox.requireCheckbox();
-    enforceCheckbox.setAllowInvalid(false);
+    enforceCheckbox.setAllowInvalid(true);
     enforceCheckbox.build();
     
     // Get the atSac range and apply data validation check boxes
@@ -265,7 +266,7 @@ function updateDataValidationRules(context=openContext()){
     // Make data validation rule for check boxes
     var enforceCheckbox = SpreadsheetApp.newDataValidation();
     enforceCheckbox.requireCheckbox();
-    enforceCheckbox.setAllowInvalid(false);
+    enforceCheckbox.setAllowInvalid(true);
     enforceCheckbox.build();
     
     // Get the 'On Date' range and apply data validation check boxes
@@ -339,26 +340,26 @@ function activateTriggers(context=openContext()){
   /* Create the project triggers */ 
   // Enable a trigger to run the page logic
   ScriptApp.newTrigger(internalVariables.triggerNames[0])
-  .forSpreadsheet(context.spreadSheetID)
-  .onChange()
-  .create();
+    .forSpreadsheet(context.spreadSheetID)
+    .onChange()
+    .create();
   
   // Enable a triger to run on edit to do the highlights
   ScriptApp.newTrigger(internalVariables.triggerNames[1])
-  .forSpreadsheet(context.spreadSheetID)
-  .onEdit()
-  .create();
+    .forSpreadsheet(context.spreadSheetID)
+    .onEdit()
+    .create();
 
   ScriptApp.newTrigger(internalVariables.triggerNames[2])
-      .timeBased()
-      .everyHours(1)
-      .create();
+    .timeBased()
+    .everyHours(1)
+    .create();
 }
 
 
-function deactivateTriggers(){
+function deactivateTriggers(context=openContext()){
   /* Remove our project triggers */
-  var triggers = ScriptApp.getProjectTriggers();
+  var triggers = ScriptApp.getUserTriggers(context.spreadSheet);
    var removeOurTriggers = function(trigger) {
      if (internalVariables.triggerNames.includes(trigger.getHandlerFunction())) {
        ScriptApp.deleteTrigger(trigger);
@@ -368,10 +369,13 @@ function deactivateTriggers(){
 }
 
 
-function setUpSheet(context=openContext()) {
+function setUpSheet(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()) {
   /*
   Create sheets, open auth pannel
   */
+  var firstSheet = _.head(spreadSheet.getSheets()).getName();
+  var context = openContext(spreadSheet, firstSheet);
+
   saveProgramSettings(defaultUserSettings, context);
   tearDownSheet(context);
   var genericHeader = internalVariables.genericHeader;
@@ -388,17 +392,17 @@ function setUpSheet(context=openContext()) {
 
 function tearDownSheet(context=openContext()) {
   /* Remove our sheets */
-  // Uninstaill the triggers
+  // Uninstall the triggers
   var spreadSheet = context.spreadSheet;
-  deactivateTriggers();
+  deactivateTriggers(context);
 
   // Get app installed page_id's, remove them from database
 
   // Remove facebook authentication for user
   resetAuth();
 
-  // Unsubscribe the page from facebook app
-  // TODO Not sure if this is needed
+  // Unsubscribe the page from facebook app to stop uncoming data
+  // TODO is needed
 
   // Remove the pages from the script properties
   // Delete managed pages by page id
@@ -418,13 +422,6 @@ function tearDownSheet(context=openContext()) {
 }
 
 function showSettings(){
-  /* 
-  have a section to calculate the page stats, member to non member interaction count, total interactions, 
-  
-  double check the code is clearing out the highlights out side of its bounds
-
-  Settings needs to be able to:
-  */
   var html = HtmlService.createTemplateFromFile('page_interaction/settings');
   html = html.evaluate()
     .setTitle('Program Settings')
@@ -434,11 +431,13 @@ function showSettings(){
     .showModalDialog(html, 'Program Settings');
 }
 
-function openContext(spreadSheet=SpreadsheetApp.getActiveSpreadsheet()){
+function openContext(spreadSheet=SpreadsheetApp.getActiveSpreadsheet(), sheetName=undefined){
   // Create a context to be shared by all executions
   var spreadSheetID = spreadSheet.getId();
-  var sheet = spreadSheet.getActiveSheet();
-  var sheetName = sheet.getName();
+  var manuallySpecified = _.isString(sheetName);
+  var sheetName = _.defaultTo(sheetName, spreadSheet.getActiveSheet().getName());
+  if (!manuallySpecified && !_.includes(internalVariables.sheetNames, sheetName)){Logger.log(`${sheetName} of ${spreadSheetID} made an edit on a non normal sheet, exiting`); return}
+  var sheet = spreadSheet.getSheetByName(sheetName);
   var settings = programSettings(spreadSheetID);
   var range = sheet.getDataRange();
   var values = range.getValues();
@@ -643,7 +642,7 @@ function doPost(request){
       options.headers.Authorization = 'Bearer ' + page_details.google_sheets.token;
       setPageDetails(page_details.id, page_details);
       var results = UrlFetchApp.fetch(url, options);
-      if (results.getResponseCode() !== 200){throw {name : "TokenError", message : `Tried to update access token but failed for ${page_details}`}};
+      if (results.getResponseCode() !== 200){throw {name : "TokenError", message : `Tried to update access token but failed for ${JSON.stringify(page_details)}`}};
     }
 
     return ContentService.createTextOutput(JSON.stringify({"status": "Processed"}));
@@ -777,20 +776,36 @@ function mergeData(context=openContext()){
   const PSID = context.header.get('PSID');
   const count = context.header.get('Counter');
   const status = context.header.get('Status');
-  var results = {};
-  var unMerged = [];
+  const assignment = context.header.get('Assignment');
+  const date = context.header.get('Date');
   const statusToMerge = context.settings.statusToMerge;
-  context.values.forEach(row => {
-    if (!statusToMerge.includes(row[status])) {unMerged.push(row);return}
-    if (results[row[PSID]] == null){
-      results[row[PSID]] = {};
-      results[row[PSID]].data = row;
-    } else {
-      results[row[PSID]].data[count] = results[row[PSID]].data[count] == "" ? 1 : results[row[PSID]].data[count];
-      results[row[PSID]].data[count] = parseInt(results[row[PSID]].data[count]) + parseInt(row[count]);
-    }
+  var values = _.groupBy(context.values, PSID);
+  var defaultStatus = _.head(context.settings.statusList);
+  
+  var rowsToMerge = _.filter(context.values, function(row){
+    return _.includes(statusToMerge, row[status]);
   });
-  context.values = Object.values(results).map(key => key.data).concat(unMerged);
+  var PSIDToMerge = _.uniq(_.map(rowsToMerge, row => row[PSID]));
+  
+  PSIDToMerge.forEach(currentPSID => {
+    values[currentPSID] = _.partition(values[currentPSID], [status, defaultStatus])
+    values[currentPSID] = _.map(values[currentPSID], partition => {return _.orderBy(partition, [status, assignment, date], ['asc', 'asc', 'asc'])});
+    values[currentPSID] = _.flatten(values[currentPSID]);
+    values[currentPSID] = _.reduceRight(values[currentPSID], function(accumulator, row){
+      row[count] = _.isNumber(row[count]) ? row[count] : 1;
+      accumulator[count] = _.isNumber(accumulator[count]) ? accumulator[count] : 1;
+      row[count] = _.defaultTo(row[count], 1)
+      accumulator[count] = _.defaultTo(accumulator[count], 1);
+      if (!accumulator[count] || !row[count]){
+        Logger.log(`${accumulator} ${row[count]}`)
+      }
+      accumulator[count] = parseInt(accumulator[count]) + parseInt(row[count]);
+      return accumulator;
+    });
+    values[currentPSID] = [values[currentPSID]]
+  });
+
+  context.values = _.flatten(_.values(values));
   return context;
 }
 
@@ -910,31 +925,35 @@ function insertMissingDefaultValues(context=openContext()){
     row[10] = row[10] == "" ? "" : row[10]; // Reaction
     row[11] = row[11] == "" ? "" : row[11]; // Notes
     row[12] = row[12] == "" ? 1 : row[12]; // Counter
-    row[12] = row[12] == "#NUM!" ? 1 : row[12];
+    row[12] = isNaN(row[12]) ? 1 : row[12];
   })
   context.writeRange();
 }
 
-function everyHour(e=undefined, context=openContext()){
+function everyHour(e=undefined){
   try {
     Logger.log(`Running every hour ${JSON.stringify(e)}`);
-    var context = e == undefined ? context : openContext(e.source);
     var foo = _.mapKeys(e, function(key){return key});
     Logger.log(foo)
-    Logger.log(JSON.stringify(context));
-    context.spreadSheet.setActiveSheet(context.spreadSheet.getSheetByName("Ad Likes"));
-    formatSheet(context);
-    updateSheet(e=undefined, context);
-    insertMissingDefaultValues(context);
-
+    if (e != undefined) {
+      internalVariables.sheetNames.forEach(sheetName => {
+        var context = openContext(e.source, sheetName);
+        Logger.log(JSON.stringify(context));
+        formatSheet(context);
+        updateSheet(e=undefined, context);
+        insertMissingDefaultValues(context);
+      })
+    }
   } catch (e) {
     if (e instanceof TypeError) {
       // statements to handle TypeError exceptions
-
+      Logger.log(e)
     } else if (e instanceof RangeError) {
       // statements to handle RangeError exceptions
+      Logger.log(e)
     } else if (e instanceof EvalError) {
       // statements to handle EvalError exceptions
+      Logger.log(e)
     } else {
       // statements to handle any unspecified exceptions
       Logger.log(e); // pass exception object to error handler
@@ -943,14 +962,18 @@ function everyHour(e=undefined, context=openContext()){
 }
 
 function toastSheetInfo(context=openContext()){
-  var triggers = ScriptApp.getProjectTriggers();
-  var installedTriggers = _.map(triggers, function(trigger){return trigger.getHandlerFunction()});
-  Logger.log(installedTriggers);
-  context.spreadSheet.toast(`${installedTriggers.toString()}`, 'Debug info', 30);
+
+  var projectTriggers = ScriptApp.getProjectTriggers();
+  var installedProjectTriggers = _.map(projectTriggers, function(trigger){return trigger.getHandlerFunction()});
+
+  var userTriggers = ScriptApp.getUserTriggers(context.spreadSheet);
+  var installedUserTriggers = _.map(userTriggers, function(trigger){return trigger.getHandlerFunction()});
+  var results = `P ${installedProjectTriggers.toString()}: U ${installedUserTriggers.toString()}`;
+  Logger.log(results);
+  context.spreadSheet.toast(results, 'Debug info', 30);
+  
 }
 
-// TODO Fix analytics not opening
-// FIX post map, storing the post data some where
 // fix the every hour issue not being able to get settings or do any update
 // set highlighting to false in every ones settings?
 // add a forward and back button to the find member profiles
@@ -960,4 +983,5 @@ function toastSheetInfo(context=openContext()){
 // message people automatticaly and update the sheet that it has been done.
 // stream all events into backup database for history and reliability
 // make the profiles global accross all google sheets so if one missionary marks a profile as member all missionaries get that data
-// 
+// fix the column formating for counter to be a number and date to be a date
+// todo fix collumsn expanding right

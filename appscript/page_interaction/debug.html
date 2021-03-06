@@ -12,16 +12,18 @@
         <p v-for="(val, key) in debug_functions">
             <button v-on:click="callFunc(val)">
                 {{ val }}
-            </button></p> 
+            </button>
+        </p> 
     </div>
       <script>
         new Vue({
             el: '#app',
             data: {
-                debug_functions: ["trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet", "sortData", "test_doLogicPageMessages", "formatSheet",
-                                    "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
-                                    "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
-                                    "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
+                debug_functions: ["test_mergeData", "showDebugSidebar", "tearDownSheet", "deactivateTriggers", "toastSheetInfo", "trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet", 
+                                  "sortData", "test_doLogicPageMessages", "formatSheet",
+                                  "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
+                                  "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
+                                  "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
             },
             methods: {
                 callFunc: function(funcName){
