@@ -38,6 +38,13 @@
             <p>Use this to try and fix the sheet if it is not working right.</p>
             <button class="btn btn-primary" @click="fireHealFunction">Heal</button>
         </div>
+        <div v-if="JSON.parse(programSettings).hasOwnProperty('debug')">
+            <p v-for="(val, key) in debug_functions">
+                <button v-on:click="callFunc(val)">
+                    {{ val }}
+                </button>
+            </p> 
+        </div>
     </div>
 
       <script>
@@ -50,6 +57,11 @@
                 scraperInput: '',
                 profileList: '',
                 facebookAuthLink: undefined,
+                debug_functions: ["showDebugSidebar", "tearDownSheet", "deactivateTriggers", "toastSheetInfo", "trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet", 
+                                  "sortData", "test_doLogicPageMessages", "formatSheet",
+                                  "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
+                                  "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
+                                  "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
             },
             methods: {
                 saveProgramSettings: function(){
@@ -89,7 +101,10 @@
                 },
                 updateFacebookAuthLink: function(facebookAuthLink){
                     this.facebookAuthLink = facebookAuthLink;
-                }
+                },
+                callFunc: function(funcName){
+                    google.script.run.withSuccessHandler().executeFunctionByName(funcName);
+                },
             },
             created: function(){
                 google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();

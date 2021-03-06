@@ -250,3 +250,46 @@ function findMissingRefreshTokens(){
     console.log(`Missing ${_.toString(missingList)}`);
     console.log(`All ${_.toString(all)}`)
 }
+
+function checkForFaultySettings(){
+    var pageSettingsList = getAllPreference();
+    var badList = {};
+    Object.values(pageSettingsList).forEach(function(val, idx){
+        if(!val.statusList){
+            Logger.log(`${Object.keys(pageSettingsList)[idx]} is missing statusList`);
+            badList[Object.keys(pageSettingsList)[idx]] = val;
+            val.statusList = defaultUserSettings.statusList;
+        }
+        if(!val.hiddenStatuses){
+            Logger.log(`${Object.keys(pageSettingsList)[idx]} is missing hiddenStatuses`);
+            badList[Object.keys(pageSettingsList)[idx]] = val;
+            val.hiddenStatuses = defaultUserSettings.hiddenStatuses
+        }
+        if(!val.statusToMerge){
+            Logger.log(`${Object.keys(pageSettingsList)[idx]} is missing statusToMerge`);
+            badList[Object.keys(pageSettingsList)[idx]] = val;
+            val.statusToMerge = defaultUserSettings.statusToMerge
+        }
+        if(!val.assignmentMap){
+            Logger.log(`${Object.keys(pageSettingsList)[idx]} is missing assignmentMap`);
+            badList[Object.keys(pageSettingsList)[idx]] = val;
+            val.assignmentMap = defaultUserSettings.assignmentMap
+        }
+        if(!val.sheetSettings){
+            Logger.log(`${Object.keys(pageSettingsList)[idx]} is missing sheetSettings`);
+            badList[Object.keys(pageSettingsList)[idx]] = val;
+            val.sheetSettings = defaultUserSettings.sheetSettings
+        }
+        if (val.genderMap){delete val.genderMap;}
+        if (val.reactionsMap){delete val.reactionsMap;}
+        if (val.triggerNames){delete val.triggerNames;}
+        if (val.headerRowNumber){delete val.headerRowNumber;}
+        if (val.initialRowLength){delete val.initialRowLength;}
+        if (val.adIDMap){delete val.adIDMap;}
+        if (val.areaIDs){delete val.areaIDs;}
+        
+        setPreference(Object.keys(pageSettingsList)[idx], val)
+    })
+    console.log(`Missing ${JSON.stringify(badList)}`);
+}
+
