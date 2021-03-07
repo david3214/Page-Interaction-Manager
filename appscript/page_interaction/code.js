@@ -932,13 +932,9 @@ function insertMissingDefaultValues(context=openContext()){
 
 function everyHour(e=undefined){
   try {
-    Logger.log(`Running every hour ${JSON.stringify(e)}`);
-    var foo = _.mapKeys(e, function(key){return key});
-    Logger.log(foo)
     if (e != undefined) {
       internalVariables.sheetNames.forEach(sheetName => {
         var context = openContext(e.source, sheetName);
-        Logger.log(JSON.stringify(context));
         formatSheet(context);
         updateSheet(e=undefined, context);
         insertMissingDefaultValues(context);
@@ -985,3 +981,5 @@ function toastSheetInfo(context=openContext()){
 // make the profiles global accross all google sheets so if one missionary marks a profile as member all missionaries get that data
 // fix the column formating for counter to be a number and date to be a date
 // todo fix collumsn expanding right
+// Bug: when notes are cleared to nothing none of the other ones update...
+// name cache isn't working 
