@@ -87,26 +87,6 @@ def bot():
   return 'done'
 
 
-#@app.route("/proxy-data/<site>")
-##@cache.cached(timeout=3600)
-#def pass_data_view(site):
-#  args = request.args
-#  url = urllib.parse.unquote_plus(args['url'])
-#  if site == "facebook":
-#    facebook_username = urllib.parse.unquote_plus(args['facebook_username'])
-#    facebook_password = urllib.parse.unquote_plus(args['facebook_password'])
-#    bot = MissionaryBot(church_username="proxy", facebook_username=facebook_username, facebook_password=facebook_password)
-#    bot.authenticate_with_facebook()
-#    # Scroll to botom to get all the data
-#  elif site == "church":
-#    church_username = urllib.parse.unquote_plus(args['church_username'])
-#    church_password = urllib.parse.unquote_plus(args['church_password'])
-#    bot = MissionaryBot(church_username=church_username, church_password=church_password)
-#    bot.authenticate_with_church()
-#
-#  return bot.pass_data(url)
-
-
 @app.route("/get-next-profile")
 def get_next_profile():
   args = request.args
@@ -194,24 +174,57 @@ def resource_not_found(e):
     return jsonify(error=str(e)), 404
 
 
-@app.route('/page-interaction-manager/credentials', methods=['POST', 'GET', 'DELETE'])
-def credentials():
-    """ Handle the credentials """
-    if request.method == "POST":
-        for page in request.json['data']:
-            r.sadd(f"PIM:{page['id']}", json.dumps(page))
-        return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+from celery.result import AsyncResult
+from tasks import app as celeryApp
+
+@app.route('/tasks', methods=["GET","POST"])
+def tasks():
     if request.method == "GET":
-      results = str(r.smembers(f"PIM:{request.args['id']}"))
-      return jsonify(results)
-    if request.method == "DELETE":
-      key = f"PIM:{request.args['page_id']}"
-      for page in r.sscan_iter(key):
-        page = json.loads(page)
-        if page['google_sheets']['id'] == request.args['sheet_id']:
-          resp = r.srem(key, json.dumps(page))
-          return jsonify(resp)
-      abort(404, description="Resource not found")
+        job_id = request.args['id']
+        res = AsyncResult(job_id, app=celeryApp)
+        if res.state == "SUCCESS":
+            return res.get()
+        else:
+            return res.state
+
+    elif request.method == "POST":
+        payload = request.get_json()
+        if payload['type'] == "scrape_profiles":
+            task = get_profile_links.apply_async((payload['data'],))
+            return jsonify({}), 202, {'Location': url_for('taskstatus',
+                                                  task_id=task.id)}
+        
+
+@app.route('/status/<task_id>')
+def taskstatus(task_id):
+    task = AsyncResult(task_id, app=celeryApp)
+    if task.state == 'PENDING':
+        response = {
+            'state': task.state,
+            'current': 0,
+            'total': 1,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0),
+            'total': task.info.get('total', 1),
+            'status': task.info.get('status', '')
+        }
+        if task.result:
+            response['result'] = task.result
+    else:
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'current': 1,
+            'total': 1,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
+
 
 if __name__ == '__main__':
   app.run(host='127.0.0.1', port=5001, debug=True)
