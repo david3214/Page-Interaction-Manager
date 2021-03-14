@@ -40,4 +40,11 @@ RUN pip install gunicorn[eventlet]
 RUN pip install -r requirements.txt
 
 ADD . /app/
-CMD gunicorn -b :$PORT main:app --worker-class eventlet --workers 3
+
+ENV RABBITMQ_URL=amqps://***REMOVED***@albatross.rmq.cloudamqp.com/ywxqrfya
+ENV FACEBOOK_USERNAME=***REMOVED***
+ENV FACEBOOK_PASSWORD=***REMOVED***
+ENV FACEBOOK_LANGUAGE=japanese-kansai
+# Start the background 
+
+CMD celery -A tasks worker --loglevel=INFO

@@ -437,6 +437,9 @@ class MissionaryBot:
     self.wd.find_element_by_tag_name('input')
     return self.wd.page_source
 
+  def say_hi(self):
+    print("Hi")
+    return "Hi"
 
   def delete(self):
     """Delete the instance of the bot in case of failure"""
