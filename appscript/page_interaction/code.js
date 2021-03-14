@@ -2,12 +2,12 @@
 // Dictionary of program settings
 var defaultUserSettings = {
   // Program variables
-  statusList : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Outside Mission", "Member", "Missionary", "Non Member", "Sent Friend Request", "Currently Messaging", "Teaching", "Baptized", "Stopped Teaching"],
+  statusList : ["Select", "Left on Read", "Rejected", "Do Not Contact", "Outside Mission", "Member", "Missionary", "Non Member", "Sent Friend Request", "Currently Messaging", "Messaged 1 Time", "Teaching", "Baptized", "Stopped Teaching"],
   hiddenStatuses : ["Member", "Missionary", "Do Not Contact", "Rejected"],
   statusToMerge: ["Member", "Missionary", "Do Not Contact", "Rejected"],
   assignmentMap : [['Unassigned', '#82C1EC'], ['Ward 1', '#F28530'], ['Ward 2', '#FCFBC2'], ['Ward 3', '#ECE3D4'], ['Ward 4', '#F9F85F']],
   sheetSettings: {
-      "Ad Likes": { "highlightEnabled": true, "sortingEnabled": true, "mergingEnabled": true },
+      "Ad Likes": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true },
       "Page Messages": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true }
     },
 };
@@ -273,6 +273,21 @@ function updateDataValidationRules(context=openContext()){
     sheet.getRange(2, context.header.get('On Date')+1, context.values.length).setDataValidation(enforceCheckbox);
   };
   rules["On Date"] = onDate;
+
+  // Make a 'Following The FB Page' rule
+  var followingTheFBPage = new Rule();
+  followingTheFBPage.create = function(){
+    
+    // Make data validation rule for check boxes
+    var enforceCheckbox = SpreadsheetApp.newDataValidation();
+    enforceCheckbox.requireCheckbox();
+    enforceCheckbox.setAllowInvalid(true);
+    enforceCheckbox.build();
+    
+    // Get the 'Following The Page' range and apply data validation check boxes
+    sheet.getRange(2, context.header.get('Following The FB Page')+1, context.values.length).setDataValidation(enforceCheckbox);
+  };
+  rules["Following The FB Page"] = followingTheFBPage;
 
   // Build the rules on for the current sheet
   context.header.headerData.forEach(function(columnName){
@@ -983,3 +998,4 @@ function toastSheetInfo(context=openContext()){
 // todo fix collumsn expanding right
 // Bug: when notes are cleared to nothing none of the other ones update...
 // name cache isn't working 
+// TODO delete should disconnect from the facebook app as well
