@@ -832,6 +832,7 @@ function shuffle(context=openContext()){
  function sortData(context=openContext()){
   /**
    * Sort and group the data, memberish rows are moved to the end
+   * TODO Add another sorting option to sort just by date
   */
   if (!context.settings.sheetSettings[context.sheetName].sortingEnabled){return;}
   var assignment = context.header.get('Assignment');
