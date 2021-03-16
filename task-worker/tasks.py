@@ -1,12 +1,18 @@
 import os
 import threading, queue
-import multiprocessing
+from multiprocessing import Process, cpu_count
+import logging
+from PIL import Image
+import qrcode
+import urllib.request
 
 from celery import Celery
 
-from missionary_bot import MissionaryBot
+from .missionary_bot import MissionaryBot
 
 app = Celery('tasks', broker=os.getenv("RABBITMQ_URL"), backend=os.getenv("REDISCLOUD_URL"))
+jesus_bg = Image.open(urllib.request.urlopen(
+    "https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/qr-code/jesus_template.png").read())
 
 results = {}
 @app.task(reply_to='result_queue')
@@ -47,7 +53,7 @@ def get_profile_links(missing_links):
     print('All task requests sent\n', end='')
     threading.Thread(target=merge_results, daemon=True, args=[resultsQ], name="Merge Results").start()
 
-    for _ in range(multiprocessing.cpu_count()):
+    for _ in range(cpu_count()):
         threading.Thread(target=worker, daemon=True, name=f"Profile_worker_{_}", args=[workQ]).start()
 
     workQ.join()
@@ -67,3 +73,30 @@ def find_member_profiles(task_info):
         logging.error(e)
         return f"{e} Didn't completed loading Facebook profile information"
 
+@app.task
+def create_pass_along_cards(task_info):
+    """
+    Take a string and encode onto a jesus background with qr code
+    """
+    try:
+        assert task_info.get('text') is not None
+        # Open the template
+        img_bg = jesus_bg
+        qr_code_text = task_info.get('text')
+        # Make the qr code
+        qr = qrcode.QRCode(box_size=2, border=0)
+        qr.add_data(qr_code_text)
+        qr.make()
+        img_qr = qr.make_image(fit=True)
+        img_qr = img_qr.resize(
+            (int(img_bg.size[0] * 0.53), int(img_bg.size[0] * 0.53)))
+        # Paste the qr code onto the image
+        pos = (int(img_bg.size[0] * 0.23), int(img_bg.size[1] * 0.65))
+        img_bg.paste(img_qr, pos)
+    finally:
+        return img_bg
+
+@app.task
+def insert_row_in_sheet(task_info):
+    """ Insert a row into the users sheet and into the db"""
+    pass
