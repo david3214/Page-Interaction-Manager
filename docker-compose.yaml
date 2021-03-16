@@ -9,12 +9,12 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=mypass
-  web:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    hostname: web
-    command: ./scripts/run_web.sh
+    hostname: app
+    command: ./scripts/run_app.sh
     volumes:
       - .:/app
     ports:
@@ -22,6 +22,35 @@ services:
     links:
       - rabbit
       - redis
+    depends_on:
+    - cloud-sql-proxy
+    environment:
+      DATABASE_URL: mysql://dbuser:dbpassword@cloud-sql-proxy:3306/database
+      CLIENT_SECRET_FILE: /app***REMOVED***
+  cloud-sql-proxy:
+    image: gcr.io/cloudsql-docker/gce-proxy:latest
+    command: /cloud_sql_proxy -instances=eighth-vehicle-287322:us-central1:datab=tcp:0.0.0.0:3306 -credential_file=/config
+    volumes:
+    - keys/cloud_sql_proxy_key.json:/config
+    ports:
+    - 3306:3306
+  hub:
+    image: selenium/hub:latest
+    expose:
+      - 4444
+    networks:
+      - selenium-grid
+  chrome:
+    image: selenium/node-chrome-debug:latest
+    environment:
+      - HUB_PORT_4444_TCP_ADDR=hub
+      - HUB_PORT_4444_TCP_PORT=4444
+    ports:
+      - 5900:5900
+    depends_on:
+      - hub
+    networks:
+      - selenium-grid
   worker:
     build:
       context: .
@@ -34,3 +63,24 @@ services:
       - redis
     depends_on:
       - rabbit
+      - hub
+      - redis
+    networks:
+      - selenium-grid
+  flower:
+    build: ./
+    command: python -m flower -A tasks
+    volumes:
+      - ./examples:/data
+    working_dir: /data
+    ports:
+      - 5555:5555
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
