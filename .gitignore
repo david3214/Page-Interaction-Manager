@@ -1,5 +1,7 @@
 .vscode
 .venv
+venv/
+venv/*
 bots.pickle
 *.pyc
 /test_data
@@ -12,3 +14,4 @@ __pycache__
 */.pytest_cache
 task-service/results.json
 task-service/input.json
+app/keys/*
