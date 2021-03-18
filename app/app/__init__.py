@@ -14,7 +14,7 @@ r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
 celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, backend=Config.CELERY_RESULT_BACKEND)
 context = pa.default_serialization_context()
 
-def create_app(config_name):
+def create_app(config_name="default"):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)

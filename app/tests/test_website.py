@@ -16,9 +16,13 @@ class WebsiteTestCase(unittest.TestCase):
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
-        self.client = self.app.test_client(use_cookies=True)
+        self.client = self.app.test_client()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
 
     def test_home_page(self):
-        self.app = create_app('testing')
-        response = self.client.get(url_for('website.index'))
+        response = self.client.get('/')
         self.assertEquals(response.status_code, 200)
