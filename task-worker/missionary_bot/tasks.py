@@ -8,22 +8,33 @@ import urllib.request
 
 from celery import Celery
 
-from .missionary_bot import MissionaryBot
+from .bot import MissionaryBot
+from .config import config
 
-app = Celery('tasks', broker=os.getenv("RABBITMQ_URL"), backend=os.getenv("REDISCLOUD_URL"))
-jesus_bg = Image.open(urllib.request.urlopen(
-    "https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/qr-code/jesus_template.png").read())
+celery = Celery('tasks', broker=os.getenv("RABBITMQ_URL"), backend=os.getenv("REDISCLOUD_URL"))
+#jesus_bg = Image.open(urllib.request.urlopen(
+#    "https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/qr-code/jesus_template.png").read())
+
+@celery.task
+def test_task(task_info):
+    results = {"text": task_info['text']}
+    return results
 
 results = {}
-@app.task(reply_to='result_queue')
-def get_profile_links(missing_links):
+@celery.task()
+def get_profile_links(task_info):
+    """
+    Task Info: sheet_url: where to insert the results
+               data: {url:[names to find]}
+               type: get_profile_links
+               results: {}
+    """
     workQ = queue.Queue()
     resultsQ = queue.Queue()
     def worker(queue):
         global results
         try:
-            bot = MissionaryBot(facebook_username=os.getenv("FACEBOOK_USERNAME"), 
-                                facebook_password=os.getenv("FACEBOOK_PASSWORD"))
+            bot = MissionaryBot(config=config['default'])
             bot.language = os.getenv("FACEBOOK_LANGUAGE")
             bot.authenticate_with_facebook()
             while True:
@@ -48,7 +59,7 @@ def get_profile_links(missing_links):
             if obj is not None:
                 results = {**results, **obj}
 
-    for key, value in missing_links.items():
+    for key, value in task_info['data'].items():
         workQ.put([key, value])
     print('All task requests sent\n', end='')
     threading.Thread(target=merge_results, daemon=True, args=[resultsQ], name="Merge Results").start()
@@ -61,7 +72,7 @@ def get_profile_links(missing_links):
     
     return results
 
-@app.task
+@celery.task
 def find_member_profiles(task_info):
     def do_work(kwargs):
         MissionaryBot(**kwargs).do_work()
@@ -72,12 +83,10 @@ def find_member_profiles(task_info):
     except Exception as e:
         logging.error(e)
         return f"{e} Didn't completed loading Facebook profile information"
-
-@app.task
+"""
+@celery.task
 def create_pass_along_cards(task_info):
-    """
-    Take a string and encode onto a jesus background with qr code
-    """
+    #Take a string and encode onto a jesus background with qr code
     try:
         assert task_info.get('text') is not None
         # Open the template
@@ -95,8 +104,28 @@ def create_pass_along_cards(task_info):
         img_bg.paste(img_qr, pos)
     finally:
         return img_bg
-
-@app.task
+"""
+@celery.task
 def insert_row_in_sheet(task_info):
     """ Insert a row into the users sheet and into the db"""
+    pass
+
+@celery.task
+def add_friend(task_info):
+    pass
+
+@celery.task
+def send_message(task_info):
+    pass
+
+@celery.task
+def get_all_page_followers(task_info):
+    pass
+
+@celery.task
+def get_all_page_likes(task_info):
+    pass
+
+@celery.task
+def get_group_members(task_info):
     pass

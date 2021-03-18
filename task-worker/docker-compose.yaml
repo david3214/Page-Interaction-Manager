@@ -1,0 +1,16 @@
+version: '3'
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - standalone-chrome
+  standalone-chrome:
+    hostname: selenium
+    ports:
+      - '4444:4444'
+      - '5900:5900'
+    volumes:
+      - '/dev/shm:/dev/shm'
+    image: 'selenium/standalone-chrome-debug:latest'

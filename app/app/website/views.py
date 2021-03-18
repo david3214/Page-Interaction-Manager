@@ -8,7 +8,7 @@ def resource_not_found(e):
 
 
 @website.route("/")
-def main():
+def home_page():
     return render_template('index.html')
 
 
