@@ -1000,3 +1000,4 @@ function toastSheetInfo(context=openContext()){
 // Bug: when notes are cleared to nothing none of the other ones update...
 // name cache isn't working 
 // TODO delete should disconnect from the facebook app as well
+// TODO freeze the header row

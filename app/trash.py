@@ -268,3 +268,34 @@ import pandas as pd
 
 with open("/workspaces/missionary-tools/appscript/page_interaction/mock_data.json") as f:
   mock_data = json.load(f)
+
+  redis:
+    image: redis:latest
+    hostname: redis
+  rabbit:
+    hostname: rabbit
+    image: rabbitmq:latest
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=mypass
+
+flower:
+    build: ./
+    command: python -m flower -A tasks
+    volumes:
+      - ./examples:/data
+    working_dir: /data
+    ports:
+      - 5555:5555
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+
+
+
