@@ -15,3 +15,5 @@ __pycache__
 task-service/results.json
 task-service/input.json
 app/keys/*
+*/keys/
+.pytest_cache

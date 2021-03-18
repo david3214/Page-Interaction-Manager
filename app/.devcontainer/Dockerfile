@@ -22,7 +22,9 @@ RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requ
 # RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && npm install -g <your-package-here>" 2>&1
 ENV REDISCLOUD_URL='***REMOVED***'
 ENV CLOUD_SQL_CONNECTION_NAME=eighth-vehicle-287322:us-central1:datab
-ENV DATABASE_URL=mysql://***REMOVED***@cloud-sql-proxy:3306/page_interaction_manager
-ENV TEST_DATABASE_URL=mysql://dbuser:dbpassword@cloud-sql-proxy:3306/database
+ENV DATABASE_URL=***REMOVED***
+ENV TEST_DATABASE_URL=***REMOVED***/testing
+ENV DEV_DATABASE_URL=***REMOVED***/development
 ENV REDIS_URL=***REMOVED***
 ENV RABBITMQ_URL=***REMOVED***
+
