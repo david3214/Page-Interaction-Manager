@@ -1,12 +1,12 @@
 import urllib.parse
 
-import redis
 import pyarrow as pa
+import redis
 from celery.app.base import Celery
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-from .config import config, Config
+from .config import Config, config
 
 db = SQLAlchemy()
 url = urllib.parse.urlparse(Config.REDIS_URL)

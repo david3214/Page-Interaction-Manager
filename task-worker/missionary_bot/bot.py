@@ -28,6 +28,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import urlparse, parse_qs
 import jwt
 
+from .errors import AuthenticationError
+
 # Redis
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
 r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
@@ -234,7 +236,8 @@ class MissionaryBot:
     try:
       WebDriverWait(self.wd, 10).until(EC.presence_of_element_located((By.XPATH, self.facebook_paths[self.language]['home_button'])))
     except:
-      return False
+      self.set_status("Failed to login to Facebook")
+      raise AuthenticationError(provider="Facebook")
     return True
 
 
