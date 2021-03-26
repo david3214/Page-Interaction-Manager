@@ -9,9 +9,10 @@ class Config:
     DATABASE_URL = os.environ.get("DATABASE_URL")
     CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
     CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
+    CELERY_IMPORTS = ('app.worker',)
     CLIENT_SECRETS_FILE = os.environ.get("CLIENT_SECRETS_FILE")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
+
     @staticmethod
     def init_app(app):
         pass

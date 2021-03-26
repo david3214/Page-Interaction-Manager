@@ -5,6 +5,7 @@ import logging
 from PIL import Image
 import qrcode
 import urllib.request
+from time import sleep
 
 from celery import Celery
 
@@ -15,19 +16,19 @@ celery = Celery('tasks', broker=os.getenv("RABBITMQ_URL"), backend=os.getenv("RE
 #jesus_bg = Image.open(urllib.request.urlopen(
 #    "https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/qr-code/jesus_template.png").read())
 
-@celery.task
+@celery.task(reply_to='results')
 def test_task(task_info):
-    results = {"text": task_info['text']}
-    return results
+    task_info['results'] = task_info['text']
+    return task_info
 
 results = {}
-@celery.task()
+@celery.task(reply_to='results')
 def get_profile_links(task_info):
     """
     Task Info: sheet_url: where to insert the results
                data: {url:[names to find]}
                type: get_profile_links
-               results: {}
+               results: {name:url}
     """
     workQ = queue.Queue()
     resultsQ = queue.Queue()
@@ -66,11 +67,13 @@ def get_profile_links(task_info):
 
     for _ in range(cpu_count()):
         threading.Thread(target=worker, daemon=True, name=f"Profile_worker_{_}", args=[workQ]).start()
+        sleep(5) # Don't like but facebook don't like to multiple simultaeneous logins
 
     workQ.join()
     print('All work completed')
-    
-    return results
+    task_info['results'] = results
+
+    return task_info
 
 @celery.task
 def find_member_profiles(task_info):
@@ -105,6 +108,8 @@ def create_pass_along_cards(task_info):
     finally:
         return img_bg
 """
+
+
 @celery.task
 def insert_row_in_sheet(task_info):
     """ Insert a row into the users sheet and into the db"""

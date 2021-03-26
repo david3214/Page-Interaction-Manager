@@ -4,8 +4,8 @@
  * https://developers.facebook.com/apps/
  */
 
-var CLIENT_ID = '***REMOVED***';
-var CLIENT_SECRET = '***REMOVED***';
+var CLIENT_ID = PropertiesService.getDocumentProperties().getProperty('FACEBOOK_CLIENT_ID');
+var CLIENT_SECRET = PropertiesService.getDocumentProperties().getProperty('FACEBOOK_CLIENT_SECRET');
 
 /**
  * Authorizes and makes a request to the Facebook API.
@@ -53,7 +53,7 @@ function getFacebookService() {
     .setCallbackFunction('authCallback')
 
     // Set the access scope
-    .setScope("pages_read_engagement,pages_manage_metadata,pages_messaging")
+    .setScope("pages_read_engagement,pages_manage_metadata") //pages_messaging
 
     // Set the property store where authorized tokens should be persisted.
     .setPropertyStore(PropertiesService.getUserProperties());
