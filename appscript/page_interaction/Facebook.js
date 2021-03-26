@@ -4,8 +4,6 @@
  * https://developers.facebook.com/apps/
  */
 
-var CLIENT_ID = PropertiesService.getDocumentProperties().getProperty('FACEBOOK_CLIENT_ID');
-var CLIENT_SECRET = PropertiesService.getDocumentProperties().getProperty('FACEBOOK_CLIENT_SECRET');
 
 /**
  * Authorizes and makes a request to the Facebook API.
@@ -39,6 +37,8 @@ function resetAuth() {
  * Configures the service.
  */
 function getFacebookService() {
+  var CLIENT_ID = PropertiesService.getScriptProperties().getProperty('FACEBOOK_CLIENT_ID');
+  var CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('FACEBOOK_CLIENT_SECRET');
   return OAuth2.createService('Facebook')
     // Set the endpoint URLs.
     .setAuthorizationBaseUrl('https://www.facebook.com/dialog/oauth')
@@ -53,7 +53,7 @@ function getFacebookService() {
     .setCallbackFunction('authCallback')
 
     // Set the access scope
-    .setScope("pages_read_engagement,pages_manage_metadata") //pages_messaging
+    .setScope("pages_read_engagement,pages_manage_metadata") //pages_messaging TODO add back in when approved
 
     // Set the property store where authorized tokens should be persisted.
     .setPropertyStore(PropertiesService.getUserProperties());
@@ -93,6 +93,9 @@ function getFacebookPages(){
   /**
    * Get all facebook pages as list of obj
    */
+  var CLIENT_ID = PropertiesService.getScriptProperties().getProperty('FACEBOOK_CLIENT_ID');
+  var CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('FACEBOOK_CLIENT_SECRET');
+
   service = getFacebookService();
   var token = service.getAccessToken();
 
