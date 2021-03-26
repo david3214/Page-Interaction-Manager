@@ -1,0 +1,40 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: app
+    ports:
+      - "5000:5000"
+    depends_on:
+    - db
+  redis:
+    image: redis:latest
+    hostname: redis
+  rabbit:
+    hostname: rabbit
+    image: rabbitmq:latest
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=mypass
+  db:
+    image: mysql:5.7
+    hostname: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: testing
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+  flower:
+    image: mher/flower
+    ports:
+      - 5555:5555
+    environment:
+      CELERY_BROKER_URL: amqp://***REMOVED***@albatross.rmq.cloudamqp.com/ywxqrfya
+      CELERY_RESULT_BACKEND: ***REMOVED***

@@ -22,4 +22,4 @@ RUN pip install -r requirements.txt
 
 ADD . .
 
-CMD celery -A tasks worker --loglevel=INFO
+CMD celery -A missionary_bot.tasks worker --loglevel=INFO
