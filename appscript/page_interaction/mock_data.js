@@ -12,7 +12,7 @@ test_data = {
             ],
             "name": "Ash Cat Page",
             "id": "1353269864728879",
-            "google_sheets": {"id": "293kfj", "token": "2342444r" },
+            "google_sheets": {"id": "293kfj", "token": "2342444r", "refresh_token": "123453421" },
             "feed": [
                 {
                   "created_time": "2021-01-22T09:31:44+0000",
