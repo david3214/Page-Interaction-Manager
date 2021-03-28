@@ -131,7 +131,7 @@ function saveFacebookPagesDetails(pageResults) {
     var options = {
       'method': 'post',
     }
-    var FBurl = `https://graph.facebook.com/${page.id}/subscribed_apps?subscribed_fields=feed,messages&access_token=${page.access_token}`;
+    var FBurl = `https://graph.facebook.com/${page.id}/subscribed_apps?subscribed_fields=feed&access_token=${page.access_token}`; // messages
     var results = JSON.parse(UrlFetchApp.fetch(FBurl, options));
   })
 
