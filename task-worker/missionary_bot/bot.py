@@ -57,7 +57,7 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    # self.chrome_options.add_argument("--headless")
+    self.chrome_options.add_argument("--headless")
     self.chrome_options.add_argument("--disable-gpu")
     self.chrome_options.add_argument("--disable-dev-shm-usage")
     self.chrome_options.add_argument("--no-sandbox")
@@ -342,30 +342,6 @@ class MissionaryBot:
     headers= {}
     requests.request("DELETE", url, headers=headers, data = payload)
 
-
-# def get_missionary_emails(self):
-#   self.wd.get('https://areabook.churchofjesuschrist.org/services/config?lang=en')
-#   try:
-#     self.authenticate_with_church()
-#   except:
-#     pass
-#   self.wd.find_elements_by_tag_name("pre")
-#   lang_data = self.parse_church_json(self.wd.page_source)
-#   url_list = []
-#   for mission in lang_data['missions']:
-#     url_list.append({'url':f'https://areabook.churchofjesuschrist.org/services/mission/{mission["id"]}', 'id':mission["id"]})
-#   #f = open('urls.txt', 'w')
-#   #for item in url_list:
-#   #  f.write("%s\n" % item)
-#   #f.close()
-#   import json 
-#   for item in url_list:
-#     self.wd.get(item["url"])
-#     self.wd.find_elements_by_tag_name("pre")
-#     ff = open(f'data/{item["id"]}', 'w+')
-#     ff.write(json.dumps(self.parse_church_json(self.wd.page_source)))
-#     ff.close()
-#   return f'found {len(url_list)}'
 
 
 def convert_html_to_data_frame(html):

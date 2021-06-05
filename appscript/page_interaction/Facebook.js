@@ -117,7 +117,7 @@ function getFacebookPages(){
  */
 function saveFacebookPagesDetails(pageResults) {
   // Get the refresh token for the script
-  var userId = getEffectiveUserId();  
+  var userId = getEffectiveUserId();
   var refreshToken = getRefreshToken(userId);
 
   // Get the spreadsheet id
@@ -138,7 +138,7 @@ function saveFacebookPagesDetails(pageResults) {
   // Save results to db
   pageResults.data.forEach(page => setPageDetails(page.id, page));
 
-  // Insert feed data -ree db cant hold values this big
+  // Insert feed data
   getFacebookPagePosts(pageResults);
 
   // Save results to doc properties
