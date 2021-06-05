@@ -11,9 +11,8 @@ ENV RABBITMQ_URL=amqps://***REMOVED***@albatross.rmq.cloudamqp.com/ywxqrfya
 ENV FACEBOOK_USERNAME=***REMOVED***
 ENV FACEBOOK_PASSWORD=***REMOVED***
 ENV FACEBOOK_LANGUAGE=japanese-kansai
-env ***REMOVED***
-env ***REMOVED***
-
+ENV ***REMOVED***
+ENV ***REMOVED***
 
 
 # Copy local code to the container image.
@@ -22,4 +21,4 @@ RUN pip install -r requirements.txt
 
 ADD . .
 
-CMD celery -A missionary_bot.tasks worker --loglevel=INFO
+CMD celery -A missionary_bot.tasks worker --loglevel=INFO --concurrency=1
