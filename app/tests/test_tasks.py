@@ -40,6 +40,5 @@ class TaskTestCase(unittest.TestCase):
         self.assertTrue(results)
 
     def test_update_all_profile_links(self):
-        results = worker.update_all_profile_links()
+        results = worker.update_all_profile_links() 
         self.assertTrue(results)
-
