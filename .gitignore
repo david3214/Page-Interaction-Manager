@@ -17,3 +17,5 @@ task-service/input.json
 app/keys/*
 */keys/
 .pytest_cache
+app/.noseids
+app/nosetests.xml
