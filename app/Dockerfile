@@ -11,11 +11,11 @@ ENV TEST_DATABASE_URL=mysql+pymysql://root:example@mysql:3306/testing
 ENV DEV_DATABASE_URL=
 ENV REDIS_URL=***REMOVED***
 ENV TEST_REDIS_URL=***REMOVED***
-ENV RABBITMQ_URL=***REMOVED***
+ENV RABBITMQ_URL=amqps://ywxqrfya:***REMOVED***@albatross.rmq.cloudamqp.com/ywxqrfya
 ENV TEST_RABBITMQ_URL=***REMOVED***
 ENV PORT=5000
 ENV CLIENT_SECRETS_FILE=***REMOVED***
-ENV CELERY_BROKER_URL=***REMOVED***
+ENV CELERY_BROKER_URL=amqps://ywxqrfya:***REMOVED***@albatross.rmq.cloudamqp.com/ywxqrfya
 ENV CELERY_RESULT_BACKEND=***REMOVED***
 ENV FLASK_CONFIG=testing
 ENV APP_HOME /app

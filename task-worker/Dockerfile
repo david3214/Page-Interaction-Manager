@@ -7,7 +7,7 @@ ENV ***REMOVED***
 ENV ***REMOVED***
 ENV ***REMOVED***
 
-ENV RABBITMQ_URL=***REMOVED***
+ENV RABBITMQ_URL=amqps://ywxqrfya:***REMOVED***@albatross.rmq.cloudamqp.com/ywxqrfya
 ENV FACEBOOK_USERNAME=***REMOVED***
 ENV FACEBOOK_PASSWORD=***REMOVED***
 ENV FACEBOOK_LANGUAGE=japanese-kansai
