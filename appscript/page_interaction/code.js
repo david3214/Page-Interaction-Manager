@@ -842,8 +842,8 @@ function shuffle(context=openContext()){
   var memberStatuses = internalVariables.memberStatusList;
   var hidden = _.filter(context.values, function(row){return _.includes(memberStatuses, row[status])});
   var values = _.filter(context.values, function(row){return !_.includes(memberStatuses, row[status])});
-  values = _.orderBy(values, [assignment, status, PSID, date], ['asc','asc','asc','desc']);
-  hidden = _.orderBy(hidden, [assignment, status, PSID, date], ['asc','asc','asc','desc']);
+  values = _.orderBy(values, [assignment, status, date], ['asc','asc','desc']);
+  hidden = _.orderBy(hidden, [assignment, status, date], ['asc','asc','desc']);
   var finalResults = _.concat(values, hidden)
   context.values = finalResults
   return context
