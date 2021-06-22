@@ -65,7 +65,8 @@ def get_profile_links(task_info):
     print('All task requests sent\n', end='')
     threading.Thread(target=merge_results, daemon=True, args=[resultsQ], name="Merge Results").start()
 
-    for _ in range(cpu_count()):
+    # for _ in range(cpu_count()):
+    for _ in range(1):
         threading.Thread(target=worker, daemon=True, name=f"Profile_worker_{_}", args=[workQ]).start()
         sleep(5) # Don't like but facebook don't like to multiple simultaeneous logins
 

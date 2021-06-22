@@ -89,6 +89,8 @@ def process_result(task_info):
         def f(name, profileLink):
             if profileLink == '' and name in task_info['results']:
                 return task_info['results'][name]
+            # elif profileLink == '' and not task_info['results'][name]:
+            #     return 'Link not found'
             else:
                 return profileLink
         df['Profile Link'] = df.apply(lambda x: f(x['Name'], x['Profile Link']), axis=1)
