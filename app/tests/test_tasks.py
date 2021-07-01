@@ -13,6 +13,7 @@ class TaskTestCase(unittest.TestCase):
         db.create_all()
         test_data = []
         with open('tests/page_data.json') as json_file:
+        # with open('tests/page_data_tst.json') as json_file:
             data = json.load(json_file)
             for page in data['page_data']:
                 foo = PageDatum(page_id=page['page_id'], page_details=json.loads(page['page_details']))
