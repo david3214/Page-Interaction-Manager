@@ -2,6 +2,7 @@ FROM python:3.7-slim
 
 WORKDIR /app
 
+<<<<<<< HEAD
 ENV REDISCLOUD_URL=***REMOVED***
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/keys/worker_upload.json
 ENV PROJECT_ID=eighth-vehicle-287322
@@ -14,6 +15,12 @@ ENV FACEBOOK_LANGUAGE=japanese-kansai
 ENV ***REMOVED***
 ENV ***REMOVED***
 
+=======
+# Make sure to load environment variables to me
+# REDISCLOUD_URL, GOOGLE_APPLICATION_CREDENTIAL, PROJECT_ID, BUCKET_NAME
+# RABBITMQ_URL, FACEBOOK_USERNAME, FACEBOOK_PASSWORD
+# FACEBOOK_LANGUAGE, CHURCH_USERNAME, CHURCH_PASSWORD
+>>>>>>> c6aa773010b215b334354e5f741394f6048197a5
 
 # Copy local code to the container image.
 ADD requirements.txt .

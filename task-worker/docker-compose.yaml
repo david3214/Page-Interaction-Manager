@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    env_file: 
+      - worker.env
     depends_on:
       - standalone-chrome
   standalone-chrome:

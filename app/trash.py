@@ -1,3 +1,4 @@
+# type: ignore
 
 @app.route('/api/bot', methods=['GET', 'POST', 'DELETE'])
 def bot():
@@ -189,8 +190,13 @@ import sqlalchemy as db
 config = {
     'host': 'localhost',
     'port': 3306,
+<<<<<<< HEAD
     'user': '***REMOVED***',
     'password': '***REMOVED***',
+=======
+    'user': '',
+    'password': '',
+>>>>>>> c6aa773010b215b334354e5f741394f6048197a5
     'database': 'page_interaction_manager'
 }
 db_user = config.get('user')
