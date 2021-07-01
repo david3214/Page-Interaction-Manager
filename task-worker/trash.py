@@ -33,7 +33,7 @@ import multiprocessing
 from alive_progress import alive_bar
 
 def worker():
-  bot = MissionaryBot(facebook_username="***REMOVED***", facebook_password="***REMOVED***")
+  bot = MissionaryBot(facebook_username="graham.harrison@missionary.org", facebook_password="***REMOVED***")
   bot.language = "japanese-kansai"
   bot.authenticate_with_facebook()
   while True:
