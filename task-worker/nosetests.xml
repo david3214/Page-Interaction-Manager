@@ -1,1 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?><testsuite name="nosetests" tests="1" errors="0" failures="0" skip="0"><testcase classname="tests.test_tasks.TasksTestCase" name="test_test_task" time="0.026"></testcase></testsuite>
