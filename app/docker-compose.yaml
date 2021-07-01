@@ -5,6 +5,8 @@ services:
       context: .
       dockerfile: Dockerfile
     hostname: app
+    env_file: 
+      - app.env
     ports:
       - "5000:5000"
     depends_on:
@@ -12,12 +14,12 @@ services:
   redis:
     image: redis:latest
     hostname: redis
-  rabbit:
-    hostname: rabbit
-    image: rabbitmq:latest
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=mypass
+  # rabbit:
+  #   hostname: rabbit
+  #   image: rabbitmq:latest
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=admin
+  #     - RABBITMQ_DEFAULT_PASS=mypass
   db:
     image: mysql:5.7
     hostname: mysql
@@ -26,15 +28,17 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: example
       MYSQL_DATABASE: testing
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
-  flower:
-    image: mher/flower
-    ports:
-      - 5555:5555
-    environment:
-      CELERY_BROKER_URL: ***REMOVED***
-      CELERY_RESULT_BACKEND: ***REMOVED***
+  # adminer:
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
+  # flower:
+  #   image: mher/flower
+  #   ports:
+  #     - 5555:5555
+  #   env_file: 
+  #     - app.env
+  #   #environment:
+  #     #CELERY_BROKER_URL: 
+  #     #CELERY_RESULT_BACKEND:

@@ -19,3 +19,7 @@ app/keys/*
 .pytest_cache
 app/.noseids
 app/nosetests.xml
+kubectl.*
+*.env
+app/tests/page_data.json
+app/tests/page_data_tst.json
