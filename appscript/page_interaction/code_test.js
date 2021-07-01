@@ -293,7 +293,3 @@ function time_functions() {
         console.log(`${testFunc.name}: ${t1 - t0}`);
     })
 }
-
-function test_saveFacebookPagesDetails(){
-    
-}
