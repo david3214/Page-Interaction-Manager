@@ -24,7 +24,7 @@ def privacy():
 
 @website.route("/support")
 def support():
-    return "Email me at ***REMOVED***"
+    return "Email me at graham.harrison@missionary.org"
 
 
 @website.route("/post-install-tip")
