@@ -19,3 +19,5 @@ app/keys/*
 .pytest_cache
 app/.noseids
 app/nosetests.xml
+kubectl.*
+*.env
