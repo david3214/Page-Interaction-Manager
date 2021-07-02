@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-
-=======
 # type: ignore
->>>>>>> c6aa773010b215b334354e5f741394f6048197a5
 # Install Chrome for Selenium
 ARG CHROME_VERSION="google-chrome-stable"
 RUN apt-get update && apt-get install unzip
