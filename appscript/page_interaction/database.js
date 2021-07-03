@@ -1,8 +1,5 @@
-var user = 'app_script';
-var userPwd = '***REMOVED***';
+const {DB_USER, DB_USERPWD, DB_ROOT, DB_ROOTPWD} = PropertiesService.getScriptProperties().getProperties()
 var db = 'page_interaction_manager';
-var root = 'root';
-var rootPwd = '***REMOVED***';
 var instanceUrl = "jdbc:mysql://34.68.83.123";
 var dbUrl = instanceUrl + '/' + db;
 
@@ -10,7 +7,7 @@ var dbUrl = instanceUrl + '/' + db;
  * Create a new database within a Cloud SQL instance.
  */
 function createDatabase() {
-    var conn = Jdbc.getConnection(instanceUrl, root, rootPwd);
+    var conn = Jdbc.getConnection(instanceUrl, DB_ROOT, DB_ROOTPWD);
     var stmt = conn.prepareStatement(`CREATE DATABASE ${db} DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci`);
     stmt.execute();
 }
@@ -19,19 +16,19 @@ function createDatabase() {
  * Create a new user for your database with full privileges.
  */
 function createUser() {
-  var conn = Jdbc.getConnection(dbUrl, root, rootPwd);
+  var conn = Jdbc.getConnection(dbUrl, DB_ROOT, DB_ROOTPWD);
   var stmt = conn.prepareStatement('CREATE USER ? IDENTIFIED BY ?');
-  stmt.setString(1, user);
-  stmt.setString(2, userPwd);
+  stmt.setString(1, DB_USER);
+  stmt.setString(2, DB_USERPWD);
   stmt.execute();
-  conn.createStatement().execute('GRANT ALL ON `%`.* TO ' + user);
+  conn.createStatement().execute('GRANT ALL ON `%`.* TO ' + DB_USER);
 }
 
 /**
  * Create a new table in the database.
  */
 function createTable() {
-  var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+  var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
   conn.createStatement().execute('CREATE TABLE preferences ('
   + 'sheet_id VARCHAR(100) NOT NULL, '
   + 'preference VARCHAR(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, '
@@ -46,7 +43,7 @@ function createTable() {
  * Write preferences for a sheet_id
  */
 function setPreference(sheet_id, preference) {
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
   
     var stmt = conn.prepareStatement('REPLACE INTO preferences '
         + '(sheet_id, preference) values (?, ?)');
@@ -62,7 +59,7 @@ function setPreference(sheet_id, preference) {
  * Get preferences for a sheet_id
  */
 function getPreference(sheet_id) {
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('SELECT preference '
         + 'FROM preferences WHERE sheet_id = ?');
     stmt.setString(1, sheet_id);
@@ -80,7 +77,7 @@ function getPreference(sheet_id) {
  * Get all page_details for a page_id
  */
 function getAllPreference() {
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('SELECT * '
         + 'FROM preferences');
     results = stmt.executeQuery();
@@ -98,7 +95,7 @@ function getAllPreference() {
  * Delete preferences for a sheet_id
  */
 function deletePreference(sheet_id) {
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('DELETE '
     + 'FROM preferences WHERE sheet_id = ?');
     stmt.setString(1, sheet_id);
@@ -112,7 +109,7 @@ function deletePreference(sheet_id) {
  * Write page_data for a page_id
  */
 function setPageDetails(page_id, page_details) {
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('REPLACE INTO page_data '
         + '(page_id, page_details) values (?, ?)');
     stmt.setString(1, page_id);
@@ -127,7 +124,7 @@ function setPageDetails(page_id, page_details) {
  * Get page_details for a page_id
  */
 function getPageDetails(page_id) {
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('SELECT page_details '
         + 'FROM page_data WHERE page_id = ?');
     stmt.setString(1, page_id);
@@ -146,7 +143,7 @@ function getPageDetails(page_id) {
  * Get all page_details for a page_id
  */
 function getAllPageDetails() {
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('SELECT * '
         + 'FROM page_data');
     results = stmt.executeQuery();
@@ -165,7 +162,7 @@ function getAllPageDetails() {
  * Delete page_details for a page_id
  */
 function deletePageDetails(page_id) {
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('DELETE '
         + 'FROM page_data WHERE page_id = (?)');
     stmt.setString(1, page_id);
@@ -183,7 +180,7 @@ function getRefreshToken(userId){
 }
 
 function getUser(userId){
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('SELECT id_token '
         + 'FROM users WHERE user_id = ?');
     stmt.setString(1, userId);
@@ -199,7 +196,7 @@ function getUser(userId){
 }
 
 function setUser(user_id, id_token){
-    var conn = Jdbc.getConnection(dbUrl, user, userPwd);
+    var conn = Jdbc.getConnection(dbUrl, DB_USER, DB_USERPWD);
     var stmt = conn.prepareStatement('REPLACE INTO users '
         + '(user_id, id_token) values (?, ?)');
     stmt.setString(1, user_id);
@@ -216,11 +213,11 @@ function setUser(user_id, id_token){
 function addUserToDB(){
     var userIdentityToken = getIdentityToken();
     var userId = getEffectiveUserId();
-    var user = getUser(userId);
-    user = user == undefined ? {} : user;
-    user['name'] = userIdentityToken['name'];
-    user['email'] = userIdentityToken['email'];
-    setUser(userId, user);
+    var user1 = getUser(userId);
+    user1 = user1 == undefined ? {} : user1;
+    user1['name'] = userIdentityToken['name'];
+    user1['email'] = userIdentityToken['email'];
+    setUser(userId, user1);
 }
 
 
