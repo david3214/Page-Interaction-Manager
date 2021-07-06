@@ -22,6 +22,7 @@ This includes
   - Includes program settings, formatting, sorting, etc
 - page_interaction/Facebook.js is where the facebook webhook is and code related to that data
 - page_interaction/database.js is where user preferences are stored, as well as the sheet_id etc used by the profile scraping bot
+- It also has a testing configuration using [QUnit](https://github.com/simula-innovation/qunit/tree/gas/gas).
 
 ## How to Update the add-on via Google Cloud
 
