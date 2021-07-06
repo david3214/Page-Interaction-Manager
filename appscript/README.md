@@ -1,4 +1,4 @@
-# Google Apps Script Add-ons
+# Google Apps Script Add-on
 
 This project is made using [Google Apps Script](https://developers.google.com/apps-script) (It is Javascript with some additional tools and restrictions)
 
