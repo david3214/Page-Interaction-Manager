@@ -6,7 +6,7 @@ If you are a missionary and you want to make a tool for everyone please make it 
 
 [**appscript**](appscript/) has all the code for the addon
 
-[**task-worker**](task_worker/) is the missionary bot module
+[**task-worker**](task-worker/) is the missionary bot module
 
 ## External Resources used in this project.
 
