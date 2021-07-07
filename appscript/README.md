@@ -1,5 +1,14 @@
 # Google Apps Script Add-on
 
+Parts of appscript:
+- [Project Tools](#user-content-project-tools) used to run the appscript project
+- [Connection Tracker](#user-content-connection-tracker) is not currently in use
+- [Member Profiles](#user-content-member-profiles) is possibly going to be removed as well
+- [Page Interaction Manager](#user-content-page-interaction-manager) is all the good stuff used for the page interaction manager
+- [How to Update the add-on via Google Cloud](#user-content-how-to-update-the-add-on-via-google-cloud) is a short description on updating the add-on for everyone using it.
+
+# Project Tools
+
 This project is made using [Google Apps Script](https://developers.google.com/apps-script) (It is Javascript with some additional tools and restrictions)
 
 We use [clasp](https://github.com/google/clasp) for editing it. Here is a short [guide](https://yagisanatode.com/2019/04/01/working-with-google-apps-script-in-visual-studio-code-using-clasp/) to getting clasp setup on your machine.
