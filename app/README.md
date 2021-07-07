@@ -2,12 +2,12 @@
 ### Project containing the front and backend for the Page Interaction Manager
 
 Prerequisites to running app:
-- [app.env](user-content-appenv) file with all your environment variables in the app directory
-- [Cloud SQL Proxy](user-content-cloud-sql-proxy) used for generating the page_data.json
-- [page_data.json](user-content-page_datajson) file with all the data from the cloud sql database/page_interaction_manager
-- [Docker](user-content-docker) installed on your local machine
+- [app.env](#user-content-appenv) file with all your environment variables in the app directory
+- [Cloud SQL Proxy](#user-content-cloud-sql-proxy) used for generating the page_data.json
+- [page_data.json](#user-content-page_datajson) file with all the data from the cloud sql database/page_interaction_manager
+- [Docker](#user-content-docker) installed on your local machine
 - [Python](https://www.python.org/downloads/) installed on your machine. (Currently Running fine on Python 3.9)
-- [VScode](user-content-remote-containers-extension) with Remote Containers extension
+- [VScode](#user-content-remote-containers-extension) with Remote Containers extension
   - After Issue #14 this won't be necessary
 
 ## App.env file
@@ -40,7 +40,7 @@ Once cloud_sql_proxy is running you can connect to your database via localhost:3
 
 ## page_data.json
 
-Once you have [Cloud SQL Proxy](user-content-cloud-sql-proxy) up and running use your favorite database tool to access the database.
+Once you have [Cloud SQL Proxy](#user-content-cloud-sql-proxy) up and running use your favorite database tool to access the database.
 
 I have used [DBeaver](https://dbeaver.io/) to view my database with a decent experience. 
 Once you have the database open you will want to export the page_data table as a json object. Then save it in app/tests/page_data.json
