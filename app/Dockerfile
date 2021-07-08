@@ -13,6 +13,7 @@ ENV PYTHONUNBUFFERED True
 
 ENV PORT=5000
 ENV APP_HOME /app
+ENV CLIENT_SECRETS_FILE=/keys/missionary_tools_client_secret.json
 
 WORKDIR $APP_HOME
 ADD ./requirements.txt requirements.txt
@@ -20,7 +21,7 @@ RUN pip install Flask gunicorn
 RUN pip install -r requirements.txt
 
 COPY ./app ./app
-COPY ./keys/missionary_tools_client_secret.json /keys/missionary_tools_client_secret.json
+COPY ./keys/missionary_tools_client_secret.json ${CLIENT_SECRETS_FILE}
 
 # RUN celery -A celery_worker worker --loglevel=INFO -Q results
 CMD exec gunicorn --bind :$PORT --workers 2 --threads 8 --timeout 0 "app:create_app()"
