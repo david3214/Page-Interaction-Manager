@@ -986,6 +986,11 @@ function toastSheetInfo(context=openContext()){
   
 }
 
+function include(filename){
+  return HtmlService.createHtmlOutputFromFile(filename)
+    .getContent()
+}
+
 // fix the every hour issue not being able to get settings or do any update
 // set highlighting to false in every ones settings?
 // add a forward and back button to the find member profiles
