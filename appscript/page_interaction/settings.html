@@ -2,279 +2,536 @@
 <html>
 
 <head>
-    <base target="_top">
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
-    <style>
-        .settingBlock span {
-            color: rgb(148, 146, 26)
-        } 
-    </style>
+  <base target="_top">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Source+Sans+Pro:wght@400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    #app {
+      margin: 24px;
+      padding: 4px;
+    }
+
+    .checkbox {
+      display: block;
+      padding: 0;
+      text-align: right;
+      user-select: none;
+    }
+
+    .checkbox input[type=checkbox] {
+      display: block;
+      height: 0;
+      opacity: 0 !important;
+      overflow: hidden;
+      position: relative;
+      width: 0;
+    }
+
+    li .checkbox span, .checkboxContainer .checkbox span {
+      background: #fff;
+      border: 2px solid grey;
+      border-radius: 4px;
+      display: inline-block;
+      float: right;
+      height: 14px;
+      margin: 0 8px;
+      position: relative;
+      top: 3px;
+      width: 14px;
+      cursor: pointer;
+    }
+
+    .checkboxContainer {
+      display: block;
+      margin: 0;
+      padding: 0;
+    }
+
+    .checkboxContainer > .checkbox {
+      display: inline-block;
+      height: 28px;
+      position: relative;
+      top: -5px;
+      width: auto;
+    }
+
+    .classify-grid-container {
+      display: grid;
+      grid-gap: 10px;
+      grid-template-columns: max-content max-content max-content;
+      padding: 10px;
+    }
+
+    .classify-grid-container > div {
+      height: 28px;
+    }
+
+    .classify-grid-container button {
+      height: 28px;
+      width: 76px;
+    }
+
+    .colorWrapper {
+      background-color: #f00;
+      border-radius: 8px;
+      border-width: 0;
+      display: block;
+      float: left;
+      height: 28px;
+      margin: 0;
+      width: 178px;
+    }
+
+    .dropdown {
+      background-color: #e0e0e0;
+      border-radius: 8px;
+      border-width: 0;
+      font-weight: 600;
+      height: 28px;
+      margin: 0;
+      padding: 4px;
+      text-overflow: ellipsis;
+      transition: background-color 250ms;
+      width: 170px;
+    }
+
+    .dropdown:hover {
+      background-color: #a3b5cf;
+    }
+
+    .saveButton {
+      font-size: 24px;
+      padding: 10px 24px;
+      margin: 12px;
+      /* border: 6px solid rgb(223, 30, 46); */
+    }
+
+    .sheet-grid-container {
+      display: grid;
+      grid-template-columns: max-content max-content;
+      padding: 4px;
+    }
+
+    .sheetSettings {
+      cursor: default;
+      padding: 4px;
+      width: max-content;
+    }
+
+    .sheetSettings li {
+      border-radius: 4px;
+      list-style-type: none;
+      padding: 0 8px 4px 8px;
+      transition: background-color 150ms;
+    }
+
+    .sheetSettings li:hover {
+      background-color: #e0e0e0;
+    }
+
+    .sheetSettings span {
+      float: left;
+      text-align: right;
+      width: 72px;
+    }
+
+    .sheetSettings ul {
+      margin: 0;
+      padding: 0;
+    }
+
+    [type=checkbox]:checked + span {
+      background: #04385a;
+    }
+
+    [type=checkbox]:checked + span:before {
+      color: #fff;
+      content: '\2713';
+      font-size: 22px;
+      left: 0;
+      position: relative;
+      top: -8px;
+    }
+
+    body {
+      background-color: rgb(255, 255, 255);
+      box-sizing: border-box;
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+
+    button {
+      background-color: #04385a;
+      border-radius: 8px;
+      border-width: 0;
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      padding: 4px;
+      transition: background-color 150ms;
+    }
+
+    button:hover {
+      background-color: #1b4e70;
+    }
+
+    h1, h3 {
+      font-family: 'Montserrat', sans-serif;
+      margin: 4px;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    h3 {
+      font-size: 22px;
+    }
+
+    input {
+      font-family: 'Source Sans Pro', sans-serif;
+      outline: none;
+    }
+
+    input[type=color] {
+      border: none;
+      display: block;
+      height: 20px;
+      opacity: 0;
+      width: 170px;
+    }
+
+    input[type=text] {
+      border: 2px solid #777;
+      border-radius: 8px;
+      display: block;
+      float: left;
+      height: 16px;
+      margin: 0;
+      padding: 4px;
+      width: 166px;
+    }
+  </style>
 </head>
+
 <body>
-    <div id="app">
-        <h1>Program Settings</h1>
-        <h7>Ad Likes</h7>
-        <div v-for="setting in adSettings" class="settingBlock" v-model="adSettings">
-            <span>{{setting.name}}: </span>
-            <input type="checkbox" v-model="setting.value">
+  <div id="app">
+    <h1>Program Settings</h1>
+    <h3>Ad Likes</h3>
+    <div class="sheet-grid-container">
+      <div class="sheetSettings">
+        
+        <ul>
+          <li v-for="setting in adSettings">
+            <label class="checkbox">
+              <input type="checkbox" v-model="setting.value">
+              <span></span>
+              {{setting.name}}:
+            </label>
+          </li>
+        </ul>
+      </div>
+      <!-- <div class="sheetSettings">
+        <h3>Page Messages</h3>
+        <ul>
+          <li v-for="setting in messageSettings">
+            <label class="checkbox">
+              <input type="checkbox" v-model="setting.value">
+              <span></span>
+              {{setting.name}}:
+            </label>
+          </li>
+        </ul>
+      </div> -->
+    </div>
+    <h3>Classifications</h3>
+    <div class="classify-grid-container">
+      <select class="dropdown" v-model="selectedUnit">
+        <option selected>Add a Unit</option>
+        <option v-for="unit in unitList">{{unit.name}}</option>
+      </select>
+      <div>
+        <input type='text' placeholder="Type Unit name here..." v-if="selectedUnit == 'Add a Unit'"
+          v-model='addUnitName' v-on:keyup.enter="changeUnit('add')">
+        <div class="colorWrapper" id="unitWrapper" v-if="selectedUnit != '' && selectedUnit != 'Add a Unit'">
+          <input type='color' id="unitColor" v-model='unitColor' @blur='changeColor'>
         </div>
-        <h7>Page Messages</h7>
-        <div v-for="setting in messageSettings" class="settingBlock" v-model="messageSettings">
-            <span>{{setting.name}}: </span>
-            <input type="checkbox" v-model="setting.value">
-        </div>
-        <select v-model="selectedUnit">
-            <option selected>Add a Unit</option>
-            <option v-for="unit in unitList">{{unit.name}}</option>
-        </select>
-        <input type='text' v-if="selectedUnit == 'Add a Unit'" v-model='addUnitName' v-on:keyup.enter="changeUnit('add')">
-        <input type='color' v-if="selectedUnit != ''" v-model='unitColor' @blur='changeColor'>
+      </div>
+      <div>
         <button v-if="selectedUnit == 'Add a Unit'" @click='changeUnit("add")'>Add</button>
         <button v-if="selectedUnit != 'Add a Unit' && selectedUnit != ''" @click='changeUnit("remove")'>Remove</button>
-        
-        <br>
-        <select v-model="selectedStatus" @change="statusChange">
-            <option selected>Add a Status</option>
-            <option v-for="status in statusList">{{status.name}}</option>
-        </select>
-        <input type='text' v-if="selectedStatus == 'Add a Status'" v-model='addStatus' v-on:keyup.enter="changeStatus('add')">
-        <input type="checkbox" v-model="statusMerge" @change="changeStatus('merge')">
-        <label>Merge</label>
-        <input type="checkbox" v-model="statusHide" @change="changeStatus('hide')">
-        <label>Hide</label>
+      </div>
+
+      <select class="dropdown" v-model="selectedStatus" @change="statusChange">
+        <option selected>Add a Status</option>
+        <option v-for="status in statusList">{{status.name}}</option>
+      </select>
+      <div>
+        <input type='text' placeholder="Type Status name here..." v-if="selectedStatus == 'Add a Status'" v-model='addStatus'
+          v-on:keyup.enter="changeStatus('add')">
+        <div class="checkboxContainer" v-if="selectedStatus != 'Add a Status'">
+          <label class="checkbox">
+            
+            <input type="checkbox" v-model="statusMerge" @change="changeStatus('merge')">
+            <span></span>
+            Merge: 
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" v-model="statusHide" @change="changeStatus('hide')">
+            <span></span>
+            Hide: 
+          </label>
+        </div>
+      </div>
+      <div>
         <button v-if="selectedStatus == 'Add a Status'" @click='changeStatus("add")'>Add</button>
-        <button v-if="selectedStatus != 'Add a Status' && selectedStatus != ''" @click='changeStatus("remove")'>Remove</button>
-        <!-- <textarea style="display: block; margin-bottom:10px;" cols="50" rows="25" v-model="programSettings" placeholder="Adjust program settings here"></textarea> -->
-        <br>
-        <button @click="formatData">Format</button>
-        <button @click="formatSettings">Format Back</button>
-        <p>{{debug}}</p>
-        <button class="btn btn-primary" @click="saveProgramSettings">Save Settings</button>
-        <br>
-        <h1>Facebook Settings</h1>
-        <label for="page-select">Select a page:</label>
-        <select v-model="selected" id="page-select">
-            <option v-if="!facebookPages.length" disabled selected="selected">Select a page</option>
-            <option v-for="page in selected" v-bind:value="[page]" disabled selected>Selected: {{ page.name }}</option>
-            <option v-for="page in facebookPages" v-bind:value="[page]">{{ page.name }}</option>
-        </select>
-        <button class="btn btn-primary" @click="submitFacebookPageSelection">Update</button>
-        <button class="btn btn-danger" @click="removeFacebookPageSelection">Delete</button>
-        <div v-if="facebookAuthLink">
-            <a target="_blank" id="facebook-auth-link" v-bind:href="facebookAuthLink">
-                <img id="facebook-sign-in-button" style="padding-top:10px; width: 200px; display:inline-block; margin:auto;" src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/continue-with-facebook.png"></img>
-            </a>
-        </div>
-        <div v-if="JSON.parse(programSettings).hasOwnProperty('experimental')">
-            <h1>Profile Link Tool</h1>
-            <p>Copy the program input to input file</p>
-            <textarea style="display: block; margin-bottom:10px;" v-model="scraperInput"></textarea>
-            <p>Copy the program output text file here</p>
-            <textarea style="display: block; margin-bottom:10px;" v-model="profileList"></textarea>            
-            <button class="btn btn-primary" @click="updateSheetProfileLinks">Submit</button>
-        </div>
-        <div>
-            <h1>Heal Button</h1>
-            <p>Use this to try and fix the sheet if it is not working right.</p>
-            <button class="btn btn-primary" @click="fireHealFunction">Heal</button>
-        </div>
-        <div v-if="JSON.parse(programSettings).hasOwnProperty('debug')">
-            <p v-for="(val, key) in debug_functions">
-                <button v-on:click="callFunc(val)">
-                    {{ val }}
-                </button>
-            </p> 
-        </div>
+        <button v-if="selectedStatus != 'Add a Status' && selectedStatus != ''"
+          @click='changeStatus("remove")'>Remove</button>
+      </div>
     </div>
 
-      <script>
-        new Vue({
-            el: '#app',
-            data: {
-                programSettings: '{}',
-                facebookPages:[],
-                selected:[],
-                selectedUnit: 'Add a Unit',
-                unitList: [],
-                addUnitName: '',
-                unitColor: '#ffffff',
-                debug: [],
-                selectedStatus: 'Add a Status',
-                statusList: [],
-                addStatus: '',
-                statusMerge: true,
-                statusHide: false,
-                adSettings: [{"name": "Highlight", "value": false}, {"name": "Sorting", "value": true}, {"name": "Merging", "value": true }],
-                messageSettings: [{"name": "Highlight", "value": false}, {"name": "Sorting", "value": true}, {"name": "Merging", "value": true }],
-                formatList: {"Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging":"mergingEnabled"},
-                scraperInput: '',
-                profileList: '',
-                facebookAuthLink: undefined,
-                debug_functions: ["showDebugSidebar", "tearDownSheet", "deactivateTriggers", "toastSheetInfo", "trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet", 
-                                  "sortData", "test_doLogicPageMessages", "formatSheet",
-                                  "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
-                                  "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
-                                  "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
-            },
-            methods: {
-                saveProgramSettings: function(){
-                    google.script.run.withSuccessHandler().saveProgramSettings(formatData());
-                    google.script.run.withSuccessHandler().updateSheet();
-                },
-                updateProgramSettings: function(settings){
-                    // Request settings from google
-                    let programSettings = JSON.stringify(settings, null, 2)
-                    formatSettings(programSettings)
-                },
-                submitFacebookPageSelection: function(){
-                    var pageResults = {'data':this.selected};
-                    google.script.run.withSuccessHandler().saveFacebookPagesDetails(pageResults);
-                },
-                removeFacebookPageSelection: function(){
-                    var pageResults = {'data':this.selected};
-                    google.script.run.withSuccessHandler().deleteFacebookPagesDetails(pageResults);
-                    this.selected = [];
-                },
-                updateAvailibleFacebookPages: function(pageResults){
-                    this.facebookPages = pageResults.data;
-                },
-                updateSelectedPage: function(selectedPages){
-                    this.selected = selectedPages.data;
-                },
-                updateSheetProfileLinks: function(){
-                    var profileList = JSON.parse(this.profileList);
-                    google.script.run.withSuccessHandler().updateProfiles(profileList);
-                    this.profileList = '';
-                },
-                updateScraperInput: function(scraperInput){
-                    this.scraperInput = JSON.stringify(scraperInput);
-                },
-                fireHealFunction: function(){
-                    google.script.run.withSuccessHandler().healSheet();
-                    google.script.run.withSuccessHandler().updateSheet();
-                },
-                updateFacebookAuthLink: function(facebookAuthLink){
-                    this.facebookAuthLink = facebookAuthLink;
-                },
-                formatSettings: function (settings){
-                    this.statusList = settings.statusList.map(status=>{
-                        return {
-                            name: status,
-                            hide: settings.hiddenStatuses.includes(status), 
-                            merge: settings.statusToMerge.includes(status.name)
-                        }
-                    })
-                    this.unitList = settings.assignmentMap.map(unit=>{return {name: unit[0], color: unit[1]}})
-                    let formatReverse = this.swap(this.formatList)
-                    this.adSettings = Object.keys(settings.sheetSettings["Ad Likes"]).map(s=>{
-                        return {name: formatReverse[s], value: settings.sheetSettings["Ad Likes"][s]}
-                    })
-                    this.messageSettings = Object.keys(settings.sheetSettings["Page Messages"]).map(s=>{
-                        return {name: formatReverse[s], value: settings.sheetSettings["Page Messages"][s]}
-                    })
-                    this.selectedUnit = 'Add a Unit'
-                    this.selectedStatus = 'Add a Status'
-                },
-                formatData: function (){
-                    let finalObject = {statusList: [], hiddenStatuses:[], statusToMerge:[],assignmentMap:[],sheetSettings:{"Ad Likes": {}, "Page Messages": {}}}
-                    finalObject.statusList.push(...this.statusList.map(status=>status.name))
-                    let [toHide, toMerge] = this.statusList.reduce((total, status)=>{
-                        if (status.hide) total[0].push(status.name)
-                        if (status.merge) total[1].push(status.name)
-                        return total
-                    }, [[], []])
-                    finalObject.hiddenStatuses.push(...toHide)
-                    finalObject.statusToMerge.push(...toMerge)
-                    finalObject.assignmentMap = this.unitList.map(unit=>[unit.name, unit.color])
-                    finalObject.sheetSettings["Ad Likes"] = this.adSettings.reduce((final,setting)=>{
-                        final[this.formatList[setting.name]] = setting.value
-                        return final
-                    }, {})
-                    finalObject.sheetSettings["Page Messages"] = this.messageSettings.reduce((final,setting)=>{
-                        final[this.formatList[setting.name]] = setting.value
-                        return final
-                    }, {})
-                    this.debug = finalObject
-                    return finalObject
-                },
-                callFunc: function(funcName){
-                    google.script.run.withSuccessHandler().executeFunctionByName(funcName);
-                },
-                changeUnit: function(type){
-                    if (type == 'add'){
-                        if (this.addUnitName && !this.unitList.find(unit=>unit.name == this.selectedUnit)){
-                            this.unitList.push({name: this.addUnitName, color: this.unitColor})
-                            this.selectedUnit = this.addUnitName
-                            this.addUnitName = ''
-                        }
-                    } else if (type == 'remove'){
-                        let index = this.unitList.findIndex(unit=>unit.name == this.selectedUnit);
-                        if (index !== -1) {
-                            this.unitList.splice(index, 1);
-                            this.selectedUnit = 'Add a Unit'
-                        }
-                        else
-                            console.log('Tried to remove ' + this.selectedUnit + ' but couldn\'t find it')
-                    }
-                },
-                statusChange: function (){
-                    let currentStatus = this.statusList.find(status=>status.name == this.selectedStatus);
-                    this.statusMerge = currentStatus.merge
-                    this.statusHide = currentStatus.hide
-                },
-                changeColor: function(){
-                    let index = this.unitList.findIndex(unit=>unit.name == this.selectedUnit)
-                    if (index != -1)
-                        this.unitList[index].color = this.unitColor
-                },
-                changeStatus: function(type){
-                    if (type == 'add'){
-                        if (this.addStatus && !this.statusList.find(status=>status.name == this.addStatus)){
-                            this.statusList.push({name: this.addStatus, merge: this.statusMerge, hide: this.statusHide})
-                            this.selectedStatus = this.addStatus
-                            this.addStatus = ''
-                        }
-                    } else if (type == 'remove'){
-                        let index = this.statusList.findIndex(status=>status.name == this.selectedStatus);
-                        if (index !== -1) {
-                            this.statusList.splice(index, 1);
-                            this.selectedStatus = 'Add a Status'
-                        }
-                        else
-                            console.log('Tried to remove ' + this.selectedStatus + ' but couldn\'t find it')
-                    } else if (type == 'merge' && this.selectedStatus != 'Add a Status'){
-                        let index = this.statusList.findIndex(status=>status.name == this.selectedStatus);
-                        if (index !== -1) this.statusList[index].merge = this.statusMerge;
-                        else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
-                    } else if (type == 'hide' && this.selectedStatus != 'Add a Status'){
-                        let index = this.statusList.findIndex(status=>status.name == this.selectedStatus);
-                        if (index !== -1) this.statusList[index].hide = this.statusHide;
-                        else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')
-                    }
-                },
-                swap: function (obj){
-                    var ret = {};
-                    for(var key in obj){
-                        ret[obj[key]] = key;
-                    }
-                    return ret;
-                }
-            },
-            created: function(){
-                google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();
-                google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).getFacebookPages();
-                google.script.run.withSuccessHandler(this.updateSelectedPage).getSelectedPages();
-                google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
-                google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
-            },
-            watch: {
-                selectedUnit: function(){
-                    let color = this.unitList.find(s => s.name == this.selectedUnit).color
-                    this.unitColor = color ? color : '#ffffff'
-                }
+    <!-- <textarea style="display: block; margin-bottom:10px;" cols="50" rows="25" v-model="programSettings" placeholder="Adjust program settings here"></textarea> -->
+
+    <button class="saveButton" @click="saveProgramSettings">Save Settings</button>
+    <br>
+    <br>
+    <h1>Facebook Settings</h1>
+    <div class="classify-grid-container">
+      <div>
+        <!-- <label for="page-select">Select a page:  </label> -->
+        <select class="dropdown" v-model="selected" id="page-select">
+          <option v-if="!facebookPages.length" disabled selected="selected">Select a page</option>
+          <option v-for="page in selected" v-bind:value="[page]" disabled selected>Selected: {{ page.name }}</option>
+          <option v-for="page in facebookPages" v-bind:value="[page]">{{ page.name }}</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" @click="submitFacebookPageSelection">Update</button>
+      <button class="btn btn-danger" @click="removeFacebookPageSelection">Delete</button>
+    </div>
+    
+    
+    <div v-if="facebookAuthLink">
+      <a target="_blank" id="facebook-auth-link" v-bind:href="facebookAuthLink">
+        <img id="facebook-sign-in-button" style="padding-top:10px; width: 200px; display:inline-block; margin:auto;"
+          src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/continue-with-facebook.png"></img>
+      </a>
+    </div>
+    <div v-if="JSON.parse(programSettings).hasOwnProperty('experimental')">
+      <h1>Profile Link Tool</h1>
+      <p>Copy the program input to input file</p>
+      <textarea style="display: block; margin-bottom:10px;" v-model="scraperInput"></textarea>
+      <p>Copy the program output text file here</p>
+      <textarea style="display: block; margin-bottom:10px;" v-model="profileList"></textarea>
+      <button class="btn btn-primary" @click="updateSheetProfileLinks">Submit</button>
+    </div>
+    <!-- <div>
+        <h1>Heal Button</h1>
+        <p>Use this to try and fix the sheet if it is not working right.</p>
+        <button class="btn btn-primary" @click="fireHealFunction">Heal</button>
+    </div> -->
+    <br>
+    <button @click="formatData">Format</button>
+    <button @click="formatSettings">Format Back</button>
+    <p>{{debug}}</p>
+    <div v-if="JSON.parse(programSettings).hasOwnProperty('debug')">
+      <p v-for="(val, key) in debug_functions">
+        <button v-on:click="callFunc(val)">
+          {{ val }}
+        </button>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        programSettings: '{}',
+        facebookPages: [],
+        selected: [],
+        selectedUnit: 'Add a Unit',
+        unitList: [],
+        addUnitName: '',
+        unitColor: '#ffffff',
+        debug: [],
+        selectedStatus: 'Add a Status',
+        statusList: [],
+        addStatus: '',
+        statusMerge: true,
+        statusHide: false,
+        adSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
+        messageSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
+        formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
+        scraperInput: '',
+        profileList: '',
+        facebookAuthLink: undefined,
+        debug_functions: ["showDebugSidebar", "tearDownSheet", "deactivateTriggers", "toastSheetInfo", "trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet",
+          "sortData", "test_doLogicPageMessages", "formatSheet",
+          "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
+          "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
+          "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
+      },
+      methods: {
+        saveProgramSettings: function () {
+          google.script.run.withSuccessHandler().saveProgramSettings(formatData());
+          google.script.run.withSuccessHandler().updateSheet();
+        },
+        updateProgramSettings: function (settings) {
+          // Request settings from google
+          let programSettings = JSON.stringify(settings, null, 2)
+          formatSettings(programSettings)
+        },
+        submitFacebookPageSelection: function () {
+          var pageResults = { 'data': this.selected };
+          google.script.run.withSuccessHandler().saveFacebookPagesDetails(pageResults);
+        },
+        removeFacebookPageSelection: function () {
+          var pageResults = { 'data': this.selected };
+          google.script.run.withSuccessHandler().deleteFacebookPagesDetails(pageResults);
+          this.selected = [];
+        },
+        updateAvailibleFacebookPages: function (pageResults) {
+          this.facebookPages = pageResults.data;
+        },
+        updateSelectedPage: function (selectedPages) {
+          this.selected = selectedPages.data;
+        },
+        updateSheetProfileLinks: function () {
+          var profileList = JSON.parse(this.profileList);
+          google.script.run.withSuccessHandler().updateProfiles(profileList);
+          this.profileList = '';
+        },
+        updateScraperInput: function (scraperInput) {
+          this.scraperInput = JSON.stringify(scraperInput);
+        },
+        // fireHealFunction: function(){
+        //     google.script.run.withSuccessHandler().healSheet();
+        //     google.script.run.withSuccessHandler().updateSheet();
+        // },
+        updateFacebookAuthLink: function (facebookAuthLink) {
+          this.facebookAuthLink = facebookAuthLink;
+        },
+        formatSettings: function (settings) {
+          this.statusList = settings.statusList.map(status => {
+            return {
+              name: status,
+              hide: settings.hiddenStatuses.includes(status),
+              merge: settings.statusToMerge.includes(status.name)
             }
-        })
-        </script>
+          })
+          this.unitList = settings.assignmentMap.map(unit => { return { name: unit[0], color: unit[1] } })
+          let formatReverse = this.swap(this.formatList)
+          this.adSettings = Object.keys(settings.sheetSettings["Ad Likes"]).map(s => {
+            return { name: formatReverse[s], value: settings.sheetSettings["Ad Likes"][s] }
+          })
+          this.messageSettings = Object.keys(settings.sheetSettings["Page Messages"]).map(s => {
+            return { name: formatReverse[s], value: settings.sheetSettings["Page Messages"][s] }
+          })
+          this.selectedUnit = 'Add a Unit'
+          this.selectedStatus = 'Add a Status'
+        },
+        formatData: function () {
+          let finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }
+          finalObject.statusList.push(...this.statusList.map(status => status.name))
+          let [toHide, toMerge] = this.statusList.reduce((total, status) => {
+            if (status.hide) total[0].push(status.name)
+            if (status.merge) total[1].push(status.name)
+            return total
+          }, [[], []])
+          finalObject.hiddenStatuses.push(...toHide)
+          finalObject.statusToMerge.push(...toMerge)
+          finalObject.assignmentMap = this.unitList.map(unit => [unit.name, unit.color])
+          finalObject.sheetSettings["Ad Likes"] = this.adSettings.reduce((final, setting) => {
+            final[this.formatList[setting.name]] = setting.value
+            return final
+          }, {})
+          finalObject.sheetSettings["Page Messages"] = this.messageSettings.reduce((final, setting) => {
+            final[this.formatList[setting.name]] = setting.value
+            return final
+          }, {})
+          this.debug = finalObject
+          return finalObject
+        },
+        callFunc: function (funcName) {
+          google.script.run.withSuccessHandler().executeFunctionByName(funcName);
+        },
+        changeUnit: function (type) {
+          if (type == 'add') {
+            if (this.addUnitName && !this.unitList.find(unit => unit.name == this.selectedUnit)) {
+              this.unitList.push({ name: this.addUnitName, color: "#f00" })
+              this.selectedUnit = this.addUnitName
+              this.addUnitName = ''
+            }
+          } else if (type == 'remove') {
+            let index = this.unitList.findIndex(unit => unit.name == this.selectedUnit);
+            if (index !== -1) {
+              this.unitList.splice(index, 1);
+              this.selectedUnit = 'Add a Unit'
+            }
+            else
+              console.log('Tried to remove ' + this.selectedUnit + ' but couldn\'t find it')
+          }
+        },
+        statusChange: function () {
+          let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
+          this.statusMerge = currentStatus.merge
+          this.statusHide = currentStatus.hide
+        },
+        changeColor: function () {
+          let index = this.unitList.findIndex(unit => unit.name == this.selectedUnit)
+          if (index != -1)
+            this.unitList[index].color = this.unitColor
+          document.getElementById("unitWrapper").style["background-color"] = this.unitColor
+        },
+        changeStatus: function (type) {
+          if (type == 'add') {
+            if (this.addStatus && !this.statusList.find(status => status.name == this.addStatus)) {
+              this.statusList.push({ name: this.addStatus, merge: this.statusMerge, hide: this.statusHide })
+              this.selectedStatus = this.addStatus
+              this.addStatus = ''
+            }
+          } else if (type == 'remove') {
+            let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+            if (index !== -1) {
+              this.statusList.splice(index, 1);
+              this.selectedStatus = 'Add a Status'
+            }
+            else
+              console.log('Tried to remove ' + this.selectedStatus + ' but couldn\'t find it')
+          } else if (type == 'merge' && this.selectedStatus != 'Add a Status') {
+            let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+            if (index !== -1) this.statusList[index].merge = this.statusMerge;
+            else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
+          } else if (type == 'hide' && this.selectedStatus != 'Add a Status') {
+            let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+            if (index !== -1) this.statusList[index].hide = this.statusHide;
+            else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')
+          }
+        },
+        swap: function (obj) {
+          var ret = {};
+          for (var key in obj) {
+            ret[obj[key]] = key;
+          }
+          return ret;
+        }
+      },
+      created: function () {
+        google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();
+        google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).getFacebookPages();
+        google.script.run.withSuccessHandler(this.updateSelectedPage).getSelectedPages();
+        google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
+        google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
+      },
+      watch: {
+        selectedUnit: function () {
+          let color = this.unitList.find(s => s.name == this.selectedUnit).color
+          this.unitColor = color ? color : '#f00'
+          document.getElementById("unitWrapper").style["background-color"] = this.unitColor
+        }
+      }
+    })
+  </script>
 </body>
 
 </html>
