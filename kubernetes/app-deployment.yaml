@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\Program Files\kompose\kompose.exe convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: app
+  name: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: app
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\Program Files\kompose\kompose.exe convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: app
+    spec:
+      containers:
+      - env:
+        - name: BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: BUCKET_NAME
+              name: env
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: CELERY_BROKER_URL
+              name: env
+        - name: CELERY_RESULT_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: CELERY_RESULT_BACKEND
+              name: env
+        - name: CHURCH_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: CHURCH_PASSWORD
+              name: env
+        - name: CHURCH_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: CHURCH_USERNAME
+              name: env
+        - name: CLIENT_SECRETS_FILE
+          valueFrom:
+            configMapKeyRef:
+              key: CLIENT_SECRETS_FILE
+              name: env
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: DATABASE_URL
+              name: env
+        - name: FACEBOOK_LANGUAGE
+          valueFrom:
+            configMapKeyRef:
+              key: FACEBOOK_LANGUAGE
+              name: env
+        - name: FACEBOOK_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: FACEBOOK_PASSWORD
+              name: env
+        - name: FACEBOOK_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: FACEBOOK_USERNAME
+              name: env
+        - name: FLASK_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              key: FLASK_CONFIG
+              name: env
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: PORT
+              name: env
+        - name: RABBITMQ_URL
+          valueFrom:
+            configMapKeyRef:
+              key: RABBITMQ_URL
+              name: env
+        - name: REDISCLOUD_URL
+          valueFrom:
+            configMapKeyRef:
+              key: REDISCLOUD_URL
+              name: env
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              key: REDIS_URL
+              name: env
+        image: app
+        imagePullPolicy: ""
+        name: app
+        ports:
+        - containerPort: 5000
+        - containerPort: 8080
+        resources: {}
+      hostname: app
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

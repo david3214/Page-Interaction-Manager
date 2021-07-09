@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\Program Files\kompose\kompose.exe convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: standalone-chrome
+  name: standalone-chrome
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: standalone-chrome
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\Program Files\kompose\kompose.exe convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: standalone-chrome
+    spec:
+      containers:
+      - image: selenium/standalone-chrome-debug:latest
+        imagePullPolicy: ""
+        name: standalone-chrome
+        ports:
+        - containerPort: 4444
+        - containerPort: 5900
+        resources: {}
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: standalone-chrome-claim0
+      hostname: selenium
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: standalone-chrome-claim0
+        persistentVolumeClaim:
+          claimName: standalone-chrome-claim0
+status: {}

@@ -21,6 +21,7 @@ RUN pip install -r requirements.txt
 
 COPY ./app ./app
 COPY ./keys/missionary_tools_client_secret.json /keys/missionary_tools_client_secret.json
+EXPOSE ${PORT}
 
 # RUN celery -A celery_worker worker --loglevel=INFO -Q results
 CMD exec gunicorn --bind :$PORT --workers 2 --threads 8 --timeout 0 "app:create_app()"

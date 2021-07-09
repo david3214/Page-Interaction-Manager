@@ -14,12 +14,6 @@ services:
   redis:
     image: redis:latest
     hostname: redis
-  # rabbit:
-  #   hostname: rabbit
-  #   image: rabbitmq:latest
-  #   environment:
-  #     - RABBITMQ_DEFAULT_USER=admin
-  #     - RABBITMQ_DEFAULT_PASS=mypass
   db:
     image: mysql:5.7
     hostname: mysql
@@ -28,6 +22,13 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: example
       MYSQL_DATABASE: testing
+  
+  # rabbit:
+  #   hostname: rabbit
+  #   image: rabbitmq:latest
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=admin
+  #     - RABBITMQ_DEFAULT_PASS=mypass
   # adminer:
   #   image: adminer
   #   restart: always

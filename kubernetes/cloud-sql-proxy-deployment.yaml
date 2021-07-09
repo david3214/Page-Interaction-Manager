@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\Program Files\kompose\kompose.exe convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: cloud-sql-proxy
+  name: cloud-sql-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: cloud-sql-proxy
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\Program Files\kompose\kompose.exe convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: cloud-sql-proxy
+    spec:
+      containers:
+      - args:
+        - /cloud_sql_proxy
+        - -instances=eighth-vehicle-287322:us-central1:datab=tcp:0.0.0.0:3306
+        - -credential_file=/config
+        image: gcr.io/cloudsql-docker/gce-proxy:latest
+        imagePullPolicy: ""
+        name: cloud-sql-proxy
+        ports:
+        - containerPort: 3306
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}
