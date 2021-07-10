@@ -1,0 +1,252 @@
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+#app {
+  margin: 24px;
+  padding: 4px;
+}
+
+.checkbox {
+  display: block;
+  padding: 0;
+  text-align: right;
+  user-select: none;
+}
+
+.checkbox input[type=checkbox] {
+  display: block;
+  height: 0;
+  opacity: 0 !important;
+  overflow: hidden;
+  position: relative;
+  width: 0;
+}
+
+li .checkbox span, .checkboxContainer .checkbox span {
+  background: #fff;
+  border: 2px solid grey;
+  border-radius: 4px;
+  cursor: pointer;
+  float: right;
+  height: 14px;
+  margin: 0 8px;
+  position: relative;
+  top: 3px;
+  width: 14px;
+}
+
+.checkboxContainer {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.checkboxContainer > .checkbox {
+  display: inline-block;
+  height: 28px;
+  position: relative;
+  top: -5px;
+  width: auto;
+}
+
+.classify-grid-container {
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: max-content max-content max-content;
+  padding: 10px;
+}
+
+.classify-grid-container > div {
+  height: 28px;
+}
+
+.classify-grid-container button {
+  height: 28px;
+  width: 76px;
+}
+
+.colorWrapper {
+  background-color: #000;
+  border-radius: 8px;
+  border: 2px solid grey;
+  display: block;
+  float: left;
+  height: 24px;
+  margin: 0;
+  width: 174px;
+}
+
+.colorWrapper:focus-within {
+  border-color: #0d99f7;
+  box-shadow: 0 0 0 1px #0d99f7;
+  outline: none;
+}
+
+.colorWrapper span {
+  background: inherit;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  font-size: 13px;
+  left: 5px;
+  pointer-events: none;
+  position: relative;
+  top: -22px;
+  user-select: none;
+  filter: invert(1) grayscale(1) contrast(1000);
+}
+
+.dropdown {
+  background-color: #e0e0e0;
+  border-radius: 8px;
+  border: 2px solid grey;
+  cursor: pointer;
+  font-weight: 600;
+  height: 28px;
+  margin: 0;
+  padding: 4px;
+  text-overflow: ellipsis;
+  transition: background-color 250ms;
+  width: 170px;
+}
+
+.dropdown:focus {
+  border-color: #0d99f7;
+  box-shadow: 0 0 0 1px #0d99f7;
+  outline: none;
+}
+
+.dropdown:hover {
+  background-color: #e0e4eb;
+}
+
+.saveButton {
+  /* border: 2px solid rgb(223, 30, 46); */
+  font-size: 24px;
+  margin: 12px;
+  padding: 10px 24px;
+}
+
+.sheet-grid-container {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  padding: 4px;
+}
+
+.sheetSettings {
+  cursor: default;
+  padding: 4px;
+  width: max-content;
+}
+
+.sheetSettings li {
+  border-radius: 4px;
+  list-style-type: none;
+  padding: 0 8px 4px 8px;
+  transition: background-color 150ms;
+}
+
+.sheetSettings span {
+  float: left;
+  text-align: right;
+  width: 72px;
+}
+
+.sheetSettings ul {
+  margin: 0;
+  padding: 0;
+}
+
+[type=checkbox]:checked + span {
+  background: #04385a;
+}
+
+[type=checkbox]:checked + span:before {
+  color: #fff;
+  content: '\2713';
+  font-size: 22px;
+  left: 0;
+  position: relative;
+  top: -8px;
+}
+
+[type=checkbox]:checked:hover + span {
+  background: #364957;
+}
+
+[type=checkbox]:focus + span {
+  border-color: #0d99f7;
+  box-shadow: 0 0 0 1px #0d99f7;
+  outline: none;
+}
+
+body {
+  background-color: rgb(255, 255, 255);
+  box-sizing: border-box;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+button {
+  background-color: #04385a;
+  border: 2px solid gray;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  margin: 0;
+  padding: 4px;
+  transition: background-color 150ms;
+}
+
+button:focus {
+  border-color: #0d99f7;
+  box-shadow: 0 0 0 1px #0d99f7;
+  outline: none;
+}
+
+button:hover {
+  background-color: #364957;
+}
+
+h1, h3 {
+  font-family: 'Montserrat', sans-serif;
+  margin: 4px;
+}
+h1 {
+  font-size: 24px;
+}
+h3 {
+  font-size: 22px;
+}
+
+input {
+  font-family: 'Source Sans Pro', sans-serif;
+  outline: none;
+}
+
+input[type=color] {
+  border: none;
+  cursor: pointer;
+  display: block;
+  height: 20px;
+  opacity: 0;
+  width: 170px;
+}
+
+input[type=text] {
+  border: 2px solid #777;
+  border-radius: 8px;
+  display: block;
+  float: left;
+  height: 16px;
+  margin: 0;
+  padding: 4px;
+  width: 166px;
+}
+
+input[type=text]:focus {
+  border-color: #0d99f7;
+  box-shadow: 0 0 0 1px #0d99f7;
+  outline: none;
+}
+</style>
