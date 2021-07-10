@@ -29,13 +29,14 @@ new Vue({
   },
   methods: {
     saveProgramSettings: function () {
-      google.script.run.withSuccessHandler().saveProgramSettings(formatData());
+      google.script.run.withSuccessHandler().saveProgramSettings(this.formatData());
       google.script.run.withSuccessHandler().updateSheet();
     },
     updateProgramSettings: function (settings) {
       // Request settings from google
-      let programSettings = JSON.stringify(settings, null, 2)
-      formatSettings(programSettings)
+      // let programSettings = JSON.stringify(settings, null, 2)
+      // formatSettings(programSettings)
+      this.formatSettings(settings)
     },
     submitFacebookPageSelection: function () {
       var pageResults = { 'data': this.selected };
