@@ -4,7 +4,7 @@ metadata:
   annotations:
     kompose.cmd: C:\Program Files\kompose\kompose.exe convert
     kompose.version: 1.21.0 (992df58d8)
-  creationTimestamp: null
+  # creationTimestamp: null
   labels:
     io.kompose.service: cloud-sql-proxy
   name: cloud-sql-proxy

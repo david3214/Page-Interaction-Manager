@@ -4,7 +4,7 @@ metadata:
   annotations:
     kompose.cmd: C:\Program Files\kompose\kompose.exe convert
     kompose.version: 1.21.0 (992df58d8)
-  creationTimestamp: null
+  # creationTimestamp: null
   labels:
     io.kompose.service: standalone-chrome
   name: standalone-chrome
@@ -20,13 +20,13 @@ spec:
       annotations:
         kompose.cmd: C:\Program Files\kompose\kompose.exe convert
         kompose.version: 1.21.0 (992df58d8)
-      creationTimestamp: null
+      # creationTimestamp: null
       labels:
         io.kompose.service: standalone-chrome
     spec:
       containers:
       - image: selenium/standalone-chrome-debug:latest
-        imagePullPolicy: ""
+        # imagePullPolicy: ""
         name: standalone-chrome
         ports:
         - containerPort: 4444

@@ -6,19 +6,15 @@ metadata:
     kompose.version: 1.21.0 (992df58d8)
   # creationTimestamp: null
   labels:
-    app: app
-  name: app
+    app: csp
+  name: csp
 spec:
-  type: LoadBalancer
+  type: NodePort
   ports:
-  - protocol: TCP
-    name: http
-    port: 5000
-    targetPort: web
-  # - name: "8080"
-  #   port: 8080
-  #   targetPort: 8080
+  - name: "3306"
+    port: 3306
+    targetPort: 3306
   selector:
-    app: app
+    app: csp
 status:
   loadBalancer: {}
