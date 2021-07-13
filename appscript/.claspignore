@@ -2,3 +2,4 @@ mileage_tracker/*
 connection_tracker/*
 .mileage_tracker
 .connection_tracker
+page_interaction/settings-debug.html
