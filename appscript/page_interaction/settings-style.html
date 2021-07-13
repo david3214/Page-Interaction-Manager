@@ -1,52 +1,29 @@
 <link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Source+Sans+Pro:wght@400&display=swap" rel="stylesheet">
 <style>
 #app {
   margin: 24px;
   padding: 4px;
 }
 
-.checkbox {
+.checkbox {  /* Wrapper class on label around checkbox inputs */
   display: block;
   padding: 0;
-  text-align: right;
+  text-align: right;  /* Label displays to the right of the checkbox */
   user-select: none;
 }
 
-.checkbox input[type=checkbox] {
-  display: block;
-  height: 0;
-  opacity: 0 !important;
-  overflow: hidden;
-  position: relative;
-  width: 0;
-}
-
-li .checkbox span, .checkboxContainer .checkbox span {
-  background: #fff;
-  border: 2px solid grey;
-  border-radius: 4px;
-  cursor: pointer;
-  float: right;
-  height: 14px;
-  margin: 0 8px;
-  position: relative;
-  top: 3px;
-  width: 14px;
-}
-
-.checkboxContainer {
+.mergeHideContainer {  /* Wrapper class for the Merge and Hide checkboxes */
   display: block;
   margin: 0;
   padding: 0;
 }
 
-.checkboxContainer > .checkbox {
+.mergeHideContainer > .checkbox {  /* Position checkboxes in .mergeHideContainer wrapper */
   display: inline-block;
   height: 28px;
   position: relative;
   top: -5px;
-  width: auto;
 }
 
 .classify-grid-container {
@@ -65,7 +42,7 @@ li .checkbox span, .checkboxContainer .checkbox span {
   width: 76px;
 }
 
-.colorWrapper {
+.colorWrapper {  /* Style div like color picker */
   background-color: #000;
   border-radius: 8px;
   border: 2px solid grey;
@@ -76,13 +53,7 @@ li .checkbox span, .checkboxContainer .checkbox span {
   width: 174px;
 }
 
-.colorWrapper:focus-within {
-  border-color: #0d99f7;
-  box-shadow: 0 0 0 1px #0d99f7;
-  outline: none;
-}
-
-.colorWrapper span {
+.colorWrapper span {  /* Style color picker label; automatically switch between black and white */
   background: inherit;
   -webkit-background-clip: text;
           background-clip: text;
@@ -108,12 +79,6 @@ li .checkbox span, .checkboxContainer .checkbox span {
   text-overflow: ellipsis;
   transition: background-color 250ms;
   width: 170px;
-}
-
-.dropdown:focus {
-  border-color: #0d99f7;
-  box-shadow: 0 0 0 1px #0d99f7;
-  outline: none;
 }
 
 .dropdown:hover {
@@ -146,38 +111,9 @@ li .checkbox span, .checkboxContainer .checkbox span {
   transition: background-color 150ms;
 }
 
-.sheetSettings span {
-  float: left;
-  text-align: right;
-  width: 72px;
-}
-
 .sheetSettings ul {
   margin: 0;
   padding: 0;
-}
-
-[type=checkbox]:checked + span {
-  background: #04385a;
-}
-
-[type=checkbox]:checked + span:before {
-  color: #fff;
-  content: '\2713';
-  font-size: 22px;
-  left: 0;
-  position: relative;
-  top: -8px;
-}
-
-[type=checkbox]:checked:hover + span {
-  background: #364957;
-}
-
-[type=checkbox]:focus + span {
-  border-color: #0d99f7;
-  box-shadow: 0 0 0 1px #0d99f7;
-  outline: none;
 }
 
 body {
@@ -196,12 +132,6 @@ button {
   margin: 0;
   padding: 4px;
   transition: background-color 150ms;
-}
-
-button:focus {
-  border-color: #0d99f7;
-  box-shadow: 0 0 0 1px #0d99f7;
-  outline: none;
 }
 
 button:hover {
@@ -224,6 +154,45 @@ input {
   outline: none;
 }
 
+input[type=checkbox] {  /* Hide the actual checkbox element */
+  display: block;
+  height: 0;
+  opacity: 0 !important;
+  overflow: hidden;
+  position: relative;
+  width: 0;
+}
+
+input[type=checkbox] + span { /* Style span as checkbox */
+  background: #fff;
+  border: 2px solid grey;
+  border-radius: 4px;
+  cursor: pointer;
+  float: right;
+  height: 14px;
+  margin: 0 8px;
+  position: relative;
+  top: 3px;
+  width: 14px;
+}
+
+input[type=checkbox]:checked + span {
+  background: #04385a;
+}
+
+input[type=checkbox]:checked + span:before {  /* Add check in checkbox */
+  color: #fff;
+  content: '\2713';
+  font-size: 22px;
+  left: 0;
+  position: relative;
+  top: -8px;
+}
+
+input[type=checkbox]:checked:hover + span {
+  background: #364957;
+}
+
 input[type=color] {
   border: none;
   cursor: pointer;
@@ -244,6 +213,10 @@ input[type=text] {
   width: 166px;
 }
 
+.colorWrapper:focus-within,  /* Style when interior input is in focus */
+.dropdown:focus,
+button:focus,
+input[type=checkbox]:focus + span,
 input[type=text]:focus {
   border-color: #0d99f7;
   box-shadow: 0 0 0 1px #0d99f7;

@@ -13,7 +13,6 @@
     <h3>Ad Likes</h3>
     <div class="sheet-grid-container">
       <div class="sheetSettings">
-        
         <ul>
           <li v-for="setting in adSettings">
             <label class="checkbox">
@@ -63,9 +62,8 @@
       <div>
         <input type='text' placeholder="Type Status name here..." v-if="selectedStatus == 'Add a status'" v-model='addStatus'
           v-on:keyup.enter="changeStatus('add')">
-        <div class="checkboxContainer" v-if="selectedStatus != 'Add a status'">
+        <div class="mergeHideContainer" v-if="selectedStatus != 'Add a status'">
           <label class="checkbox">
-            
             <input type="checkbox" v-model="statusMerge" @change="changeStatus('merge')">
             <span></span>
             Merge: 
@@ -84,15 +82,12 @@
       </div>
     </div>
 
-    <!-- <textarea style="display: block; margin-bottom:10px;" cols="50" rows="25" v-model="programSettings" placeholder="Adjust program settings here"></textarea> -->
-
     <button class="saveButton" @click="saveProgramSettings">Save Settings</button>
     <br>
     <br>
     <h1>Facebook Settings</h1>
     <div class="classify-grid-container">
       <div>
-        <!-- <label for="page-select">Select a page:  </label> -->
         <select class="dropdown" v-model="selected" id="page-select">
           <option v-if="!facebookPages.length" disabled selected="selected">Select a page</option>
           <option v-for="page in selected" v-bind:value="[page]" disabled selected>Selected: {{ page.name }}</option>
@@ -118,11 +113,6 @@
       <textarea style="display: block; margin-bottom:10px;" v-model="profileList"></textarea>
       <button class="btn btn-primary" @click="updateSheetProfileLinks">Submit</button>
     </div>
-    <!-- <div>
-        <h1>Heal Button</h1>
-        <p>Use this to try and fix the sheet if it is not working right.</p>
-        <button class="btn btn-primary" @click="fireHealFunction">Heal</button>
-    </div> -->
     <!-- <br>
     <button @click="formatData">Format</button>
     <button @click="formatSettings">Format Back</button>

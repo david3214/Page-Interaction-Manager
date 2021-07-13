@@ -33,9 +33,7 @@ new Vue({
       google.script.run.withSuccessHandler().updateSheet();
     },
     updateProgramSettings: function (settings) {
-      // Request settings from google
-      // let programSettings = JSON.stringify(settings, null, 2)
-      // formatSettings(programSettings)
+      // Request settings from Google
       this.formatSettings(settings)
     },
     submitFacebookPageSelection: function () {
@@ -74,11 +72,11 @@ new Vue({
         return {
           name: status,
           hide: settings.hiddenStatuses.includes(status),
-          merge: settings.statusToMerge.includes(status.name)
+          merge: settings.statusToMerge.includes(status)
         }
       })
       this.unitList = settings.assignmentMap.map(unit => { return { name: unit[0], color: unit[1] } })
-      let formatReverse = this.swap(this.formatList)
+      const formatReverse = this.swap(this.formatList)
       this.adSettings = Object.keys(settings.sheetSettings["Ad Likes"]).map(s => {
         return { name: formatReverse[s], value: settings.sheetSettings["Ad Likes"][s] }
       })
@@ -89,15 +87,12 @@ new Vue({
       this.selectedStatus = 'Add a status'
     },
     formatData: function () {
-      let finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }
+      const finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }
       finalObject.statusList.push(...this.statusList.map(status => status.name))
-      let [toHide, toMerge] = this.statusList.reduce((total, status) => {
-        if (status.hide) total[0].push(status.name)
-        if (status.merge) total[1].push(status.name)
-        return total
-      }, [[], []])
-      finalObject.hiddenStatuses.push(...toHide)
-      finalObject.statusToMerge.push(...toMerge)
+      this.statusList.forEach((status) => {
+        if (status.hide) finalObject.hiddenStatuses.push(status.name)
+        if (status.merge) finalObject.statusToMerge.push(status.name)
+      })
       finalObject.assignmentMap = this.unitList.map(unit => [unit.name, unit.color])
       finalObject.sheetSettings["Ad Likes"] = this.adSettings.reduce((final, setting) => {
         final[this.formatList[setting.name]] = setting.value
@@ -115,7 +110,7 @@ new Vue({
     },
     changeUnit: function (type) {
       if (type == 'add') {
-        if (this.addUnitName && !this.unitList.find(unit => unit.name == this.selectedUnit)) {
+        if (this.addUnitName && !this.unitList.find(unit => unit.name == this.addUnitName)) {
           this.unitList.push({ name: this.addUnitName, color: "#000000" })
           this.selectedUnit = this.addUnitName
           this.addUnitName = ''
@@ -126,8 +121,6 @@ new Vue({
           this.unitList.splice(index, 1);
           this.selectedUnit = 'Add a unit'
         }
-        else
-          console.log('Tried to remove ' + this.selectedUnit + ' but couldn\'t find it')
       }
     },
     statusChange: function () {
@@ -154,13 +147,11 @@ new Vue({
           this.statusList.splice(index, 1);
           this.selectedStatus = 'Add a status'
         }
-        else
-          console.log('Tried to remove ' + this.selectedStatus + ' but couldn\'t find it')
-      } else if (type == 'merge' && this.selectedStatus != 'Add a status') {
+      } else if (type == 'merge') {
         let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
         if (index !== -1) this.statusList[index].merge = this.statusMerge;
         else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
-      } else if (type == 'hide' && this.selectedStatus != 'Add a status') {
+      } else if (type == 'hide') {
         let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
         if (index !== -1) this.statusList[index].hide = this.statusHide;
         else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')

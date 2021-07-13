@@ -3,10 +3,6 @@ var db = 'page_interaction_manager';
 var instanceUrl = "jdbc:mysql://34.68.83.123";
 var dbUrl = instanceUrl + '/' + db;
 
-function pullstuff(){
-  Logger.log({DB_USER, DB_USERPWD, DB_ROOT, DB_ROOTPWD})
-}
-
 /**
  * Create a new database within a Cloud SQL instance.
  */

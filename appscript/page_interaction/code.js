@@ -528,6 +528,7 @@ function updateSheet(e=undefined, context=openContext()){
   mergeData(context);
   sortData(context);
   removeBadRows(context);
+  formatSheet(context);
   context.writeRange();
   SpreadsheetApp.flush();
   lock.releaseLock();
@@ -986,6 +987,7 @@ function toastSheetInfo(context=openContext()){
   
 }
 
+//Helper function for HTML scriplet templating. Called by HtmlService when including other files into a template
 function include(filename){
   return HtmlService.createHtmlOutputFromFile(filename)
     .getContent()
