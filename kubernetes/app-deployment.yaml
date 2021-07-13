@@ -16,7 +16,8 @@ spec:
         app: app
     spec:
       containers:
-      - env:
+      - name: app 
+        env:
         - name: CELERY_BROKER_URL
           valueFrom:
             configMapKeyRef:
@@ -52,12 +53,12 @@ spec:
             configMapKeyRef:
               key: REDIS_URL
               name: env
-        image: 9f3fb9e39a72
+        image: app:latest
         imagePullPolicy: "Never"
-        name: app
+        command: 
+          - './create-app.sh'
         ports:
         - containerPort: 5000
-        # - containerPort: 8080
         resources:
           requests:
             memory: "2Gi"
@@ -65,6 +66,54 @@ spec:
           limits:
             memory: "2Gi"
             cpu: 500m
+      - name: celery-worker
+        env:
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: CELERY_BROKER_URL
+              name: env
+        - name: CELERY_RESULT_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: CELERY_RESULT_BACKEND
+              name: env
+        - name: CLIENT_SECRETS_FILE
+          valueFrom:
+            configMapKeyRef:
+              key: CLIENT_SECRETS_FILE
+              name: env
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: DATABASE_URL
+              name: env
+        - name: FLASK_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              key: FLASK_CONFIG
+              name: env
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: PORT
+              name: env
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              key: REDIS_URL
+              name: env
+        image: app:latest
+        imagePullPolicy: "Never"
+        command: 
+          - './celery-worker.sh'
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu:    "50m"
+          limits:
+            memory: "2Gi"
+            cpu: 100m
       - name: cloud-sql-proxy
         # It is recommended to use the latest version of the Cloud SQL proxy
         # Make sure to update on a regular schedule!

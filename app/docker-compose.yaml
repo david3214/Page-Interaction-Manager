@@ -23,9 +23,6 @@ services:
     depends_on:
     - db
     - redis
-  redis:
-    image: redis:latest
-    hostname: redis
   db:
     image: mysql:5.7
     hostname: mysql
@@ -34,6 +31,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: example
       MYSQL_DATABASE: testing
+  redis:
+    image: redis:latest
+    hostname: redis
   # celery-cron:
   #   build:
   #     context: .

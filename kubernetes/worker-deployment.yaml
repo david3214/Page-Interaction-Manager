@@ -57,7 +57,12 @@ spec:
             configMapKeyRef:
               key: REDISCLOUD_URL
               name: env
-        image: worker
+        - name: DRIVER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: DRIVER_URL
+              name: env
+        image: worker:latest
         imagePullPolicy: "Never"
         name: worker
         resources: {}
