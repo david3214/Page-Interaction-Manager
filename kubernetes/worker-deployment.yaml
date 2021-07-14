@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: worker
+  name: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - env:
+        - name: BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: BUCKET_NAME
+              name: env
+        - name: CHURCH_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: CHURCH_PASSWORD
+              name: env
+        - name: CHURCH_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: CHURCH_USERNAME
+              name: env
+        - name: FACEBOOK_LANGUAGE
+          valueFrom:
+            configMapKeyRef:
+              key: FACEBOOK_LANGUAGE
+              name: env
+        - name: FACEBOOK_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: FACEBOOK_PASSWORD
+              name: env
+        - name: FACEBOOK_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: FACEBOOK_USERNAME
+              name: env
+        - name: RABBITMQ_URL
+          valueFrom:
+            configMapKeyRef:
+              key: RABBITMQ_URL
+              name: env
+        - name: REDISCLOUD_URL
+          valueFrom:
+            configMapKeyRef:
+              key: REDISCLOUD_URL
+              name: env
+        - name: DRIVER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: DRIVER_URL
+              name: env
+        image: worker:latest
+        imagePullPolicy: "Never"
+        name: worker
+        resources: {}
+      - image: selenium/standalone-chrome-debug:latest
+        imagePullPolicy: "IfNotPresent"
+        name: standalone-chrome
+        ports:
+        - containerPort: 4444
+        - containerPort: 5900
+        resources: {}
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: standalone-chrome-claim
+      volumes:
+      - name: standalone-chrome-claim
+        persistentVolumeClaim:
+          claimName: standalone-chrome-claim
+      restartPolicy: Always
+status: {}

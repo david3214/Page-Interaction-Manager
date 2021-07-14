@@ -44,6 +44,7 @@ class MissionaryBot:
     self.facebook_username = config.FACEBOOK_USERNAME
     self.facebook_password = config.FACEBOOK_PASSWORD
     self.language = config.LANGUAGE
+    self.selenium_url = config.DRIVER_URL
     with open('missionary_bot/facebook_paths.json') as f:
       self.facebook_paths = json.load(f)
     self.set_status('Intializing')
@@ -68,7 +69,7 @@ class MissionaryBot:
     # self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
     # self.chrome_options.add_argument("--log-level=3")
     # self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
-    self.wd = webdriver.Remote("http://selenium:4444/wd/hub", DesiredCapabilities.CHROME, options=self.chrome_options)
+    self.wd = webdriver.Remote(self.selenium_url, DesiredCapabilities.CHROME, options=self.chrome_options)
     # self.wd.set_window_size(1920, 1080)
     # self.wd.implicitly_wait(30)
     # self.wd.set_script_timeout(30)

@@ -12,6 +12,7 @@ class Config:
     FACEBOOK_USERNAME = os.environ.get('FACEBOOK_USERNAME')
     FACEBOOK_PASSWORD = os.environ.get('FACEBOOK_PASSWORD')
     LANGUAGE = os.environ.get('FACEBOOK_LANGUAGE')
+    DRIVER_URL = os.environ.get('DRIVER_URL') if os.environ.get('DRIVER_URL') else "http://selenium:4444/wd/hub"
     
     @staticmethod
     def init_app(app):

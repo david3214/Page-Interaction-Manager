@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from flask.app import Flask
 
 import gspread
 import pandas as pd
@@ -14,22 +15,28 @@ from ..models import PageDatum, Preference, User
 from celery import Celery
 from celery.schedules import crontab
 
+# Placeholder, for flask app created on init
 app = Celery()
 
 # TODO set task to run periodically
-@app.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(
-        crontab(minute=0, hour='*/6'),
-        update_all_profile_links()
-    )
-
+# @app.on_after_configure.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     sender.add_periodic_task(
+#         10.0,
+#         # crontab(minute='*1'),
+#         update_all_profile_links(),
+#         name="update_all_profile_links"
+#     )
 
 @worker_process_init.connect
 def init_worker(**kwargs):
     app = create_app(os.getenv('FLASK_CONFIG') or 'default')
     app.app_context().push()
 
+@celery.task(name='app.worker.cron_run')
+def cron_run(**kwargs):
+    print('I\'ve been triggered')
+    return
 
 @worker_process_shutdown.connect
 def shutdown_worker(**kwargs):
@@ -169,3 +176,7 @@ def make_auth(page_id):
             "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.scriptapp"]
         auth = Credentials.from_authorized_user_info(data, scopes)
     return auth
+
+@celery.task()
+def check():
+    print("I am checking your stuff")

@@ -566,7 +566,7 @@ function showAuthenticationSidebar() {
       </div>
       <div class="auth-container-google">
       Click the button to authenticate with Google.
-      <a target="_blank" id="facebook-auth-link" href="https://page-interaction-manager-auth-t7emter6aa-uc.a.run.app/authorize">
+      <a target="_blank" id="facebook-auth-link" href="https://missionary-tools.com/authorize">
           <img id="google-sign-in-button" style="padding:10px; width: 250px; display:block; margin:auto;" src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/btn_google_signin_dark_normal_web.png"></img>
       </a>
       </div>

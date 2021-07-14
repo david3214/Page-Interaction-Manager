@@ -23,7 +23,7 @@ def insert_user(id, id_token):
         "REPLACE INTO users (user_id, id_token)" " VALUES (:id, :id_token)"
     )
     try:
-        with db.connect() as conn:
+        with db.engine.connect() as conn:
             conn.execute(stmt, id=id, id_token=json.dumps(id_token))
     except Exception as e:
         logger.exception(e)
@@ -62,14 +62,14 @@ def test_api_request():
 def authorize():
     # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        current_app.config.CLIENT_SECRETS_FILE, scopes=SCOPES)
+        current_app.config['CLIENT_SECRETS_FILE'], scopes=SCOPES)
 
     # The URI created here must exactly match one of the authorized redirect URIs
     # for the OAuth 2.0 client, which you configured in the API Console. If this
     # value doesn't match an authorized URI, you will get a 'redirect_uri_mismatch'
     # error.
     flow.redirect_uri = url_for(
-        'oauth2callback', _external=True, _scheme='https')
+        'auth.oauth2callback', _external=True, _scheme='https')
 
     authorization_url, state = flow.authorization_url(
         # Enable offline access so that you can refresh an access token without
@@ -91,9 +91,9 @@ def oauth2callback():
     state = session['state']
 
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        current_app.config.CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
+        current_app.config['CLIENT_SECRETS_FILE'], scopes=SCOPES, state=state)
     flow.redirect_uri = url_for(
-        'oauth2callback', _external=True, _scheme='https')
+        'auth.oauth2callback', _external=True, _scheme='https')
 
     # Use the authorization server's response to fetch the OAuth 2.0 tokens.
     authorization_response = request.url
@@ -117,7 +117,7 @@ def oauth2callback():
 @auth.route('/revoke')
 def revoke():
     if 'credentials' not in session:
-        return ('You need to <a href="/authorize">authorize</a> before ' +
+        return ('You need to <a href="/auth/authorize">authorize</a> before ' +
                 'testing the code to revoke credentials.')
 
     credentials = google.oauth2.credentials.Credentials(
@@ -153,21 +153,21 @@ def credentials_to_dict(credentials):
 
 def print_index_table():
     return ('<table>' +
-            '<tr><td><a href="/test">Test an API request</a></td>' +
+            '<tr><td><a href="/auth/test">Test an API request</a></td>' +
             '<td>Submit an API request and see a formatted JSON response. ' +
             '    Go through the authorization flow if there are no stored ' +
             '    credentials for the user.</td></tr>' +
-            '<tr><td><a href="/authorize">Test the auth flow directly</a></td>' +
+            '<tr><td><a href="/auth/authorize">Test the auth flow directly</a></td>' +
             '<td>Go directly to the authorization flow. If there are stored ' +
             '    credentials, you still might not be prompted to reauthorize ' +
             '    the application.</td></tr>' +
-            '<tr><td><a href="/revoke">Revoke current credentials</a></td>' +
+            '<tr><td><a href="/auth/revoke">Revoke current credentials</a></td>' +
             '<td>Revoke the access token associated with the current user ' +
             '    session. After revoking credentials, if you go to the test ' +
             '    page, you should see an <code>invalid_grant</code> error.' +
             '</td></tr>' +
             '<tr><td><a href="/clear">Clear Flask session credentials</a></td>' +
             '<td>Clear the access token currently stored in the user session. ' +
-            '    After clearing the token, if you <a href="/test">test the ' +
+            '    After clearing the token, if you <a href="/auth/test">test the ' +
             '    API request</a> again, you should go back to the auth flow.' +
             '</td></tr></table>')

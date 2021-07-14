@@ -1,5 +1,6 @@
 version: '3'
 services:
+  # app images and dependencies
   app:
     build:
       context: app/
@@ -7,8 +8,11 @@ services:
     hostname: app
     ports:
       - "5000:5000"
+      - "8080:8080"
     depends_on:
-    - cloud-sql-proxy
+      - cloud-sql-proxy
+    env_file:
+      - .env
   cloud-sql-proxy:
     image: gcr.io/cloudsql-docker/gce-proxy:latest
     command: /cloud_sql_proxy -instances=eighth-vehicle-287322:us-central1:datab=tcp:0.0.0.0:3306 -credential_file=/config
@@ -16,16 +20,35 @@ services:
     - ./app/keys/cloud_sql_proxy_key.json:/config
     ports:
     - 3306:3306
-  hub:
-    image: selenium/hub:latest
-    expose:
-      - 4444
-  chrome:
-    image: selenium/node-chrome-debug:latest
-    environment:
-      - HUB_PORT_4444_TCP_ADDR=hub
-      - HUB_PORT_4444_TCP_PORT=4444
-    ports:
-      - 5900:5900
+  # Worker images and dependencies
+  worker:
+    build:
+      context: task-worker/
+      dockerfile: Dockerfile
+    env_file: 
+      - .env
     depends_on:
-      - hub
+      - standalone-chrome
+  standalone-chrome:
+    hostname: selenium
+    ports:
+      - '4444:4444'
+      - '5900:5900'
+    volumes:
+      - '/dev/shm:/dev/shm'
+    image: 'selenium/standalone-chrome-debug:latest'
+
+
+  # hub:
+  #   image: selenium/hub:latest
+  #   expose:
+  #     - 4444
+  # chrome:
+  #   image: selenium/node-chrome-debug:latest
+  #   environment:
+  #     - HUB_PORT_4444_TCP_ADDR=hub
+  #     - HUB_PORT_4444_TCP_PORT=4444
+  #   ports:
+  #     - 5900:5900
+  #   depends_on:
+  #     - hub
