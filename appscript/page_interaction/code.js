@@ -528,7 +528,6 @@ function updateSheet(e=undefined, context=openContext()){
   mergeData(context);
   sortData(context);
   removeBadRows(context);
-  formatSheet(context);
   context.writeRange();
   SpreadsheetApp.flush();
   lock.releaseLock();

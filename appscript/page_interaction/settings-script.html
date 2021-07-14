@@ -29,7 +29,10 @@ new Vue({
   },
   methods: {
     saveProgramSettings: function () {
-      google.script.run.withSuccessHandler().saveProgramSettings(this.formatData());
+      google.script.run.withSuccessHandler(function(){
+        google.script.run.withSuccessHandler().formatSheet();
+      }
+      ).saveProgramSettings(this.formatData());
       google.script.run.withSuccessHandler().updateSheet();
     },
     updateProgramSettings: function (settings) {
