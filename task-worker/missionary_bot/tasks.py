@@ -7,7 +7,7 @@ import qrcode
 import urllib.request
 from time import sleep
 
-from celery import Celery
+from celery import Celery, Task
 
 from .bot import MissionaryBot
 from .config import config
@@ -16,11 +16,18 @@ celery = Celery('tasks', broker=os.getenv("RABBITMQ_URL"), backend=os.getenv("RE
 #jesus_bg = Image.open(urllib.request.urlopen(
 #    "https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/qr-code/jesus_template.png").read())
 
+class FacebookTask(Task):
+    def __init__(self):
+        self.bot = MissionaryBot(config=config['default'])
+        self.bot.language = os.getenv("FACEBOOK_LANGUAGE")
+        self.bot.authenticate_with_facebook()
+
 @celery.task(reply_to='results')
 def test_task(task_info):
     task_info['results'] = task_info['text']
     return task_info
 
+# TODO Relable get_profile_links to scrape_posts_reactions_for_people():
 results = {}
 @celery.task(reply_to='results')
 def get_profile_links(task_info):
@@ -76,7 +83,8 @@ def get_profile_links(task_info):
 
     return task_info
 
-@celery.task
+# TODO Placeholder, Not tested to work yet
+@celery.task(reply_to='results')
 def find_member_profiles(task_info):
     def do_work(kwargs):
         MissionaryBot(**kwargs).do_work()
@@ -110,11 +118,23 @@ def create_pass_along_cards(task_info):
         return img_bg
 """
 
+@celery.task(reply_to='results')
+def scrape_profiles_for_location(task_info):
+    """ 
+    Takes a list of profile links and returns a dict of the location profile link combo
+    information associated with the profile link
+    """
+    bot = MissionaryBot(config=config['default'])
+    bot.language = os.getenv("FACEBOOK_LANGUAGE")
+    bot.authenticate_with_facebook()
+    profiles = task_info['data']
+    task_info['results'] = {}
+    for profile in profiles:
+        about_info = bot.scrape_profile_for_location(profile)
+        task_info['results'][profile] = about_info
+    bot.wd.quit()
+    return task_info
 
-@celery.task
-def insert_row_in_sheet(task_info):
-    """ Insert a row into the users sheet and into the db"""
-    pass
 
 @celery.task
 def add_friend(task_info):

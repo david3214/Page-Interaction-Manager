@@ -9,19 +9,19 @@ from flask_sqlalchemy import SQLAlchemy
 from .config import Config, config
 
 db = SQLAlchemy()
-url = urllib.parse.urlparse(Config.REDIS_URL)
-r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
+r = redis.Redis()
 celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, backend=Config.CELERY_RESULT_BACKEND)
 context = pa.default_serialization_context()
 
 def create_app(config_name="default"):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
-    config[config_name].init_app(app)
 
     db.init_app(app)
     celery.conf.update(app.config)
-    
+    r.from_url(config[config_name].REDIS_URL)
+
+
     from .website import website as website_blueprint
     app.register_blueprint(website_blueprint)
 

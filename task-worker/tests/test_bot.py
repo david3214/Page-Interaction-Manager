@@ -32,4 +32,21 @@ class MissionaryBotTestCase(unittest.TestCase):
     isAuthenticated = self.bot.authenticate_with_facebook()
     self.assertFalse(isAuthenticated)
 
+  def test_scrape_post_reactions_for_people(self):
+    self.bot.authenticate_with_facebook()
+    results = self.bot.scrape_post_reactions_for_people("https://www.facebook.com/SuperacionenelSur/posts/326818732396267", ["Matthew Curtis"])
+    self.assertIn("https://www.facebook.com/mattjcurtis02", results.values())
+
+  def test_scrape_profile_for_location(self):
+    self.bot.authenticate_with_facebook()
+    about_info = self.bot.scrape_profile_for_location("https://www.facebook.com/graham.harrison.3538")
+    self.assertIsNotNone(about_info)
+    self.assertNotIn("error", about_info.keys())
+
+  def test_scrape_profile_for_location_no_location(self):
+    self.bot.authenticate_with_facebook()
+    about_info = self.bot.scrape_profile_for_location("https://www.facebook.com/juan.monsalve.5492216")
+    self.assertIsNotNone(about_info)
+    self.assertIn(None, about_info.values())
+
 # Test to make sure that you can get data from facebook

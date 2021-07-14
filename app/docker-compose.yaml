@@ -14,12 +14,17 @@ services:
   redis:
     image: redis:latest
     hostname: redis
-  # rabbit:
-  #   hostname: rabbit
-  #   image: rabbitmq:latest
-  #   environment:
-  #     - RABBITMQ_DEFAULT_USER=admin
-  #     - RABBITMQ_DEFAULT_PASS=mypass
+    ports:
+      - 6379:6379
+  rabbit:
+    hostname: rabbit
+    image: rabbitmq:3-management-alpine #rabbitmq:latest
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=mypass
+    ports:
+      - 5672:5672
+      - 15672:15672
   db:
     image: mysql:5.7
     hostname: mysql

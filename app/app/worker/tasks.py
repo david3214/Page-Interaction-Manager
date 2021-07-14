@@ -71,11 +71,41 @@ def update_all_profile_links():
             print(f"error: {result}")
     return True
 
+@celery.task()
+def update_all_locations():
+    # Run a task on all sheets
+    results = db.session.query(PageDatum).all()
+    for result in results:
+        try:
+            task_info = {}
+            task_info['task_name'] = "missionary_bot.tasks.scrape_profiles_for_location"
+            task_info["page_id"] = result.page_id
+            task_info["data"] = []
+            auth = make_auth(result.page_id)
+            gc = gspread.authorize(auth)
+            sh = gc.open_by_key(result.page_details['google_sheets']['id'])
+            worksheet = sh.worksheet("Ad Likes")
+            df = pd.DataFrame(worksheet.get_all_records())
+            df = df.loc[(df['Profile Link'] != '') & (df['Location'] == '')]
+            def f(profile_link):
+                task_info['data'].append(profile_link)
 
+            df.apply(lambda x: f(x['Profile Link']), axis=1)
+            celery.send_task(app=celery, name=task_info['task_name'],
+                            kwargs={'task_info': task_info},
+                            chain=[celery.signature('app.worker.process_results', queue='results')]
+            )
+        except:
+            print(f"error: {result}")
+    return True
 
 @celery.task(name='app.worker.process_results')
 def process_result(task_info):
-    if task_info['task_name'] == "missionary_bot.tasks.get_profile_links":
+    if task_info['task_name'] == "test":
+        print(task_info)
+        return True
+
+    elif task_info['task_name'] == "missionary_bot.tasks.get_profile_links":
         results = db.session.query(PageDatum).get(task_info['page_id'])
         auth = make_auth(task_info['page_id'])
 
@@ -96,9 +126,34 @@ def process_result(task_info):
         df['Profile Link'] = df.apply(lambda x: f(x['Name'], x['Profile Link']), axis=1)
         worksheet.update([df.columns.values.tolist()] + df.values.tolist())
         return True
-    
-    elif task_info['task_name'] == "test":
-        print(task_info)
+
+    elif task_info['task_name'] == "missionary_bot.tasks.scrape_profiles_for_location":
+        results = db.session.query(PageDatum).get(task_info['page_id'])
+        auth = make_auth(task_info['page_id'])
+
+        gc = gspread.authorize(auth)
+        sh = gc.open_by_key(results.page_details['google_sheets']['id'])
+        worksheet_list = sh.worksheets()
+        worksheet = sh.worksheet("Ad Likes")
+
+        df = pd.DataFrame(worksheet.get_all_records(value_render_option="UNFORMATTED_VALUE"))
+        pd.set_option("display.max_rows", None, "display.max_columns", None)
+        def f(profileLink, location):
+            if location == '' and profileLink in task_info['results']:
+                about_info = task_info['results'][profileLink]
+                keys = about_info.keys()
+                if "lives_in" in keys and about_info['lives_in'] != None:
+                    return f"Lives in {about_info['lives_in']}"
+                elif "from" in keys and about_info['from'] != None:
+                    return f"From {about_info['from']}"
+                elif "error" in keys:
+                    return "Couldn't find it"
+                else:
+                    return "Not written"
+            else:
+                return location
+        df['Location'] = df.apply(lambda x: f(x['Profile Link'], x['Location']), axis=1)
+        worksheet.update([df.columns.values.tolist()] + df.values.tolist())
         return True
 
 def make_auth(page_id):

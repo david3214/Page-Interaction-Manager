@@ -57,16 +57,16 @@ class MissionaryBot:
 
     self.chrome_options = webdriver.ChromeOptions()
     self.chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    # self.chrome_options.add_argument("--headless")
-    self.chrome_options.add_argument("--disable-gpu")
-    self.chrome_options.add_argument("--disable-dev-shm-usage")
-    self.chrome_options.add_argument("--no-sandbox")
-    self.chrome_options.add_argument("--silent")
-    self.chrome_options.add_argument("--incognito")
-    self.chrome_options.add_argument("--disable-notifications")
-    self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
+    #self.chrome_options.add_argument("--headless")
+    #self.chrome_options.add_argument("--disable-gpu")
+    #self.chrome_options.add_argument("--disable-dev-shm-usage")
+    #s elf.chrome_options.add_argument("--no-sandbox")
+    #self.chrome_options.add_argument("--silent")
+    #self.chrome_options.add_argument("--incognito")
+    #self.chrome_options.add_argument("--disable-notifications")
+    #self.chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
     # self.chrome_options.add_argument('--proxy-server=socks5://localhost:8080')
-    self.chrome_options.add_argument("--log-level=3")
+    # self.chrome_options.add_argument("--log-level=3")
     # self.wd = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=self.chrome_options)
     self.wd = webdriver.Remote("http://selenium:4444/wd/hub", DesiredCapabilities.CHROME, options=self.chrome_options)
     # self.wd.set_window_size(1920, 1080)
@@ -240,7 +240,32 @@ class MissionaryBot:
       raise AuthenticationError(provider="Facebook")
     return True
 
+  def scrape_profile_for_location(self, profile_url):
+    """
+    Extract the about info location and return it
+    """
+    try:
+      self.wd.get(profile_url)
+      WebDriverWait(self.wd, 10).until(EC.presence_of_element_located((By.XPATH, self.facebook_paths[self.language]['about_tab'])))
+      self.wd.find_elements_by_xpath(self.facebook_paths[self.language]["about_tab"])[0].click()
+      WebDriverWait(self.wd, 10).until(EC.presence_of_element_located((By.XPATH, self.facebook_paths[self.language]['about_info_lives_in'])))
+      about_info_lives_in = self.wd.find_elements_by_xpath(self.facebook_paths[self.language]["about_info_lives_in"])
+      about_info_lives_in = about_info_lives_in.pop().text if about_info_lives_in else None
+      about_info_from =  self.wd.find_elements_by_xpath(self.facebook_paths[self.language]["about_info_from"])
+      about_info_from = about_info_from.pop().text if about_info_from else None
+      about_info = {
+        "lives_in": about_info_lives_in,
+        "from": about_info_from
+      }
+      return about_info
+    except:
+      return {"error": "Something broke trying to find the location"}
 
+  def scrape_profiles_for_locations(self, profile_urls):
+    """ Scrapes and compiles a list of the results"""
+    pass
+
+  
   def scrape_post_reactions_for_people(self, post_url, people):
     """
     Get a dictionary of the names and profile links of a list of people for a post
@@ -259,12 +284,12 @@ class MissionaryBot:
     try:
       self.set_status('Scraping for profile_id')
       self.wd.get(post_url)
-      WebDriverWait(self.wd, 10).until(EC.presence_of_element_located((By.XPATH, self.facebook_paths[self.language]['reactions_button'])))
+      WebDriverWait(self.wd, 20).until(EC.presence_of_element_located((By.XPATH, self.facebook_paths[self.language]['reactions_button'])))
       reaction_button = self.wd.find_elements_by_xpath(self.facebook_paths[self.language]["reactions_button"])[0]
       reaction_button.click()
       previous_links = None
       while len(people) != 0:
-        links = WebDriverWait(self.wd, 10).until(EC.presence_of_element_located((By.XPATH, self.facebook_paths[self.language]['reactions_box']))).find_elements_by_tag_name('a')
+        links = WebDriverWait(self.wd, 20).until(EC.presence_of_element_located((By.XPATH, self.facebook_paths[self.language]['reactions_box']))).find_elements_by_tag_name('a')
         for link in links:
           if link.text in people:
             cleaned_url = clean_facebook_profile_url(link.get_attribute('href'))

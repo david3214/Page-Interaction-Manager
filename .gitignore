@@ -23,3 +23,9 @@ kubectl.*
 *.env
 app/tests/page_data.json
 app/tests/page_data_tst.json
+*/.noseids
+*nosetests
+*.pytest_cache
+*pytest_cache/
+app/.noseids
+task-worker/.noseids

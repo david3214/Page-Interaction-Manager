@@ -1,4 +1,4 @@
-from missionary_bot.tasks import get_profile_links
+from missionary_bot.tasks import get_profile_links, scrape_profiles_for_location
 import unittest
 from unittest.mock import patch
 import json
@@ -39,14 +39,20 @@ class TasksTestCase(unittest.TestCase):
     results = get_profile_links(task)
     self.assertNotEqual(results.length, 0)
 
+  def test_scrape_profiles_for_location(self):
+    task = {
+      "sheet_url": "1234567890",
+      "type": "scrape_profiles_for_location", 
+      "data": ["https://www.facebook.com/graham.harrison.3538"],
+      "results":{}
+    }
+    results = scrape_profiles_for_location(task)
+    self.assertIsNot(results, {})
+
   @unittest.skip("Not yet written")
   def test_find_member_profiles(self):
     pass
 
   @unittest.skip("Not yet written")
   def test_create_pass_along_cards(self):
-    pass
-
-  @unittest.skip("Not yet written")
-  def test_insert_row_in_sheet(self):
     pass

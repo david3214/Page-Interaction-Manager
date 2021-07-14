@@ -13,6 +13,9 @@
       "reactions_box":"//div[@aria-label='Reactions']",
       "reactions_scroll_area": "//div[@aria-label='Reactions']/div[last()]",
       "reactions_scroll_bar": "//div[@aria-label='Reactions']/div[last()]/div[2]",
-      "reactions_box_list": "//div[@aria-label='Reactions']/div[last()]/div[1]/div"
+      "reactions_box_list": "//div[@aria-label='Reactions']/div[last()]/div[1]/div",
+      "about_tab": "//span[contains(text(), 'About')]",
+      "about_info_lives_in": "//div[contains(text(), 'Lives in ')]//span",
+      "about_info_from": "//div[contains(text(), 'From ')]//span"
     }
 }
