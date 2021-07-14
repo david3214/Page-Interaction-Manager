@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import pickle
+import signal
 import sys
 import threading
 import time
@@ -291,7 +292,15 @@ class MissionaryBot:
         condition = elements_length_changes(locator, length)
         WebDriverWait(self.wd, 5, 1).until(condition)
     except:
-      return results
+      if 'www.facebook.com/login/' in self.wd.current_url:
+        # If the webdriver has been open for a while it may have been logged out
+        self.logger.warning('Attempting to login again, url: {}'.format(self.wd.getCurrentURL()))
+        self.authenticate_with_facebook()
+        return self.scrape_post_reactions_for_people(post_url, people)
+      elif len(self.wd.find_elements_by_xpath(self.facebook_paths[self.language]["facebook_blocked"])):
+        # If facebook has blocked us because we've been doing too many tasks kill the process
+        self.logger.warning("Blocked by facebook, sending SIGTERM signal to parent os {}".format(os.getppid()))
+        os.kill(os.getppid(), signal.SIGTERM)
     finally:
       return results
 
