@@ -15,6 +15,7 @@ If you are a missionary and you want to make a tool for everyone please make it 
 - Used for a sql database to house spreadsheet data, user preferences etc
 - Cloud Funtion as a Facebook Webhook
 - Compute Engine was used in the past for running the task_worker, instead of locally
+- Cloud Run to run the authentication service for logging into google
 - Issue #6 will implement housing a Kubernetes Cluster on Google Cloud
 - Depending on Issue #7 a redis database may also be hosted on Google Cloud
 

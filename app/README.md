@@ -2,11 +2,12 @@
 ### Project containing the front and backend for the Page Interaction Manager
 
 Prerequisites to running app:
-- An app.env file with all your environment variables in the app directory
-- A page_data.json file with all the data from the cloud sql database/page_interaction_manager
-- [Docker](https://docs.docker.com/get-docker/) installed on your local machine
+- [app.env](#user-content-appenv) file with all your environment variables in the app directory
+- [Cloud SQL Proxy](#user-content-cloud-sql-proxy) used for generating the page_data.json
+- [page_data.json](#user-content-page_datajson) file with all the data from the cloud sql database/page_interaction_manager
+- [Docker](#user-content-docker) installed on your local machine
 - [Python](https://www.python.org/downloads/) installed on your machine. (Currently Running fine on Python 3.9)
-- VScode with Remote Containers extension
+- [VScode](#user-content-remote-containers-extension) with Remote Containers extension
   - After Issue #14 this won't be necessary
 
 ## App.env file
@@ -24,10 +25,30 @@ CELERY_RESULT_BACKEND=
 - **Celery Result Backend** same url as the redis url
 - **Celery Broker URL** is the url for the rabbitMQ queue. Found on [CloudAMPQ](https://customer.cloudamqp.com/) Difference is this one starts with ampq not ampqs
 
+## Cloud SQL Proxy
+
+Install [Cloud SQL Proxy](https://cloud.google.com/sql/docs/mysql/connect-admin-proxy#install). This is honestly kinda jank. 
+Get [gcloud](https://cloud.google.com/sdk/gcloud) as well to find your instance_connection_name
+
+Once you have it installed run this command. Your Key file is obtained from our cloud_sql_proxy service account on the google cloud project.
+To generate a key file go to the projects service accounts, found [here](https://console.cloud.google.com/iam-admin/serviceaccounts?project=eighth-vehicle-287322&supportedpurview=project). 
+Choose the service account labeled cloud_sql_proxy, then go to the keys section and choose add key to generate your key file as a json file.
+
+`./cloud_sql_proxy -instances=INSTANCE_CONNECTION_NAM=tcp:3306 -credential_file=PATH_TO_KEY_FILE`
+
+Once cloud_sql_proxy is running you can connect to your database via localhost:3306
+
 ## page_data.json
 
+Once you have [Cloud SQL Proxy](#user-content-cloud-sql-proxy) up and running use your favorite database tool to access the database.
+
+I have used [DBeaver](https://dbeaver.io/) to view my database with a decent experience. 
+Once you have the database open you will want to export the page_data table as a json object. Then save it in app/tests/page_data.json
+
 ## Docker
-Once you have docker installed you may also install the VScode extension called docker. This will make running the app much easier.
+
+Once you have [Docker](https://docs.docker.com/get-docker/) installed you may also install the VScode extension called docker. 
+This will make running the app much easier.
 
 App right now is a bit more complicated than running task-worker
 
