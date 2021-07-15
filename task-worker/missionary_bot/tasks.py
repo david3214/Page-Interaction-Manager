@@ -129,7 +129,8 @@ def scrape_profiles_for_location(task_info):
     bot.authenticate_with_facebook()
     profiles = task_info['data']
     task_info['results'] = {}
-    for profile in profiles:
+    unique_profiles = set(profiles)
+    for profile in unique_profiles:
         about_info = bot.scrape_profile_for_location(profile)
         task_info['results'][profile] = about_info
     bot.wd.quit()
