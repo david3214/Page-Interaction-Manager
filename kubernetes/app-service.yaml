@@ -9,12 +9,19 @@ metadata:
     app: app
   name: app
 spec:
-  type: LoadBalancer
   ports:
+  # - protocol: TCP
+  #   name: https
+  #   port: 443
+  #   targetPort: 443
+  # - protocol: TCP
+  #   name: http
+  #   port: 80
+  #   targetPort: 80
   - protocol: TCP
     name: http
     port: 5000
-    targetPort: web
+    targetPort: 5000
   # - name: "8080"
   #   port: 8080
   #   targetPort: 8080

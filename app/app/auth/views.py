@@ -26,7 +26,8 @@ def insert_user(id, id_token):
         with db.engine.connect() as conn:
             conn.execute(stmt, id=id, id_token=json.dumps(id_token))
     except Exception as e:
-        logger.exception(e)
+        current_app.logger.exception(e)
+        # logger.exception(e)
 
     return True
 
@@ -38,15 +39,16 @@ def index():
 
 @auth.route('/test')
 def test_api_request():
+    current_app.logger.warning('in test_api_request')
     if 'credentials' not in session:
-        return redirect('authorize')
+        return redirect(url_for('auth.authorize', _external=True, _scheme='https'))
 
     # Load credentials from the session.
     credentials = google.oauth2.credentials.Credentials(
         **session['credentials'])
 
-    service = googleapiclient.discovery.build(
-        API_SERVICE_NAME, API_VERSION, credentials=credentials)
+    # service = googleapiclient.discovery.build(
+    #     API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
     # Save credentials back to session in case access token was refreshed.
     # ACTION ITEM: In a production app, you likely want to save these
@@ -60,7 +62,7 @@ def test_api_request():
 
 @auth.route('/authorize')
 def authorize():
-    current_app.logger.info('in /authorize')
+    current_app.logger.warning('in /authorize')
     
     # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
@@ -83,7 +85,7 @@ def authorize():
     # Store the state so the callback can verify the auth server response.
     session['state'] = state
 
-    current_app.logger.info(f'Redirecting {authorization_url}')
+    current_app.logger.warning(f'Redirecting {flow.redirect_uri}')
     return redirect(authorization_url)
 
 
@@ -93,7 +95,7 @@ def oauth2callback():
     # verified in the authorization server response.
     state = session['state']
 
-    current_app.logger.info('in oath2callback')
+    current_app.logger.warning(f'In Oauth2callback')
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         current_app.config['CLIENT_SECRETS_FILE'], scopes=SCOPES, state=state)
     flow.redirect_uri = url_for(
@@ -101,22 +103,28 @@ def oauth2callback():
 
     # Use the authorization server's response to fetch the OAuth 2.0 tokens.
     authorization_response = request.url
-    flow.fetch_token(authorization_response=authorization_response)
+    if "http:" in authorization_response:
+        authorization_response = "https:" + authorization_response[5:]
 
-    # Store credentials in the session.
-    # ACTION ITEM: In a production app, you likely want to save these
-    #              credentials in a persistent database instead.
+    try:
+        flow.fetch_token(authorization_response=authorization_response)
+    except Warning as w:
+        # If not all scopes are checked it will throw a Warning
+        current_app.logger.warning(w)
+        return ('<p>All scopes are required for the app to work.</p>')
+
     credentials = flow.credentials
     session['credentials'] = credentials_to_dict(credentials)
-    request = grequests.Request()
+    current_app.logger.warning(f'credentials: {credentials_to_dict(credentials)}')
+    request_info = grequests.Request()
     id_info = id_token.verify_oauth2_token(
-        credentials.id_token, request, flow.client_config['client_id'])
-    current_app.logger.info(f'credentials: {credentials}')
+        credentials.id_token, request_info, flow.client_config['client_id'])
     if credentials.refresh_token:
         insert_user(id_info['sub'], {
                     'refresh_token': credentials.refresh_token, 'email': id_info['email'], 'name': id_info['name']})
 
-    return redirect(url_for('test_api_request'))
+    current_app.logger.warning(f'Redirecting to test')
+    return redirect(url_for('auth.test_api_request', _external=True, _scheme='https'))
 
 
 @auth.route('/revoke')
@@ -171,7 +179,7 @@ def print_index_table():
             '    session. After revoking credentials, if you go to the test ' +
             '    page, you should see an <code>invalid_grant</code> error.' +
             '</td></tr>' +
-            '<tr><td><a href="/clear">Clear Flask session credentials</a></td>' +
+            '<tr><td><a href="/auth/clear">Clear Flask session credentials</a></td>' +
             '<td>Clear the access token currently stored in the user session. ' +
             '    After clearing the token, if you <a href="/auth/test">test the ' +
             '    API request</a> again, you should go back to the auth flow.' +

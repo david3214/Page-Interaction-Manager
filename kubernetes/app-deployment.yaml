@@ -146,12 +146,26 @@ spec:
           limits:
             memory: "2Gi"
             cpu: "500m"
+      # - name: nginx-controller
+      #   image: nginx:latest
+      #   imagePullPolicy: "IfNotPresent"
+      #   ports:
+      #     - containerPort: 80
+      #     - containerPort: 443
+      #   volumeMounts:
+      #     - name: nginx-config
+      #       mountPath: /etc/nginx/nginx.conf
+      #       subPath: nginx.conf
+      #   resources: {}
       volumes: 
       - name: cloudsql-instance-credentials
         secret:
           secretName: cloudsql-instance-credentials
       - name: cloudsql
         emptyDir: {}
+      # - name: nginx-config
+      #   configMap:
+      #     name: nginx-conf
       hostname: app
       restartPolicy: Always
 status: {}
