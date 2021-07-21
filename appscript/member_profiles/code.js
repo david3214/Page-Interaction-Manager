@@ -6,7 +6,7 @@ function showPopup() {
         .setTitle('Find Member Profiles')
         .setWidth(600)
         .setHeight(600);
-    SpreadsheetApp.getUi() // Or DocumentApp or SlidesApp or FormApp.
+    SpreadsheetApp.getUi() 
         .showModalDialog(html, 'Find Member Profiles');
 }
 

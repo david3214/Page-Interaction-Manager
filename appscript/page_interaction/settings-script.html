@@ -15,6 +15,7 @@ new Vue({
     addStatus: '',
     statusMerge: true,
     statusHide: false,
+    settingsLoaded: false,
     adSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
     messageSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
     formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
@@ -29,7 +30,9 @@ new Vue({
   },
   methods: {
     saveProgramSettings: function () {
-      google.script.run.withSuccessHandler().saveProgramSettings(this.formatData());
+      google.script.run.withSuccessHandler(()=>{
+        google.script.run.withSuccessHandler().formatSheet()
+      }).saveProgramSettings(this.formatData());
       google.script.run.withSuccessHandler().updateSheet();
     },
     updateProgramSettings: function (settings) {
@@ -85,6 +88,7 @@ new Vue({
       })
       this.selectedUnit = 'Add a unit'
       this.selectedStatus = 'Add a status'
+      this.settingsLoaded = true
     },
     formatData: function () {
       const finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }

@@ -1,4 +1,5 @@
-const {DB_USER, DB_USERPWD, DB_ROOT, DB_ROOTPWD} = PropertiesService.getScriptProperties().getProperties()
+// DB_USER, DB_USERPWD, DB_ROOT, DB_ROOTPWD all are defined in database_vars.js which is ignored by .gitignore
+
 var db = 'page_interaction_manager';
 var instanceUrl = "jdbc:mysql://34.68.83.123";
 var dbUrl = instanceUrl + '/' + db;

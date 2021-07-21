@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <button class="saveButton" @click="saveProgramSettings">Save Settings</button>
+    <button class="saveButton" @click="saveProgramSettings" :disabled="!settingsLoaded">Save Settings</button>
     <br>
     <br>
     <h1>Facebook Settings</h1>
