@@ -39,7 +39,6 @@ def index():
 
 @auth.route('/test')
 def test_api_request():
-    current_app.logger.warning('in test_api_request')
     if 'credentials' not in session:
         return redirect(url_for('auth.authorize', _external=True, _scheme='https'))
 
@@ -62,8 +61,6 @@ def test_api_request():
 
 @auth.route('/authorize')
 def authorize():
-    current_app.logger.warning('in /authorize')
-    
     # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         current_app.config['CLIENT_SECRETS_FILE'], scopes=SCOPES)
@@ -85,7 +82,6 @@ def authorize():
     # Store the state so the callback can verify the auth server response.
     session['state'] = state
 
-    current_app.logger.warning(f'Redirecting {flow.redirect_uri}')
     return redirect(authorization_url)
 
 
@@ -95,7 +91,6 @@ def oauth2callback():
     # verified in the authorization server response.
     state = session['state']
 
-    current_app.logger.warning(f'In Oauth2callback')
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         current_app.config['CLIENT_SECRETS_FILE'], scopes=SCOPES, state=state)
     flow.redirect_uri = url_for(
@@ -115,7 +110,6 @@ def oauth2callback():
 
     credentials = flow.credentials
     session['credentials'] = credentials_to_dict(credentials)
-    current_app.logger.warning(f'credentials: {credentials_to_dict(credentials)}')
     request_info = grequests.Request()
     id_info = id_token.verify_oauth2_token(
         credentials.id_token, request_info, flow.client_config['client_id'])
@@ -123,7 +117,6 @@ def oauth2callback():
         insert_user(id_info['sub'], {
                     'refresh_token': credentials.refresh_token, 'email': id_info['email'], 'name': id_info['name']})
 
-    current_app.logger.warning(f'Redirecting to test')
     return redirect(url_for('auth.test_api_request', _external=True, _scheme='https'))
 
 
