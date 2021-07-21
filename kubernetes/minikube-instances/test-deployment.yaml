@@ -52,7 +52,7 @@ spec:
             configMapKeyRef:
               key: REDIS_URL
               name: env
-        image: 9f3fb9e39a72
+        image: 9f3fb9e39a72 # Image Name of locally built image
         imagePullPolicy: "Never"
         name: app
         ports:

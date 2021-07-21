@@ -12,25 +12,6 @@ services:
       - 8080  
     depends_on:
     - db
-  # celery-worker:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   hostname: app
-  #   command: ./celery-worker.sh
-  #   env_file: 
-  #     - app.env
-  #   depends_on:
-  #   - db
-  #   - redis
-  nginx:
-    image: nginx:latest
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/ssl/
-    ports:
-      - 80:80
-      - 443:443
   db:
     image: mysql:5.7
     hostname: mysql
@@ -42,6 +23,19 @@ services:
   redis:
     image: redis:latest
     hostname: redis
+
+  # celery-worker:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   hostname: app
+  #   command: ./celery-worker.sh
+  #   env_file: 
+  #     - app.env
+  #   depends_on:
+  #   - db
+  #   - redis
+  
   # celery-cron:
   #   build:
   #     context: .
