@@ -1,0 +1,27 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: app
+  annotations:
+    ingress.gcp.kubernetes.io/pre-shared-cert: mcrt-a78bbd8e-2a71-4a93-93c6-e7ec1d48082c
+    ingress.kubernetes.io/backends: '{"k8s-be-31332--ab0449b6830c9e1e":"HEALTHY","k8s1-ab0449b6-default-app-80-799a1761":"HEALTHY"}'
+    ingress.kubernetes.io/https-forwarding-rule: k8s2-fs-940zmibl-default-app-md2h4rpm
+    ingress.kubernetes.io/https-target-proxy: k8s2-ts-940zmibl-default-app-md2h4rpm
+    ingress.kubernetes.io/ssl-cert: mcrt-a78bbd8e-2a71-4a93-93c6-e7ec1d48082c
+    ingress.kubernetes.io/url-map: k8s2-um-940zmibl-default-app-md2h4rpm
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"extensions/v1beta1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"gce","kubernetes.io/ingress.global-static-ip-name":"app-gke-address","networking.gke.io/managed-certificates":"app"},"name":"app","namespace":"default"},"spec":{"rules":[{"host":"missionary-tools.com","http":{"paths":[{"backend":{"serviceName":"app","servicePort":80},"path":"/*"}]}}]}}
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.global-static-ip-name: app-gke-address
+    networking.gke.io/managed-certificates: app
+spec:
+  rules:
+  - host: missionary-tools.com
+    http:
+      paths:
+      - backend:
+          serviceName: app
+          servicePort: 80
+        path: /*

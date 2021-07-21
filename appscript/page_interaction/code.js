@@ -565,7 +565,7 @@ function showAuthenticationSidebar() {
       </div>
       <div class="auth-container-google">
       Click the button to authenticate with Google.
-      <a target="_blank" id="facebook-auth-link" href="https://page-interaction-manager-auth-t7emter6aa-uc.a.run.app/authorize">
+      <a target="_blank" id="facebook-auth-link" href="https://missionary-tools.com/auth/authorize">
           <img id="google-sign-in-button" style="padding:10px; width: 250px; display:block; margin:auto;" src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/btn_google_signin_dark_normal_web.png"></img>
       </a>
       </div>
@@ -894,7 +894,7 @@ function healSheet(context=openContext()){
     return;
   } else if (!_.head(getSelectedPages().data).google_sheets.refresh_token) {
     var htmlOutput = HtmlService
-      .createHtmlOutput(`<a target="_blank" href="https://page-interaction-manager-auth-t7emter6aa-uc.a.run.app/authorize">Click here</a> to fix data not showing up in the sheet.`)
+      .createHtmlOutput(`<a target="_blank" href="https://missionary-tools.com/auth/authorize">Click here</a> to fix data not showing up in the sheet.`)
       .setWidth(300)
       .setHeight(100);
     SpreadsheetApp.getUi().showModalDialog(htmlOutput, "Missing Authentication!");
