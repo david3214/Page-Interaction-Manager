@@ -1,7 +1,13 @@
 import io
 import json
 import os
+import datetime
+import locale
+from ssl import Options
+from urllib.parse import quote, urlencode
+from urllib import request, error
 from flask.app import Flask
+from babel.dates import format_date
 
 import gspread
 import pandas as pd
@@ -11,12 +17,16 @@ from oauthlib.oauth1.rfc5849.endpoints import access_token
 
 from .. import celery, create_app, db
 from ..models import PageDatum, Preference, User
+from ..utils import deep_get
+from .task_dicts import internalVariables
 
 from celery import Celery
 from celery.schedules import crontab
 
 # Placeholder, for flask app created on init
 app = Celery()
+CLIENT_ID = os.environ.get('MT_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('MT_CLIENT_SECRET')
 
 @worker_process_init.connect
 def init_worker(**kwargs):
@@ -104,3 +114,118 @@ def make_auth(page_id):
             "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.scriptapp"]
         auth = Credentials.from_authorized_user_info(data, scopes)
     return auth
+
+@celery.task()
+def insert_row_into_sheet(task_info):
+    try:
+        event_type = None
+        # TODO Need to switch getDataAsString to python equivalent
+        event = task_info
+        try:
+            if event['entry'][0]['messaging']: event_type = 'message'
+        except KeyError:
+            try: 
+                if event['entry'][0]['changes'][0]['value']['item']: event_type = 'reaction'
+            except KeyError:
+                return ('<p>{status: Unprocessed}')
+            
+        eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'}
+        reactionsMap = internalVariables['reactionsMap']
+        page_id = None
+        page_details = None
+
+        if event_type == 'reaction':
+            # Classify the incoming event
+            # Reject stuff we aren't interested in
+            if (event['entry'][0]['changes'][0]['value']['item'] == 'video' or
+            event['entry'][0]['changes'][0]['value']['item'] == 'comment' or
+            event['entry'][0]['changes'][0]['value']['verb'] != 'add'):
+                return ('<p>{}</p>'.format(json.dumps({'status': 'Unprocessed'})))
+            page_id = event['entry'][0]['id']
+
+        elif event_type == 'message':
+            page_id = event['entry'][0]['messaging'][0]['recipient']['id']
+        page =  PageDatum.query.get(page_id)
+        page_details = page.page_details
+        if not page_details:
+            raise ValueError(f'Searched for {page_id} but no result was found')
+        
+        data = {'name': None, 'psid': None, 'facebookClue': None, 'messageOrReaction': None}
+        # Process reactions
+        if event_type == 'reaction':
+            data['messageOrReaction'] = reactionsMap[event['entry'][0]['changes'][0]['value']['reaction_type'].upper()]
+            data['name'] = event['entry'][0]['changes'][0]['value']['from']['name']
+            data['psid'] = event['entry'][0]['changes'][0]['value']['from']['id']
+            data['facebookClue'] = 'https://facebook.com/{}'.format(quote(event['entry'][0]['changes'][0]['value']['post_id']))
+        elif event_type == 'message':
+            data['messageOrReaction'] = event['entry'][0]['messaging'][0]['message']['text']
+            data['psid'] = event['entry'][0]['messaging'][0]['sender']['id']
+            
+            # Get name from Facebook
+            url = 'https://graph.facebook.com/{}?fields=first_name,last_name&access_token={}'.format(data['psid'], page_details['access_token'])
+            results = json.loads(request.urlopen(url).read())
+            data['name'] = results['first_name'] + ' ' + results['last_name']
+            data['facebookClue'] = 'https://www.facebook.com/search/people?q={}'.format(quote(data['name']))
+        
+        # Process current time
+        today = format_date(datetime.datetime.now(), 'MM/dd/yyyy', locale='en_US')
+
+        # Send the results to the sheet as the user
+        spreadsheetId = page_details['google_sheets']['id']
+        sheetName = eventNameMap[event_type]
+        values = [[today, data['name'], '', '', data['psid'], data['facebookClue'], '', '', False, False, data['messageOrReaction'], '', '']]
+        
+        auth = make_auth(page_id)
+        gc = gspread.authorize(auth)
+        sh = gc.open_by_key(page_details['google_sheets']['id'])
+        res = sh.values_append('Ad Likes', {'valueInputOption': 'USER_ENTERED'}, {'values': values})
+
+        return json.dumps({'status': 'Processed'})
+
+        # headers = {
+        #     'Authorization': 'Bearer ' + page_details['google_sheets']['token'],
+        #     'Content-type': 'application/json',
+        # }
+        # url = 'https://sheets.googleapis.com/v4/spreadsheets/{}/values/{}:append?insertDataOption=INSERT_ROWS&valueInputOption=USER_ENTERED'.format(quote(spreadsheetId), quote(sheetName))
+        # req = request.Request(url, urlencode(values).encode('utf-8'), headers)
+        # results = None
+        # try:
+        #     results = request.urlopen(req)
+        # except error.HTTPError as e:
+        #     clientId = ''#
+        #     clientSecret = ''#
+        #     refreshToken = page_details['google_sheets']['refresh_token']
+        #     accessToken = refreshAccessToken(CLIENT_ID, CLIENT_SECRET, refreshToken)
+        #     page_details['google_sheets']['token'] = accessToken
+        #     options['headers']['Authorization'] = 'Bearer ' + page_details['google_sheets']['token']
+            
+        #     try:
+        #         PageDatum.query.get(page_id).update(dict(page_details=json.loads(page_details)))
+        #     except Exception as e:
+        #         print(f'failed to update accessToken: error {e}')
+
+        #     # Will raise a HTTPError: Bad Request if the token is still bad
+        #     results = request.urlopen(req)
+        # print(results.getcode())
+        # return ('<p>Status: Processed</p>')
+    except Exception as e:
+        print(e)
+        return json.dumps({'status': 'Error'})
+
+# def refreshAccessToken(clientId, clientSecret, refreshToken):
+#     url = 'https://accounts.google.com/o/oauth2/token'
+#     data = {
+#         'grant_type':    'refresh_token',
+#         'client_id':     clientId,
+#         'client_secret': clientSecret,
+#         'refresh_token': refreshToken
+#     }
+#     accessToken = ''
+#     try:
+#         req = request.urlopen(url, data=urlencode(data).encode('utf-8'))
+#         req_data = json.loads(req.read())
+#         accessToken = req_data['access_token']
+#     except error.HTTPError as e:
+#         print(f'failed to update accessToken: error {e}')
+#         raise e
+#     return accessToken

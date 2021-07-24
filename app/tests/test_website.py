@@ -2,7 +2,6 @@ import json
 import unittest
 import unittest.mock
 
-import pytest
 from flask import Flask
 
 import unittest

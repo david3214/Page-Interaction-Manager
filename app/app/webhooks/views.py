@@ -15,6 +15,6 @@ def facebook_webhook():
 
     if request.method == "POST":
         payload = request.get_json()
-        celery.send_task(app=celery, name="tasks.insert_row_in_sheet", 
-                            kwargs=payload)
+        celery.send_task(app=celery, name="app.worker.tasks.insert_row_in_sheet", 
+                            kwargs=payload, queue='webhook')
         return ('', 200)

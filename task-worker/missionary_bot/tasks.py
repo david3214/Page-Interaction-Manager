@@ -110,7 +110,6 @@ def get_profile_links(task_info):
 
     for _ in range(NUMBER_OF_BOTS):
         threading.Thread(target=worker, daemon=True, name=f"Profile_worker_{_}", args=[workQ, bots[_]]).start()
-
     workQ.join()
     print('All work completed')
     task_info['results'] = results
