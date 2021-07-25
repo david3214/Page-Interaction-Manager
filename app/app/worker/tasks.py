@@ -25,8 +25,6 @@ from celery.schedules import crontab
 
 # Placeholder, for flask app created on init
 app = Celery()
-CLIENT_ID = os.environ.get('MT_CLIENT_ID')
-CLIENT_SECRET = os.environ.get('MT_CLIENT_SECRET')
 
 @worker_process_init.connect
 def init_worker(**kwargs):
@@ -119,7 +117,8 @@ def make_auth(page_id):
 def insert_row_into_sheet(task_info):
     try:
         event_type = None
-        # TODO Need to switch getDataAsString to python equivalent
+        return_value = None
+        print(task_info)
         event = task_info
         try:
             if event['entry'][0]['messaging']: event_type = 'message'
@@ -127,7 +126,9 @@ def insert_row_into_sheet(task_info):
             try: 
                 if event['entry'][0]['changes'][0]['value']['item']: event_type = 'reaction'
             except KeyError:
-                return ('<p>{status: Unprocessed}')
+                return_value = json.dumps({'status': 'Unprocessed'})
+                print(return_value)
+                return return_value
             
         eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'}
         reactionsMap = internalVariables['reactionsMap']
@@ -140,16 +141,19 @@ def insert_row_into_sheet(task_info):
             if (event['entry'][0]['changes'][0]['value']['item'] == 'video' or
             event['entry'][0]['changes'][0]['value']['item'] == 'comment' or
             event['entry'][0]['changes'][0]['value']['verb'] != 'add'):
-                return ('<p>{}</p>'.format(json.dumps({'status': 'Unprocessed'})))
+                return_value = json.dumps({'status': 'Unprocessed', 'message': 'Reaction was a comment, video, or edited reaction'})
+                print(return_value)
+                return return_value
             page_id = event['entry'][0]['id']
 
         elif event_type == 'message':
             page_id = event['entry'][0]['messaging'][0]['recipient']['id']
         page =  PageDatum.query.get(page_id)
-        page_details = page.page_details
-        if not page_details:
-            raise ValueError(f'Searched for {page_id} but no result was found')
-        
+        try:
+            page_details = page.page_details
+        except AttributeError:
+            raise ValueError(f'Searched for page {page_id} but no result was found')
+
         data = {'name': None, 'psid': None, 'facebookClue': None, 'messageOrReaction': None}
         # Process reactions
         if event_type == 'reaction':
@@ -160,72 +164,36 @@ def insert_row_into_sheet(task_info):
         elif event_type == 'message':
             data['messageOrReaction'] = event['entry'][0]['messaging'][0]['message']['text']
             data['psid'] = event['entry'][0]['messaging'][0]['sender']['id']
-            
             # Get name from Facebook
             url = 'https://graph.facebook.com/{}?fields=first_name,last_name&access_token={}'.format(data['psid'], page_details['access_token'])
-            results = json.loads(request.urlopen(url).read())
+            try:
+                results = json.loads(request.urlopen(url).read())
+            except error.HTTPError as e:
+                raise Exception("Failed to get ({}) user's name from facebook: error {}".format(data['psid'], e))
             data['name'] = results['first_name'] + ' ' + results['last_name']
             data['facebookClue'] = 'https://www.facebook.com/search/people?q={}'.format(quote(data['name']))
         
         # Process current time
         today = format_date(datetime.datetime.now(), 'MM/dd/yyyy', locale='en_US')
-
-        # Send the results to the sheet as the user
-        spreadsheetId = page_details['google_sheets']['id']
-        sheetName = eventNameMap[event_type]
         values = [[today, data['name'], '', '', data['psid'], data['facebookClue'], '', '', False, False, data['messageOrReaction'], '', '']]
         
+        spreadsheetId = page_details['google_sheets']['id']
+        sheetName = eventNameMap[event_type]
+        # Run the auth for editing the page
         auth = make_auth(page_id)
         gc = gspread.authorize(auth)
+
+        # Send the results to the sheet as the user
         sh = gc.open_by_key(page_details['google_sheets']['id'])
-        res = sh.values_append('Ad Likes', {'valueInputOption': 'USER_ENTERED'}, {'values': values})
+        worksheet = sh.worksheet(sheetName)
+        worksheet.append_rows(values, value_input_option='USER_ENTERED')
+        # res = sh.values_append(sheetName, {'valueInputOption': 'USER_ENTERED'}, {'values': values})
 
-        return json.dumps({'status': 'Processed'})
+        return_value = json.dumps({'status': 'Processed'})
+        print(return_value)
+        return return_value
 
-        # headers = {
-        #     'Authorization': 'Bearer ' + page_details['google_sheets']['token'],
-        #     'Content-type': 'application/json',
-        # }
-        # url = 'https://sheets.googleapis.com/v4/spreadsheets/{}/values/{}:append?insertDataOption=INSERT_ROWS&valueInputOption=USER_ENTERED'.format(quote(spreadsheetId), quote(sheetName))
-        # req = request.Request(url, urlencode(values).encode('utf-8'), headers)
-        # results = None
-        # try:
-        #     results = request.urlopen(req)
-        # except error.HTTPError as e:
-        #     clientId = ''#
-        #     clientSecret = ''#
-        #     refreshToken = page_details['google_sheets']['refresh_token']
-        #     accessToken = refreshAccessToken(CLIENT_ID, CLIENT_SECRET, refreshToken)
-        #     page_details['google_sheets']['token'] = accessToken
-        #     options['headers']['Authorization'] = 'Bearer ' + page_details['google_sheets']['token']
-            
-        #     try:
-        #         PageDatum.query.get(page_id).update(dict(page_details=json.loads(page_details)))
-        #     except Exception as e:
-        #         print(f'failed to update accessToken: error {e}')
-
-        #     # Will raise a HTTPError: Bad Request if the token is still bad
-        #     results = request.urlopen(req)
-        # print(results.getcode())
-        # return ('<p>Status: Processed</p>')
     except Exception as e:
-        print(e)
-        return json.dumps({'status': 'Error'})
-
-# def refreshAccessToken(clientId, clientSecret, refreshToken):
-#     url = 'https://accounts.google.com/o/oauth2/token'
-#     data = {
-#         'grant_type':    'refresh_token',
-#         'client_id':     clientId,
-#         'client_secret': clientSecret,
-#         'refresh_token': refreshToken
-#     }
-#     accessToken = ''
-#     try:
-#         req = request.urlopen(url, data=urlencode(data).encode('utf-8'))
-#         req_data = json.loads(req.read())
-#         accessToken = req_data['access_token']
-#     except error.HTTPError as e:
-#         print(f'failed to update accessToken: error {e}')
-#         raise e
-#     return accessToken
+        return_value = json.dumps({'status': 'Error', 'message': str(e)})
+        print(return_value)
+        return return_value

@@ -6,4 +6,4 @@ set -u
 set -x
 set -o pipefail
 
-celery -A celery_worker worker --loglevel=INFO -Q ${CELERY_QUEUE:-results}
+celery -A celery_worker worker --loglevel=INFO -Q ${CELERY_QUEUE:-results,webhook}

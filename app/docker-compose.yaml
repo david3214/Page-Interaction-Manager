@@ -9,7 +9,7 @@ services:
     env_file: 
       - app.env
     expose:
-      - 8080  
+      - 8080
     depends_on:
     - db
   db:
@@ -24,17 +24,17 @@ services:
     image: redis:latest
     hostname: redis
 
-  # celery-worker:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   hostname: app
-  #   command: ./celery-worker.sh
-  #   env_file: 
-  #     - app.env
-  #   depends_on:
-  #   - db
-  #   - redis
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: app
+    command: ./celery-worker.sh
+    env_file: 
+      - app.env
+    depends_on:
+    - db
+    - redis
   
   # celery-cron:
   #   build:
