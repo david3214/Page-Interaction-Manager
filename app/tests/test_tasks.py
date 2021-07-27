@@ -73,7 +73,7 @@ class TaskTestCase(unittest.TestCase):
         for test_data in self.test_data['sample_page_message_fail']:
             results = worker.tasks.insert_row_into_sheet(test_data)
             psid = test_data['entry'][0]['messaging'][0]['sender']['id']
-            self.assertEqual(results, json.dumps({'status': 'Error', 'message': f"Failed to get ({psid}) user's name from facebook: error HTTP Error 400: Bad Request"}))
+            self.assertEqual(results, json.dumps({'status': 'Error', 'retry': False, 'message': f"Failed to get ({psid}) user's name from facebook: error HTTP Error 400: Bad Request"}))
 
 
     def test_insert_row_into_sheet_processed_reactions(self):
@@ -92,10 +92,12 @@ class TaskTestCase(unittest.TestCase):
         for test_data in self.test_data['sample_page_nonexistant_sheet_error']:
             results = worker.tasks.insert_row_into_sheet(test_data)
             page_id = test_data['entry'][0]['id']
-            self.assertEqual(results, json.dumps({'status': 'Error', 'message': f'Searched for page {page_id} but no result was found'}))
+            self.assertEqual(results, json.dumps({'status': 'Error', 'retry': False, 'message': f'Searched for page {page_id} but no result was found'}))
 
     
     def test_insert_row_into_sheet_bad_oath_error(self):
         for test_data in self.test_data['sample_page_oath_error']:
-            results = worker.tasks.insert_row_into_sheet(test_data)
-            self.assertEqual(results, json.dumps({"status": "Error", "message": "('invalid_grant: Bad Request', '{\\n  \"error\": \"invalid_grant\",\\n  \"error_description\": \"Bad Request\"\\n}')"}))
+            try:
+                results = worker.tasks.insert_row_into_sheet(test_data)
+            except Exception as e:
+                self.assertEqual(str(e), json.dumps({"status": "Error", "message": "('invalid_grant: Bad Request', '{\\n  \"error\": \"invalid_grant\",\\n  \"error_description\": \"Bad Request\"\\n}')", "task_info": test_data}))

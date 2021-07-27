@@ -85,6 +85,14 @@ class UnixConfig(ProductionConfig):
         app.logger.addHandler(syslog_handler)
 
 
+class KubernetesConfig(ProductionConfig):
+    CELERY_REDIRECT_STDOUTS_LEVEL = 'INFO'
+    
+    @classmethod
+    def init_app(cls, app):
+        ProductionConfig.init_app(app)
+
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
@@ -92,6 +100,6 @@ config = {
     'heroku': HerokuConfig,
     'docker': DockerConfig,
     'unix': UnixConfig,
-
+    'kubernetes': KubernetesConfig,
     'default': DevelopmentConfig
 }

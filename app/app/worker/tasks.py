@@ -6,6 +6,7 @@ import locale
 from ssl import Options
 from urllib.parse import quote, urlencode
 from urllib import request, error
+from celery.app import autoretry
 from flask.app import Flask
 from babel.dates import format_date
 
@@ -113,22 +114,17 @@ def make_auth(page_id):
         auth = Credentials.from_authorized_user_info(data, scopes)
     return auth
 
-@celery.task()
+@celery.task(autoretry_for=(Exception,), rety_backoff=True, retry_kwargs={'max_retries': 8})
 def insert_row_into_sheet(task_info):
     try:
         event_type = None
-        return_value = None
-        print(task_info)
-        event = task_info
         try:
-            if event['entry'][0]['messaging']: event_type = 'message'
+            if task_info['entry'][0]['messaging']: event_type = 'message'
         except KeyError:
             try: 
-                if event['entry'][0]['changes'][0]['value']['item']: event_type = 'reaction'
+                if task_info['entry'][0]['changes'][0]['value']['item']: event_type = 'reaction'
             except KeyError:
-                return_value = json.dumps({'status': 'Unprocessed'})
-                print(return_value)
-                return return_value
+                return json.dumps({'status': 'Unprocessed'})
             
         eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'}
         reactionsMap = internalVariables['reactionsMap']
@@ -138,38 +134,36 @@ def insert_row_into_sheet(task_info):
         if event_type == 'reaction':
             # Classify the incoming event
             # Reject stuff we aren't interested in
-            if (event['entry'][0]['changes'][0]['value']['item'] == 'video' or
-            event['entry'][0]['changes'][0]['value']['item'] == 'comment' or
-            event['entry'][0]['changes'][0]['value']['verb'] != 'add'):
-                return_value = json.dumps({'status': 'Unprocessed', 'message': 'Reaction was a comment, video, or edited reaction'})
-                print(return_value)
-                return return_value
-            page_id = event['entry'][0]['id']
+            if (task_info['entry'][0]['changes'][0]['value']['item'] == 'video' or
+            task_info['entry'][0]['changes'][0]['value']['item'] == 'comment' or
+            task_info['entry'][0]['changes'][0]['value']['verb'] != 'add'):
+                return json.dumps({'status': 'Unprocessed', 'message': 'Reaction was a comment, video, or edited reaction'})
+            page_id = task_info['entry'][0]['id']
 
         elif event_type == 'message':
-            page_id = event['entry'][0]['messaging'][0]['recipient']['id']
+            page_id = task_info['entry'][0]['messaging'][0]['recipient']['id']
         page =  PageDatum.query.get(page_id)
         try:
             page_details = page.page_details
         except AttributeError:
-            raise ValueError(f'Searched for page {page_id} but no result was found')
+            raise ValueError(json.dumps({'status': 'Error', 'retry': False, 'message': f'Searched for page {page_id} but no result was found'}))
 
         data = {'name': None, 'psid': None, 'facebookClue': None, 'messageOrReaction': None}
         # Process reactions
         if event_type == 'reaction':
-            data['messageOrReaction'] = reactionsMap[event['entry'][0]['changes'][0]['value']['reaction_type'].upper()]
-            data['name'] = event['entry'][0]['changes'][0]['value']['from']['name']
-            data['psid'] = event['entry'][0]['changes'][0]['value']['from']['id']
-            data['facebookClue'] = 'https://facebook.com/{}'.format(quote(event['entry'][0]['changes'][0]['value']['post_id']))
+            data['messageOrReaction'] = reactionsMap[task_info['entry'][0]['changes'][0]['value']['reaction_type'].upper()]
+            data['name'] = task_info['entry'][0]['changes'][0]['value']['from']['name']
+            data['psid'] = task_info['entry'][0]['changes'][0]['value']['from']['id']
+            data['facebookClue'] = 'https://facebook.com/{}'.format(quote(task_info['entry'][0]['changes'][0]['value']['post_id']))
         elif event_type == 'message':
-            data['messageOrReaction'] = event['entry'][0]['messaging'][0]['message']['text']
-            data['psid'] = event['entry'][0]['messaging'][0]['sender']['id']
+            data['messageOrReaction'] = task_info['entry'][0]['messaging'][0]['message']['text']
+            data['psid'] = task_info['entry'][0]['messaging'][0]['sender']['id']
             # Get name from Facebook
             url = 'https://graph.facebook.com/{}?fields=first_name,last_name&access_token={}'.format(data['psid'], page_details['access_token'])
             try:
                 results = json.loads(request.urlopen(url).read())
             except error.HTTPError as e:
-                raise Exception("Failed to get ({}) user's name from facebook: error {}".format(data['psid'], e))
+                raise Exception(json.dumps({'status': 'Error', 'retry': False, 'message': "Failed to get ({}) user's name from facebook: error {}".format(data['psid'], e)}))
             data['name'] = results['first_name'] + ' ' + results['last_name']
             data['facebookClue'] = 'https://www.facebook.com/search/people?q={}'.format(quote(data['name']))
         
@@ -177,23 +171,21 @@ def insert_row_into_sheet(task_info):
         today = format_date(datetime.datetime.now(), 'MM/dd/yyyy', locale='en_US')
         values = [[today, data['name'], '', '', data['psid'], data['facebookClue'], '', '', False, False, data['messageOrReaction'], '', '']]
         
-        spreadsheetId = page_details['google_sheets']['id']
-        sheetName = eventNameMap[event_type]
         # Run the auth for editing the page
         auth = make_auth(page_id)
         gc = gspread.authorize(auth)
 
         # Send the results to the sheet as the user
+        sheetName = eventNameMap[event_type]
         sh = gc.open_by_key(page_details['google_sheets']['id'])
         worksheet = sh.worksheet(sheetName)
         worksheet.append_rows(values, value_input_option='USER_ENTERED')
-        # res = sh.values_append(sheetName, {'valueInputOption': 'USER_ENTERED'}, {'values': values})
 
         return_value = json.dumps({'status': 'Processed'})
-        print(return_value)
         return return_value
-
+    except KeyError as k:
+        return json.dumps({'status': 'Unprocessed', 'KeyError': str(k), 'task_info': task_info})
     except Exception as e:
-        return_value = json.dumps({'status': 'Error', 'message': str(e)})
-        print(return_value)
-        return return_value
+        if not '\"retry\": false' in str(e):
+            raise Exception(json.dumps({'status': 'Error', 'message': str(e), 'task_info': task_info}))
+        else: return str(e)
