@@ -913,6 +913,46 @@ function updatePageRefreshToken(){
   return true
 }
 
+
+function test_authorization_status(){
+
+  // let revoke = UrlFetchApp.fetch(`https://oauth2.googleapis.com/revoke`, {method: 'post', payload: `token=${old_refresh_token}`})
+
+  // Logger.log(revoke)
+
+  // var clientId = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_ID");
+  // var clientSecret = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_SECRET");
+  // var page_details = getPageDetails(108536547329771)
+  // var refreshToken = page_details.google_sheets.refresh_token;
+
+  // let valid_status = {user_token, facebook_token}
+  // try{
+  //   refreshAccessToken(clientId, clientSecret, refreshToken)
+  //   valid_status.facebook_token = true
+  //   return valid_status
+  // } catch (err) {
+  //   if (!err.message || (!err.message.includes('Bad Request') && !err.message.includes('Token has been expired or revoked'))) throw err
+  //   valid_status.facebook_token = false
+  // }
+
+  // const userId = getEffectiveUserId()
+  // const user = getUser(userId)
+
+  // if (!user.refresh_token)
+  //   valid_status.user_token = false
+  // else {
+  //   try{
+  //       refreshAccessToken(clientId, clientSecret, user.refresh_token)
+  //       valid_status.user_token = true
+  //   } catch (err) {
+  //     if (!err.message || (!err.message.includes('Bad Request') && !err.message.includes('Token has been expired or revoked'))) throw err
+  //     valid_status.user_token = false
+  //   }
+  // }
+  
+  // return valid_status
+}
+
 // TODO Use the time that facebook gives for the event occurence
 // TODO convert that time to the timezone of the sheet
 
