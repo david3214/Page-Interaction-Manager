@@ -105,6 +105,15 @@
           src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/continue-with-facebook.png"></img>
       </a>
     </div>
+    <div v-if="!user_google_auth">
+      <div class="auth-container-google">
+        <a target="_blank" id="facebook-auth-link" href="https://missionary-tools.com/auth/authorize">
+            <img id="google-sign-in-button" style="padding:10px; width: 250px; display:block; margin:auto;" src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/btn_google_signin_dark_normal_web.png"></img>
+        </a>
+      </div>
+      <p>Click connect after signing in again</p>
+      <button @click='updateRefreshToken'>Connect Sheet to Account</button>
+    </div>
     <div v-if="JSON.parse(programSettings).hasOwnProperty('experimental')">
       <h1>Profile Link Tool</h1>
       <p>Copy the program input to input file</p>

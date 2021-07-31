@@ -12,6 +12,22 @@ var defaultUserSettings = {
     },
 };
 
+var headerColumns = {
+  'Date': 1,
+  'Name': 2,
+  'Gender': 3,
+  'Profile Link': 4,
+  'PSID': 5,
+  'Source': 6,
+  'Assigment': 7,
+  'Status': 8,
+  '@Sac': 9,
+  'On Date': 10,
+  'Data': 11,
+  'Notes': 12, 
+  'Counter': 13
+}
+
 var internalVariables = {
   reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
   genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
@@ -847,6 +863,54 @@ function shuffle(context=openContext()){
   var finalResults = _.concat(values, hidden)
   context.values = finalResults
   return context
+}
+
+function getGoogleAuthStatus(){
+
+  // let revoke = UrlFetchApp.fetch(`https://oauth2.googleapis.com/revoke`, {method: 'post', payload: `token=${old_refresh_token}`})
+  
+  var clientId = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_ID");
+  var clientSecret = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_SECRET");
+  let valid_status = {user_status, facebook_status}
+
+  // Check if a valid token is tied to the page
+  const selectedPage = getSelectedPages().data[0]
+  let fbRefreshToken = selectedPage ? selectedPage.google_sheets.refresh_token : undefined
+  if (!fbRefreshToken){
+    valid_status.facebook_status = false
+  } else {
+    try {
+      refreshAccessToken(clientId, clientSecret, fbRefreshToken)
+      valid_status.facebook_status = true
+      return valid_status
+    } catch (err) {
+      if (!err.message || (!err.message.includes('Bad Request') && !err.message.includes('Token has been expired or revoked'))) throw err
+      valid_status.facebook_status = false
+    }
+  }
+
+  // Check if a valid token is tied to the user
+  const userId = getEffectiveUserId()
+  const user = getUser(userId)
+
+  if (!user.refresh_token || user.refresh_token == fbRefreshToken)
+    valid_status.user_status = false
+  else {
+    try{
+        refreshAccessToken(clientId, clientSecret, user.refresh_token)
+        valid_status.user_status = true
+    } catch (err) {
+      if (!err.message || (!err.message.includes('Bad Request') && !err.message.includes('Token has been expired or revoked'))) throw err
+      valid_status.user_status = false
+    }
+  }
+  
+  return valid_status
+}
+
+function updatePageRefreshToken(){
+  saveFacebookPagesDetails(getSelectedPages())
+  return true
 }
 
 // TODO Use the time that facebook gives for the event occurence

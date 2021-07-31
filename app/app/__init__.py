@@ -22,13 +22,6 @@ def create_app(config_name="default"):
         config[config_name].init_app(app)
         db.init_app(app)
     
-    @app.teardown_request
-    def clear_db(response_or_exc):
-        try:
-            db.session.remove()
-        except AttributeError:
-            pass
-        return response_or_exc
 
     celery.conf.update(app.config)
     

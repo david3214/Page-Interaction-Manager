@@ -13,7 +13,7 @@ from babel.dates import format_date
 
 import gspread
 import pandas as pd
-from celery.signals import worker_process_init, worker_process_shutdown
+from celery.signals import worker_process_init, worker_process_shutdown, task_postrun
 from google.oauth2.credentials import Credentials, exceptions
 from oauthlib.oauth1.rfc5849.endpoints import access_token
 
@@ -28,6 +28,7 @@ from celery.schedules import crontab
 # Placeholder, for flask app created on init
 app = Celery()
 
+
 @worker_process_init.connect
 def init_worker(**kwargs):
     try:
@@ -40,15 +41,24 @@ def init_worker(**kwargs):
         app = create_app(os.getenv('FLASK_CONFIG') or 'default')
         app.app_context().push()
 
+
 @worker_process_shutdown.connect
 def shutdown_worker(**kwargs):
     if db.session:
         db.session.close()
 
+
+@task_postrun.connect
+def shutdown_task(**kwargs):
+    if db.session:
+        db.session.remove()
+
+
 @celery.task()
 def test_task(task_info):
     task_info['results'] = task_info['text']
     return task_info
+
 
 @celery.task()
 def update_all_profile_links():
@@ -80,6 +90,7 @@ def update_all_profile_links():
             print(f"error: {result}")
     return True
 
+
 @celery.task(name='app.worker.process_results')
 def process_result(task_info):
     if task_info['task_name'] == "missionary_bot.tasks.get_profile_links":
@@ -108,6 +119,7 @@ def process_result(task_info):
         print(task_info)
         return True
 
+
 def make_auth(page_id):
     results = db.session.query(PageDatum).get(page_id)
     token_path = os.environ.get('CLIENT_SECRETS_FILE')
@@ -121,6 +133,7 @@ def make_auth(page_id):
             "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.scriptapp"]
         auth = Credentials.from_authorized_user_info(data, scopes)
     return auth
+
 
 @celery.task(autoretry_for=(Exception,), rety_backoff=True, retry_kwargs={'max_retries': 8})
 def insert_row_into_sheet(task_info):
