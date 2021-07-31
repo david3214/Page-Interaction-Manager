@@ -1,6 +1,7 @@
 # coding: utf-8
 from . import db
 
+
 class PageDatum(db.Model):
     __tablename__ = 'page_data'
 
@@ -11,7 +12,8 @@ class PageDatum(db.Model):
 class Preference(db.Model):
     __tablename__ = 'preferences'
 
-    sheet_id = db.Column(db.String(100, 'utf8mb4_unicode_ci'), primary_key=True)
+    sheet_id = db.Column(
+        db.String(100, 'utf8mb4_unicode_ci'), primary_key=True)
     preference = db.Column(db.JSON, nullable=False)
 
 

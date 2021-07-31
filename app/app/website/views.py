@@ -6,10 +6,12 @@ from . import website
 def resource_not_found(e):
     return jsonify(error=str(e)), 404
 
+
 @website.errorhandler(500)
 def internal_error(error):
     current_app.logger.exception(error)
     return ("<p>An Internal Error has occured</p>")
+
 
 @website.route("/")
 def home_page():
@@ -49,4 +51,3 @@ def google_verification():
 @website.route('/assets/<path:path>')
 def send_assets(path):
     return send_from_directory('assets', path)
-

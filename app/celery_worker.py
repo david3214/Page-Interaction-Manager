@@ -6,7 +6,7 @@ foo = create_app(os.getenv('FLASK_CONFIG') or 'default')
 foo.app_context().push()
 
 celery.conf.CELERYBEAT_SCHEDULE = {
-    "run-every-ten-seconds":{
+    "run-every-ten-seconds": {
         "task": "app.worker.tasks.update_all_profile_links",
         "schedule": crontab(minute=0, hour='*/6'),
         "options": {'queue': 'results'}
