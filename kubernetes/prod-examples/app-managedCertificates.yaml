@@ -1,0 +1,9 @@
+---
+apiVersion: networking.gke.io/v1beta2
+kind: ManagedCertificate
+metadata:
+  name: app
+spec:
+  domains:
+    - missionary-tools.com
+    - www.missionary-tools.com

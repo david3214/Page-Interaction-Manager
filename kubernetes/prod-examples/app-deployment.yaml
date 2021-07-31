@@ -1,0 +1,381 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    autopilot.gke.io/resource-adjustment: '{"input":{"containers":[{"limits":{"cpu":"100m","ephemeral-storage":"20Mi","memory":"750Mi"},"requests":{"cpu":"50m","ephemeral-storage":"5Mi","memory":"350Mi"}},{"limits":{"cpu":"100m","ephemeral-storage":"20Mi","memory":"750Mi"},"requests":{"cpu":"20m","ephemeral-storage":"5Mi","memory":"400Mi"}}]},"output":{"containers":[{"limits":{"cpu":"230m","ephemeral-storage":"10Mi","memory":"350Mi"},"requests":{"cpu":"230m","ephemeral-storage":"10Mi","memory":"350Mi"}},{"limits":{"cpu":"20m","ephemeral-storage":"10Mi","memory":"400Mi"},"requests":{"cpu":"20m","ephemeral-storage":"10Mi","memory":"400Mi"}}]},"modified":true}'
+    deployment.kubernetes.io/revision: "6"
+  creationTimestamp: "2021-07-11T23:56:07Z"
+  generation: 6
+  labels:
+    app: app
+  managedFields:
+  - apiVersion: apps/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+        f:labels:
+          .: {}
+          f:app: {}
+      f:spec:
+        f:progressDeadlineSeconds: {}
+        f:replicas: {}
+        f:revisionHistoryLimit: {}
+        f:selector:
+          f:matchLabels:
+            .: {}
+            f:app: {}
+        f:strategy:
+          f:rollingUpdate:
+            .: {}
+            f:maxSurge: {}
+            f:maxUnavailable: {}
+          f:type: {}
+        f:template:
+          f:metadata:
+            f:labels:
+              .: {}
+              f:app: {}
+          f:spec:
+            f:containers:
+              k:{"name":"app"}:
+                .: {}
+                f:env:
+                  .: {}
+                  k:{"name":"CELERY_BROKER_URL"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:configMapKeyRef:
+                        .: {}
+                        f:key: {}
+                        f:name: {}
+                  k:{"name":"CELERY_RESULT_BACKEND"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:configMapKeyRef:
+                        .: {}
+                        f:key: {}
+                        f:name: {}
+                  k:{"name":"CLIENT_SECRETS_FILE"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:configMapKeyRef:
+                        .: {}
+                        f:key: {}
+                        f:name: {}
+                  k:{"name":"DATABASE_URL"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:configMapKeyRef:
+                        .: {}
+                        f:key: {}
+                        f:name: {}
+                  k:{"name":"FLASK_CONFIG"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:configMapKeyRef:
+                        .: {}
+                        f:key: {}
+                        f:name: {}
+                  k:{"name":"PORT"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:configMapKeyRef:
+                        .: {}
+                        f:key: {}
+                        f:name: {}
+                  k:{"name":"REDIS_URL"}:
+                    .: {}
+                    f:name: {}
+                    f:valueFrom:
+                      .: {}
+                      f:configMapKeyRef:
+                        .: {}
+                        f:key: {}
+                        f:name: {}
+                f:name: {}
+                f:ports:
+                  .: {}
+                  k:{"containerPort":5000,"protocol":"TCP"}:
+                    .: {}
+                    f:containerPort: {}
+                    f:protocol: {}
+                f:resources:
+                  .: {}
+                  f:limits: {}
+                  f:requests: {}
+                f:terminationMessagePath: {}
+                f:terminationMessagePolicy: {}
+              k:{"name":"cloud-sql-proxy"}:
+                .: {}
+                f:command: {}
+                f:image: {}
+                f:imagePullPolicy: {}
+                f:name: {}
+                f:resources:
+                  .: {}
+                  f:limits: {}
+                  f:requests: {}
+                f:securityContext:
+                  .: {}
+                  f:runAsNonRoot: {}
+                f:terminationMessagePath: {}
+                f:terminationMessagePolicy: {}
+                f:volumeMounts:
+                  .: {}
+                  k:{"mountPath":"/cloudsql"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                  k:{"mountPath":"/secrets/cloudsql"}:
+                    .: {}
+                    f:mountPath: {}
+                    f:name: {}
+                    f:readOnly: {}
+            f:dnsPolicy: {}
+            f:hostname: {}
+            f:restartPolicy: {}
+            f:schedulerName: {}
+            f:securityContext: {}
+            f:terminationGracePeriodSeconds: {}
+            f:volumes:
+              .: {}
+              k:{"name":"cloudsql"}:
+                .: {}
+                f:emptyDir: {}
+                f:name: {}
+              k:{"name":"cloudsql-instance-credentials"}:
+                .: {}
+                f:name: {}
+                f:secret:
+                  .: {}
+                  f:defaultMode: {}
+                  f:secretName: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2021-07-11T23:56:07Z"
+  - apiVersion: apps/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:spec:
+        f:template:
+          f:spec:
+            f:containers:
+              k:{"name":"app"}:
+                f:command: {}
+                f:image: {}
+                f:imagePullPolicy: {}
+                f:resources:
+                  f:limits:
+                    f:cpu: {}
+                    f:ephemeral-storage: {}
+                    f:memory: {}
+                  f:requests:
+                    f:cpu: {}
+                    f:ephemeral-storage: {}
+                    f:memory: {}
+              k:{"name":"cloud-sql-proxy"}:
+                f:resources:
+                  f:limits:
+                    f:cpu: {}
+                    f:ephemeral-storage: {}
+                    f:memory: {}
+                  f:requests:
+                    f:cpu: {}
+                    f:ephemeral-storage: {}
+                    f:memory: {}
+    manager: GoogleCloudConsole
+    operation: Update
+    time: "2021-07-20T20:12:28Z"
+  - apiVersion: apps/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:deployment.kubernetes.io/revision: {}
+      f:status:
+        f:availableReplicas: {}
+        f:conditions:
+          .: {}
+          k:{"type":"Available"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:lastUpdateTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Progressing"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:lastUpdateTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+        f:observedGeneration: {}
+        f:readyReplicas: {}
+        f:replicas: {}
+        f:updatedReplicas: {}
+    manager: kube-controller-manager
+    operation: Update
+    time: "2021-07-20T20:20:51Z"
+  name: app
+  namespace: default
+  resourceVersion: "7646429"
+  selfLink: /apis/apps/v1/namespaces/default/deployments/app
+  uid: ae263623-1b4c-447b-8cf0-bb48b3697d9f
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: app
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - command:
+        - ./create-app.sh
+        env:
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: CELERY_BROKER_URL
+              name: env
+        - name: CELERY_RESULT_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: CELERY_RESULT_BACKEND
+              name: env
+        - name: CLIENT_SECRETS_FILE
+          valueFrom:
+            configMapKeyRef:
+              key: CLIENT_SECRETS_FILE
+              name: env
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: DATABASE_URL
+              name: env
+        - name: FLASK_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              key: FLASK_CONFIG
+              name: env
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: PORT
+              name: env
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              key: REDIS_URL
+              name: env
+        image: us-central1-docker.pkg.dev/eighth-vehicle-287322/missionary-tools-docker/app:v2
+        imagePullPolicy: IfNotPresent
+        name: app
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 230m
+            ephemeral-storage: 10Mi
+            memory: 350Mi
+          requests:
+            cpu: 230m
+            ephemeral-storage: 10Mi
+            memory: 350Mi
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      - command:
+        - /cloud_sql_proxy
+        - -instances=eighth-vehicle-287322:us-central1:datab=tcp:0.0.0.0:3306
+        - -credential_file=/secrets/cloudsql/credentials.json
+        image: gcr.io/cloudsql-docker/gce-proxy:1.17
+        imagePullPolicy: IfNotPresent
+        name: cloud-sql-proxy
+        resources:
+          limits:
+            cpu: 20m
+            ephemeral-storage: 10Mi
+            memory: 400Mi
+          requests:
+            cpu: 20m
+            ephemeral-storage: 10Mi
+            memory: 400Mi
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          runAsNonRoot: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /secrets/cloudsql
+          name: cloudsql-instance-credentials
+          readOnly: true
+        - mountPath: /cloudsql
+          name: cloudsql
+      dnsPolicy: ClusterFirst
+      hostname: app
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: cloudsql-instance-credentials
+        secret:
+          defaultMode: 420
+          secretName: cloudsql-instance-credentials
+      - emptyDir: {}
+        name: cloudsql
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2021-07-12T01:11:21Z"
+    lastUpdateTime: "2021-07-20T20:18:22Z"
+    message: ReplicaSet "app-5bcdd6f954" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2021-07-20T20:20:51Z"
+    lastUpdateTime: "2021-07-20T20:20:51Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 6
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

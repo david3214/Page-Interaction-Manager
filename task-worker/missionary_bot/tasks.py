@@ -18,7 +18,7 @@ celery = Celery('tasks', broker=os.getenv("RABBITMQ_URL"), backend=os.getenv("RE
 #    "https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/qr-code/jesus_template.png").read())
 
 bots = []
-NUMBER_OF_BOTS = 4
+NUMBER_OF_BOTS = 2
 
 def check_bots_health():
     global bots
@@ -110,7 +110,6 @@ def get_profile_links(task_info):
 
     for _ in range(NUMBER_OF_BOTS):
         threading.Thread(target=worker, daemon=True, name=f"Profile_worker_{_}", args=[workQ, bots[_]]).start()
-
     workQ.join()
     print('All work completed')
     task_info['results'] = results

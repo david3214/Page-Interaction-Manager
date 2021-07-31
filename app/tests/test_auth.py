@@ -1,15 +1,9 @@
+import unittest
 import json
-import unittest
-import unittest.mock
-
-from flask import Flask
-
-import unittest
-from flask import current_app, url_for
+from flask import current_app
 from app import create_app, db
 
-
-class WebsiteTestCase(unittest.TestCase):
+class APITestCase(unittest.TestCase):
     def setUp(self):
         self.app = create_app('testing')
         self.app_context = self.app.app_context()
@@ -21,7 +15,3 @@ class WebsiteTestCase(unittest.TestCase):
         db.session.remove()
         db.drop_all()
         self.app_context.pop()
-
-    def test_home_page(self):
-        response = self.client.get('/')
-        self.assertEquals(response.status_code, 200)

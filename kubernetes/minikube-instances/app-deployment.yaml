@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: app
+  name: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app 
+        env:
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: CELERY_BROKER_URL
+              name: env
+        - name: CELERY_RESULT_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              key: CELERY_RESULT_BACKEND
+              name: env
+        - name: CLIENT_SECRETS_FILE
+          valueFrom:
+            configMapKeyRef:
+              key: CLIENT_SECRETS_FILE
+              name: env
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: DATABASE_URL
+              name: env
+        - name: FLASK_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              key: FLASK_CONFIG
+              name: env
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: PORT
+              name: env
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              key: REDIS_URL
+              name: env
+        image: app:latest
+        imagePullPolicy: "Never"
+        command: 
+          - './create-app.sh'
+        ports:
+        - containerPort: 5000
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu:    "500m"
+          limits:
+            memory: "2Gi"
+            cpu: 500m
+      hostname: app
+      restartPolicy: Always
+status: {}

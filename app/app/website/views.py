@@ -1,4 +1,4 @@
-from flask import (jsonify, render_template, send_from_directory)
+from flask import (jsonify, render_template, send_from_directory, current_app)
 from . import website
 
 
@@ -6,6 +6,10 @@ from . import website
 def resource_not_found(e):
     return jsonify(error=str(e)), 404
 
+@website.errorhandler(500)
+def internal_error(error):
+    current_app.logger.exception(error)
+    return ("<p>An Internal Error has occured</p>")
 
 @website.route("/")
 def home_page():

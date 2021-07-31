@@ -27,7 +27,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite://'
+        'sqlite://' + os.path.join(os.path.dirname(basedir), '/test/data-test.sqlite')
     WTF_CSRF_ENABLED = False
 
 
@@ -85,6 +85,14 @@ class UnixConfig(ProductionConfig):
         app.logger.addHandler(syslog_handler)
 
 
+class KubernetesConfig(ProductionConfig):
+    CELERY_REDIRECT_STDOUTS_LEVEL = 'INFO'
+    
+    @classmethod
+    def init_app(cls, app):
+        ProductionConfig.init_app(app)
+
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
@@ -92,6 +100,6 @@ config = {
     'heroku': HerokuConfig,
     'docker': DockerConfig,
     'unix': UnixConfig,
-
+    'kubernetes': KubernetesConfig,
     'default': DevelopmentConfig
 }

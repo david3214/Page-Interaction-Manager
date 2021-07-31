@@ -15,12 +15,15 @@ new Vue({
     addStatus: '',
     statusMerge: true,
     statusHide: false,
+    settingsLoaded: false,
     adSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
     messageSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
     formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
     scraperInput: '',
     profileList: '',
     facebookAuthLink: undefined,
+    showGoogleSignin: false,
+    showConnectPageToGoogle: false,
     debug_functions: ["showDebugSidebar", "tearDownSheet", "deactivateTriggers", "toastSheetInfo", "trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet",
       "sortData", "test_doLogicPageMessages", "formatSheet",
       "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
@@ -29,7 +32,9 @@ new Vue({
   },
   methods: {
     saveProgramSettings: function () {
-      google.script.run.withSuccessHandler().saveProgramSettings(this.formatData());
+      google.script.run.withSuccessHandler(()=>{
+        google.script.run.withSuccessHandler().formatSheet()
+      }).saveProgramSettings(this.formatData());
       google.script.run.withSuccessHandler().updateSheet();
     },
     updateProgramSettings: function (settings) {
@@ -63,6 +68,22 @@ new Vue({
     //     google.script.run.withSuccessHandler().healSheet();
     //     google.script.run.withSuccessHandler().updateSheet();
     // },
+    updateRefreshToken: function(){
+      google.script.run.withSuccessHandler(this.updateGoogleAuthLink).updatePageRefreshToken()
+    },
+    updateGoogleAuthLink: function(googleAuthorized){
+      const {user_status, facebook_status} = googleAuthorized
+      if (!facebook_token && user_token)
+        this.showConnectPageToGoogle = true
+      else if (!facebook_token && !user_token) {
+        this.showGoogleSignin = true  
+        this.showConnectPageToGoogle = true
+      }
+      else{
+        this.showConnectPageToGoogle = false
+        this.showGoogleSignin = false
+      }
+    },
     updateFacebookAuthLink: function (facebookAuthLink) {
       this.facebookAuthLink = facebookAuthLink;
     },
@@ -85,6 +106,7 @@ new Vue({
       })
       this.selectedUnit = 'Add a unit'
       this.selectedStatus = 'Add a status'
+      this.settingsLoaded = true
     },
     formatData: function () {
       const finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }
@@ -171,6 +193,7 @@ new Vue({
     google.script.run.withSuccessHandler(this.updateSelectedPage).getSelectedPages();
     google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
     google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
+    google.script.run.withSuccessHandler(this.updateGoogleAuthorization).getGoogleAuthStatus();
   },
   watch: {
     selectedUnit: function () {

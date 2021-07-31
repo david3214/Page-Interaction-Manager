@@ -12,6 +12,22 @@ var defaultUserSettings = {
     },
 };
 
+var headerColumns = {
+  'Date': 1,
+  'Name': 2,
+  'Gender': 3,
+  'Profile Link': 4,
+  'PSID': 5,
+  'Source': 6,
+  'Assigment': 7,
+  'Status': 8,
+  '@Sac': 9,
+  'On Date': 10,
+  'Data': 11,
+  'Notes': 12, 
+  'Counter': 13
+}
+
 var internalVariables = {
   reactionsMap : {"LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡'},
   genderMap : {'male': '#6ca0dc', 'female': '#f8b9d4'},
@@ -528,7 +544,6 @@ function updateSheet(e=undefined, context=openContext()){
   mergeData(context);
   sortData(context);
   removeBadRows(context);
-  formatSheet(context);
   context.writeRange();
   SpreadsheetApp.flush();
   lock.releaseLock();
@@ -566,7 +581,7 @@ function showAuthenticationSidebar() {
       </div>
       <div class="auth-container-google">
       Click the button to authenticate with Google.
-      <a target="_blank" id="facebook-auth-link" href="https://page-interaction-manager-auth-t7emter6aa-uc.a.run.app/authorize">
+      <a target="_blank" id="facebook-auth-link" href="https://missionary-tools.com/auth/authorize">
           <img id="google-sign-in-button" style="padding:10px; width: 250px; display:block; margin:auto;" src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/btn_google_signin_dark_normal_web.png"></img>
       </a>
       </div>
@@ -850,6 +865,54 @@ function shuffle(context=openContext()){
   return context
 }
 
+function getGoogleAuthStatus(){
+
+  // let revoke = UrlFetchApp.fetch(`https://oauth2.googleapis.com/revoke`, {method: 'post', payload: `token=${old_refresh_token}`})
+  
+  var clientId = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_ID");
+  var clientSecret = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_SECRET");
+  let valid_status = {user_status, facebook_status}
+
+  // Check if a valid token is tied to the page
+  const selectedPage = getSelectedPages().data[0]
+  let fbRefreshToken = selectedPage ? selectedPage.google_sheets.refresh_token : undefined
+  if (!fbRefreshToken){
+    valid_status.facebook_status = false
+  } else {
+    try {
+      refreshAccessToken(clientId, clientSecret, fbRefreshToken)
+      valid_status.facebook_status = true
+      return valid_status
+    } catch (err) {
+      if (!err.message || (!err.message.includes('Bad Request') && !err.message.includes('Token has been expired or revoked'))) throw err
+      valid_status.facebook_status = false
+    }
+  }
+
+  // Check if a valid token is tied to the user
+  const userId = getEffectiveUserId()
+  const user = getUser(userId)
+
+  if (!user.refresh_token || user.refresh_token == fbRefreshToken)
+    valid_status.user_status = false
+  else {
+    try{
+        refreshAccessToken(clientId, clientSecret, user.refresh_token)
+        valid_status.user_status = true
+    } catch (err) {
+      if (!err.message || (!err.message.includes('Bad Request') && !err.message.includes('Token has been expired or revoked'))) throw err
+      valid_status.user_status = false
+    }
+  }
+  
+  return valid_status
+}
+
+function updatePageRefreshToken(){
+  saveFacebookPagesDetails(getSelectedPages())
+  return true
+}
+
 // TODO Use the time that facebook gives for the event occurence
 // TODO convert that time to the timezone of the sheet
 
@@ -895,7 +958,7 @@ function healSheet(context=openContext()){
     return;
   } else if (!_.head(getSelectedPages().data).google_sheets.refresh_token) {
     var htmlOutput = HtmlService
-      .createHtmlOutput(`<a target="_blank" href="https://page-interaction-manager-auth-t7emter6aa-uc.a.run.app/authorize">Click here</a> to fix data not showing up in the sheet.`)
+      .createHtmlOutput(`<a target="_blank" href="https://missionary-tools.com/auth/authorize">Click here</a> to fix data not showing up in the sheet.`)
       .setWidth(300)
       .setHeight(100);
     SpreadsheetApp.getUi().showModalDialog(htmlOutput, "Missing Authentication!");

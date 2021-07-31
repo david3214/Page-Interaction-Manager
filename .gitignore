@@ -23,3 +23,9 @@ kubectl.*
 *.env
 app/tests/page_data.json
 app/tests/page_data_tst.json
+env-configmap.yaml
+certificate.crt
+private.key
+database_vars.js
+Pipfile
+data-teste.sqlite
