@@ -1,5 +1,6 @@
 import os
-import threading, queue
+import threading
+import queue
 from multiprocessing import Process, cpu_count
 import logging
 from PIL import Image
@@ -13,12 +14,14 @@ from celery.signals import worker_process_init, worker_shutdown
 from .bot import MissionaryBot
 from .config import config
 
-celery = Celery('tasks', broker=os.getenv("RABBITMQ_URL"), backend=os.getenv("REDISCLOUD_URL"))
-#jesus_bg = Image.open(urllib.request.urlopen(
+celery = Celery('tasks', broker=os.getenv("RABBITMQ_URL"),
+                backend=os.getenv("REDISCLOUD_URL"))
+# jesus_bg = Image.open(urllib.request.urlopen(
 #    "https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/qr-code/jesus_template.png").read())
 
 bots = []
 NUMBER_OF_BOTS = 2
+
 
 def check_bots_health():
     global bots
@@ -29,6 +32,7 @@ def check_bots_health():
     except:
         print('Bad Webdriver')
         return False
+
 
 def create_bots(**kwargs):
     global bots, NUMBER_OF_BOTS
@@ -47,24 +51,30 @@ def create_bots(**kwargs):
         bot.language = os.getenv("FACEBOOK_LANGUAGE")
         bot.authenticate_with_facebook()
         bots.append(bot)
-        sleep(5) # Don't like but facebook don't like to multiple simultaeneous logins
+        sleep(5)  # Don't like but facebook don't like to multiple simultaeneous logins
+
 
 @worker_process_init.connect
 def init_worker(**kwargs):
     global bots
     create_bots()
 
+
 @worker_shutdown.connect
 def shutdown_worker(**kwargs):
     for i in range(len(bots)):
         bots[i].wd.quit()
+
 
 @celery.task(reply_to='results')
 def test_task(task_info):
     task_info['results'] = task_info['text']
     return task_info
 
+
 results = {}
+
+
 @celery.task(reply_to='results')
 def get_profile_links(task_info):
     """
@@ -79,6 +89,7 @@ def get_profile_links(task_info):
         create_bots()
     workQ = queue.Queue()
     resultsQ = queue.Queue()
+
     def worker(queue, bot):
         global results
         try:
@@ -88,7 +99,8 @@ def get_profile_links(task_info):
                 for name in item[1]:
                     if name in results.keys():
                         item[1].remove(name)
-                profile_links = bot.scrape_post_reactions_for_people(item[0], item[1])
+                profile_links = bot.scrape_post_reactions_for_people(
+                    item[0], item[1])
                 resultsQ.put(profile_links)
                 print(f'Finished {item}')
                 queue.task_done()
@@ -96,6 +108,7 @@ def get_profile_links(task_info):
                     break
         except:
             pass
+
     def merge_results(queue):
         global results
         while True:
@@ -106,15 +119,18 @@ def get_profile_links(task_info):
     for key, value in task_info['data'].items():
         workQ.put([key, value])
     print('All task requests sent\n', end='')
-    threading.Thread(target=merge_results, daemon=True, args=[resultsQ], name="Merge Results").start()
+    threading.Thread(target=merge_results, daemon=True, args=[
+                     resultsQ], name="Merge Results").start()
 
     for _ in range(NUMBER_OF_BOTS):
-        threading.Thread(target=worker, daemon=True, name=f"Profile_worker_{_}", args=[workQ, bots[_]]).start()
+        threading.Thread(target=worker, daemon=True, name=f"Profile_worker_{_}", args=[
+                         workQ, bots[_]]).start()
     workQ.join()
     print('All work completed')
     task_info['results'] = results
 
     return task_info
+
 
 @celery.task
 def find_member_profiles(task_info):
@@ -127,6 +143,8 @@ def find_member_profiles(task_info):
     except Exception as e:
         logging.error(e)
         return f"{e} Didn't completed loading Facebook profile information"
+
+
 """
 @celery.task
 def create_pass_along_cards(task_info):
@@ -156,21 +174,26 @@ def insert_row_in_sheet(task_info):
     """ Insert a row into the users sheet and into the db"""
     pass
 
+
 @celery.task
 def add_friend(task_info):
     pass
+
 
 @celery.task
 def send_message(task_info):
     pass
 
+
 @celery.task
 def get_all_page_followers(task_info):
     pass
 
+
 @celery.task
 def get_all_page_likes(task_info):
     pass
+
 
 @celery.task
 def get_group_members(task_info):

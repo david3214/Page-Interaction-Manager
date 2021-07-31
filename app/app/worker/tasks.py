@@ -76,16 +76,19 @@ def update_all_profile_links():
             worksheet = sh.worksheet("Ad Likes")
             df = pd.DataFrame(worksheet.get_all_records())
             df = df.loc[df['Profile Link'] == '']
+
             def f(name, profile_link, source):
-                if profile_link == '' :
+                if profile_link == '':
                     task_info['data'].setdefault(source, []).append(name)
 
-            df.apply(lambda x: f(x['Name'], x['Profile Link'], x['Source']), axis=1)
+            df.apply(lambda x: f(
+                x['Name'], x['Profile Link'], x['Source']), axis=1)
             print(task_info)
             celery.send_task(app=celery, name=task_info['task_name'],
-                            kwargs={'task_info': task_info},
-                            chain=[celery.signature('app.worker.process_results', queue='results')]
-            )
+                             kwargs={'task_info': task_info},
+                             chain=[celery.signature(
+                                 'app.worker.process_results', queue='results')]
+                             )
         except:
             print(f"error: {result}")
     return True
@@ -102,8 +105,10 @@ def process_result(task_info):
         worksheet_list = sh.worksheets()
         worksheet = sh.worksheet("Ad Likes")
 
-        df = pd.DataFrame(worksheet.get_all_records(value_render_option="UNFORMATTED_VALUE"))
+        df = pd.DataFrame(worksheet.get_all_records(
+            value_render_option="UNFORMATTED_VALUE"))
         pd.set_option("display.max_rows", None, "display.max_columns", None)
+
         def f(name, profileLink):
             if profileLink == '' and name in task_info['results']:
                 return task_info['results'][name]
@@ -111,10 +116,11 @@ def process_result(task_info):
             #     return 'Link not found'
             else:
                 return profileLink
-        df['Profile Link'] = df.apply(lambda x: f(x['Name'], x['Profile Link']), axis=1)
+        df['Profile Link'] = df.apply(lambda x: f(
+            x['Name'], x['Profile Link']), axis=1)
         worksheet.update([df.columns.values.tolist()] + df.values.tolist())
         return True
-    
+
     elif task_info['task_name'] == "test":
         print(task_info)
         return True
@@ -130,7 +136,7 @@ def make_auth(page_id):
         data['token'] = results.page_details['google_sheets']['token']
         data['refresh_token'] = results.page_details['google_sheets']['refresh_token']
         scopes = ["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/script.container.ui",
-            "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.scriptapp"]
+                  "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.scriptapp"]
         auth = Credentials.from_authorized_user_info(data, scopes)
     return auth
 
@@ -140,13 +146,15 @@ def insert_row_into_sheet(task_info):
     try:
         event_type = None
         try:
-            if task_info['entry'][0]['messaging']: event_type = 'message'
+            if task_info['entry'][0]['messaging']:
+                event_type = 'message'
         except KeyError:
-            try: 
-                if task_info['entry'][0]['changes'][0]['value']['item']: event_type = 'reaction'
+            try:
+                if task_info['entry'][0]['changes'][0]['value']['item']:
+                    event_type = 'reaction'
             except KeyError:
                 return json.dumps({'status': 'Unprocessed'})
-            
+
         eventNameMap = {'reaction': 'Ad Likes', 'message': 'Page Messages'}
         reactionsMap = internalVariables['reactionsMap']
         page_id = None
@@ -156,42 +164,51 @@ def insert_row_into_sheet(task_info):
             # Classify the incoming event
             # Reject stuff we aren't interested in
             if (task_info['entry'][0]['changes'][0]['value']['item'] == 'video' or
-            task_info['entry'][0]['changes'][0]['value']['item'] == 'comment' or
-            task_info['entry'][0]['changes'][0]['value']['verb'] != 'add'):
+                task_info['entry'][0]['changes'][0]['value']['item'] == 'comment' or
+                    task_info['entry'][0]['changes'][0]['value']['verb'] != 'add'):
                 return json.dumps({'status': 'Unprocessed', 'message': 'Reaction was a comment, video, or edited reaction'})
             page_id = task_info['entry'][0]['id']
 
         elif event_type == 'message':
             page_id = task_info['entry'][0]['messaging'][0]['recipient']['id']
-        page =  PageDatum.query.get(page_id)
+        page = PageDatum.query.get(page_id)
         try:
             page_details = page.page_details
         except AttributeError:
-            raise ValueError(json.dumps({'status': 'Error', 'retry': False, 'message': f'Searched for page {page_id} but no result was found'}))
+            raise ValueError(json.dumps(
+                {'status': 'Error', 'retry': False, 'message': f'Searched for page {page_id} but no result was found'}))
 
-        data = {'name': None, 'psid': None, 'facebookClue': None, 'messageOrReaction': None}
+        data = {'name': None, 'psid': None,
+                'facebookClue': None, 'messageOrReaction': None}
         # Process reactions
         if event_type == 'reaction':
-            data['messageOrReaction'] = reactionsMap[task_info['entry'][0]['changes'][0]['value']['reaction_type'].upper()]
+            data['messageOrReaction'] = reactionsMap[task_info['entry']
+                                                     [0]['changes'][0]['value']['reaction_type'].upper()]
             data['name'] = task_info['entry'][0]['changes'][0]['value']['from']['name']
             data['psid'] = task_info['entry'][0]['changes'][0]['value']['from']['id']
-            data['facebookClue'] = 'https://facebook.com/{}'.format(quote(task_info['entry'][0]['changes'][0]['value']['post_id']))
+            data['facebookClue'] = 'https://facebook.com/{}'.format(
+                quote(task_info['entry'][0]['changes'][0]['value']['post_id']))
         elif event_type == 'message':
             data['messageOrReaction'] = task_info['entry'][0]['messaging'][0]['message']['text']
             data['psid'] = task_info['entry'][0]['messaging'][0]['sender']['id']
             # Get name from Facebook
-            url = 'https://graph.facebook.com/{}?fields=first_name,last_name&access_token={}'.format(data['psid'], page_details['access_token'])
+            url = 'https://graph.facebook.com/{}?fields=first_name,last_name&access_token={}'.format(
+                data['psid'], page_details['access_token'])
             try:
                 results = json.loads(request.urlopen(url).read())
             except error.HTTPError as e:
-                raise Exception(json.dumps({'status': 'Error', 'retry': False, 'message': "Failed to get ({}) user's name from facebook: error {}".format(data['psid'], e)}))
+                raise Exception(json.dumps(
+                    {'status': 'Error', 'retry': False, 'message': "Failed to get ({}) user's name from facebook: error {}".format(data['psid'], e)}))
             data['name'] = results['first_name'] + ' ' + results['last_name']
-            data['facebookClue'] = 'https://www.facebook.com/search/people?q={}'.format(quote(data['name']))
-        
+            data['facebookClue'] = 'https://www.facebook.com/search/people?q={}'.format(
+                quote(data['name']))
+
         # Process current time
-        today = format_date(datetime.datetime.now(), 'MM/dd/yyyy', locale='en_US')
-        values = [[today, data['name'], '', '', data['psid'], data['facebookClue'], '', '', False, False, data['messageOrReaction'], '', '']]
-        
+        today = format_date(datetime.datetime.now(),
+                            'MM/dd/yyyy', locale='en_US')
+        values = [[today, data['name'], '', '', data['psid'], data['facebookClue'],
+                   '', '', False, False, data['messageOrReaction'], '', '']]
+
         try:
             # Run the auth for editing the page
             auth = make_auth(page_id)
@@ -203,15 +220,19 @@ def insert_row_into_sheet(task_info):
             worksheet = sh.worksheet(sheetName)
             worksheet.append_rows(values, value_input_option='USER_ENTERED')
         except (exceptions.RefreshError, exceptions.GoogleAuthError, exceptions.UserAccessTokenError) as e:
-            raise Exception(json.dumps({'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
+            raise Exception(json.dumps(
+                {'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
         except (gspread.exceptions.APIError) as e:
-            raise Exception(json.dumps({'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
-        
+            raise Exception(json.dumps(
+                {'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
+
         return_value = json.dumps({'status': 'Processed'})
         return return_value
     except KeyError as k:
         return json.dumps({'status': 'Unprocessed', 'KeyError': str(k), 'task_info': task_info})
     except Exception as e:
         if not '\"retry\": false' in str(e):
-            raise Exception(json.dumps({'status': 'Error', 'message': str(e), 'task_info': task_info}))
-        else: return str(e)
+            raise Exception(json.dumps(
+                {'status': 'Error', 'message': str(e), 'task_info': task_info}))
+        else:
+            return str(e)

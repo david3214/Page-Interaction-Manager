@@ -3,6 +3,7 @@ from flask import render_template, request
 from .. import celery
 from . import webhooks
 
+
 @webhooks.route('/facebook', methods=["GET", "POST"])
 def facebook_webhook():
     """ recieve post request and create a task """
@@ -16,7 +17,7 @@ def facebook_webhook():
     if request.method == "POST":
         try:
             payload = request.get_json()
-            celery.send_task(app=celery, name="app.worker.tasks.insert_row_into_sheet", 
-                                kwargs={'task_info': payload}, queue='webhook')
+            celery.send_task(app=celery, name="app.worker.tasks.insert_row_into_sheet",
+                             kwargs={'task_info': payload}, queue='webhook')
         finally:
             return ('', 200)

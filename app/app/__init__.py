@@ -11,8 +11,10 @@ from .config import Config, config
 db = SQLAlchemy()
 url = urllib.parse.urlparse(Config.REDIS_URL)
 r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
-celery = Celery(__name__, broker=Config.CELERY_BROKER_URL, backend=Config.CELERY_RESULT_BACKEND)
+celery = Celery(__name__, broker=Config.CELERY_BROKER_URL,
+                backend=Config.CELERY_RESULT_BACKEND)
 context = pa.default_serialization_context()
+
 
 def create_app(config_name="default"):
     app = Flask(__name__)
@@ -21,10 +23,9 @@ def create_app(config_name="default"):
     with app.app_context():
         config[config_name].init_app(app)
         db.init_app(app)
-    
 
     celery.conf.update(app.config)
-    
+
     from .website import website as website_blueprint
     app.register_blueprint(website_blueprint)
 
@@ -36,5 +37,5 @@ def create_app(config_name="default"):
 
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
-    
+
     return app

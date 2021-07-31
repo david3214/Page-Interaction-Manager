@@ -15,10 +15,11 @@ from . import auth
 from ..models import PageDatum, User
 
 SCOPES = ["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/script.container.ui",
-        "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.scriptapp"]
+          "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.scriptapp"]
 API_SERVICE_NAME = 'sheets'
 API_VERSION = 'v4'
 logger = Logger
+
 
 def insert_user(id, id_token):
     stmt = db.text(
