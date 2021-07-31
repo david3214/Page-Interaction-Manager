@@ -1,205 +1,209 @@
 <script>
-new Vue({
-  el: '#app',
-  data: {
-    programSettings: '{}',
-    facebookPages: [],
-    selected: [],
-    selectedUnit: 'Add a unit',
-    unitList: [],
-    addUnitName: '',
-    unitColor: '#ffffff',
-    debug: [],
-    selectedStatus: 'Add a status',
-    statusList: [],
-    addStatus: '',
-    statusMerge: true,
-    statusHide: false,
-    settingsLoaded: false,
-    adSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
-    messageSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
-    formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
-    scraperInput: '',
-    profileList: '',
-    facebookAuthLink: undefined,
-    showGoogleSignin: false,
-    showConnectPageToGoogle: false,
-    debug_functions: ["showDebugSidebar", "tearDownSheet", "deactivateTriggers", "toastSheetInfo", "trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet",
-      "sortData", "test_doLogicPageMessages", "formatSheet",
-      "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
-      "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
-      "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
-  },
-  methods: {
-    saveProgramSettings: function () {
-      google.script.run.withSuccessHandler(()=>{
-        google.script.run.withSuccessHandler().formatSheet()
-      }).saveProgramSettings(this.formatData());
-      google.script.run.withSuccessHandler().updateSheet();
+  new Vue({
+    el: '#app',
+    data: {
+      programSettings: '{}',
+      facebookPages: [],
+      selected: [],
+      selectedUnit: 'Add a unit',
+      unitList: [],
+      addUnitName: '',
+      unitColor: '#ffffff',
+      debug: [],
+      selectedStatus: 'Add a status',
+      statusList: [],
+      addStatus: '',
+      statusMerge: true,
+      statusHide: false,
+      settingsLoaded: false,
+      adSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
+      messageSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
+      formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
+      scraperInput: '',
+      profileList: '',
+      facebookAuthLink: undefined,
+      showGoogleSignin: false,
+      showConnectPageToGoogle: false,
+      debug_functions: ["showDebugSidebar", "tearDownSheet", "deactivateTriggers", "toastSheetInfo", "trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet",
+        "sortData", "test_doLogicPageMessages", "formatSheet",
+        "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
+        "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
+        "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
     },
-    updateProgramSettings: function (settings) {
-      // Request settings from Google
-      this.formatSettings(settings)
-    },
-    submitFacebookPageSelection: function () {
-      var pageResults = { 'data': this.selected };
-      google.script.run.withSuccessHandler().saveFacebookPagesDetails(pageResults);
-    },
-    removeFacebookPageSelection: function () {
-      var pageResults = { 'data': this.selected };
-      google.script.run.withSuccessHandler().deleteFacebookPagesDetails(pageResults);
-      this.selected = [];
-    },
-    updateAvailibleFacebookPages: function (pageResults) {
-      this.facebookPages = pageResults.data;
-    },
-    updateSelectedPage: function (selectedPages) {
-      this.selected = selectedPages.data;
-    },
-    updateSheetProfileLinks: function () {
-      var profileList = JSON.parse(this.profileList);
-      google.script.run.withSuccessHandler().updateProfiles(profileList);
-      this.profileList = '';
-    },
-    updateScraperInput: function (scraperInput) {
-      this.scraperInput = JSON.stringify(scraperInput);
-    },
-    // fireHealFunction: function(){
-    //     google.script.run.withSuccessHandler().healSheet();
-    //     google.script.run.withSuccessHandler().updateSheet();
-    // },
-    updateRefreshToken: function(){
-      google.script.run.withSuccessHandler(this.updateGoogleAuthLink).updatePageRefreshToken()
-    },
-    updateGoogleAuthLink: function(googleAuthorized){
-      const {user_status, facebook_status} = googleAuthorized
-      if (!facebook_token && user_token)
-        this.showConnectPageToGoogle = true
-      else if (!facebook_token && !user_token) {
-        this.showGoogleSignin = true  
-        this.showConnectPageToGoogle = true
-      }
-      else{
-        this.showConnectPageToGoogle = false
-        this.showGoogleSignin = false
-      }
-    },
-    updateFacebookAuthLink: function (facebookAuthLink) {
-      this.facebookAuthLink = facebookAuthLink;
-    },
-    formatSettings: function (settings) {
-      if(settings instanceof Event) settings = this.debug
-      this.statusList = settings.statusList.map(status => {
-        return {
-          name: status,
-          hide: settings.hiddenStatuses.includes(status),
-          merge: settings.statusToMerge.includes(status)
+    methods: {
+      saveProgramSettings: function () {
+        google.script.run.withSuccessHandler(() => {
+          google.script.run.withSuccessHandler().formatSheet()
+        }).saveProgramSettings(this.formatData());
+        google.script.run.withSuccessHandler().updateSheet();
+      },
+      updateProgramSettings: function (settings) {
+        // Request settings from Google
+        this.formatSettings(settings)
+      },
+      submitFacebookPageSelection: function () {
+        var pageResults = { 'data': this.selected };
+        google.script.run.withSuccessHandler(() => {
+          google.script.run.withSuccessHandler(this.updateGoogleAuthorization).getGoogleAuthStatus();
+        }).saveFacebookPagesDetails(pageResults);
+      },
+      removeFacebookPageSelection: function () {
+        var pageResults = { 'data': this.selected };
+        google.script.run.withSuccessHandler().deleteFacebookPagesDetails(pageResults);
+        this.selected = [];
+      },
+      updateAvailibleFacebookPages: function (pageResults) {
+        this.facebookPages = pageResults.data;
+      },
+      updateSelectedPage: function (selectedPages) {
+        this.selected = selectedPages.data;
+      },
+      updateSheetProfileLinks: function () {
+        var profileList = JSON.parse(this.profileList);
+        google.script.run.withSuccessHandler().updateProfiles(profileList);
+        this.profileList = '';
+      },
+      updateScraperInput: function (scraperInput) {
+        this.scraperInput = JSON.stringify(scraperInput);
+      },
+      // fireHealFunction: function(){
+      //     google.script.run.withSuccessHandler().healSheet();
+      //     google.script.run.withSuccessHandler().updateSheet();
+      // },
+      updateRefreshToken: function () {
+        google.script.run.withSuccessHandler(this.updateGoogleAuthLink).updatePageRefreshToken()
+      },
+      updateGoogleAuthLink: function (googleAuthorized) {
+        const { user_status, facebook_status } = googleAuthorized
+        if (facebook_status) {
+          this.showConnectPageToGoogle = false
+          this.showGoogleSignin = false
         }
-      })
-      this.unitList = settings.assignmentMap.map(unit => { return { name: unit[0], color: unit[1] } })
-      const formatReverse = this.swap(this.formatList)
-      this.adSettings = Object.keys(settings.sheetSettings["Ad Likes"]).map(s => {
-        return { name: formatReverse[s], value: settings.sheetSettings["Ad Likes"][s] }
-      })
-      this.messageSettings = Object.keys(settings.sheetSettings["Page Messages"]).map(s => {
-        return { name: formatReverse[s], value: settings.sheetSettings["Page Messages"][s] }
-      })
-      this.selectedUnit = 'Add a unit'
-      this.selectedStatus = 'Add a status'
-      this.settingsLoaded = true
-    },
-    formatData: function () {
-      const finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }
-      finalObject.statusList.push(...this.statusList.map(status => status.name))
-      this.statusList.forEach((status) => {
-        if (status.hide) finalObject.hiddenStatuses.push(status.name)
-        if (status.merge) finalObject.statusToMerge.push(status.name)
-      })
-      finalObject.assignmentMap = this.unitList.map(unit => [unit.name, unit.color])
-      finalObject.sheetSettings["Ad Likes"] = this.adSettings.reduce((final, setting) => {
-        final[this.formatList[setting.name]] = setting.value
-        return final
-      }, {})
-      finalObject.sheetSettings["Page Messages"] = this.messageSettings.reduce((final, setting) => {
-        final[this.formatList[setting.name]] = setting.value
-        return final
-      }, {})
-      this.debug = finalObject
-      return finalObject
-    },
-    callFunc: function (funcName) {
-      google.script.run.withSuccessHandler().executeFunctionByName(funcName);
-    },
-    changeUnit: function (type) {
-      if (type == 'add') {
-        if (this.addUnitName && !this.unitList.find(unit => unit.name == this.addUnitName)) {
-          this.unitList.push({ name: this.addUnitName, color: "#000000" })
-          this.selectedUnit = this.addUnitName
-          this.addUnitName = ''
+        else {
+          if (user_status)
+            this.showConnectPageToGoogle = true
+          else {
+            this.showGoogleSignin = true
+            this.showConnectPageToGoogle = true
+          }
         }
-      } else if (type == 'remove') {
-        let index = this.unitList.findIndex(unit => unit.name == this.selectedUnit);
-        if (index !== -1) {
-          this.unitList.splice(index, 1);
-          this.selectedUnit = 'Add a unit'
+      },
+      updateFacebookAuthLink: function (facebookAuthLink) {
+        this.facebookAuthLink = facebookAuthLink;
+      },
+      formatSettings: function (settings) {
+        if (settings instanceof Event) settings = this.debug
+        this.statusList = settings.statusList.map(status => {
+          return {
+            name: status,
+            hide: settings.hiddenStatuses.includes(status),
+            merge: settings.statusToMerge.includes(status)
+          }
+        })
+        this.unitList = settings.assignmentMap.map(unit => { return { name: unit[0], color: unit[1] } })
+        const formatReverse = this.swap(this.formatList)
+        this.adSettings = Object.keys(settings.sheetSettings["Ad Likes"]).map(s => {
+          return { name: formatReverse[s], value: settings.sheetSettings["Ad Likes"][s] }
+        })
+        this.messageSettings = Object.keys(settings.sheetSettings["Page Messages"]).map(s => {
+          return { name: formatReverse[s], value: settings.sheetSettings["Page Messages"][s] }
+        })
+        this.selectedUnit = 'Add a unit'
+        this.selectedStatus = 'Add a status'
+        this.settingsLoaded = true
+      },
+      formatData: function () {
+        const finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }
+        finalObject.statusList.push(...this.statusList.map(status => status.name))
+        this.statusList.forEach((status) => {
+          if (status.hide) finalObject.hiddenStatuses.push(status.name)
+          if (status.merge) finalObject.statusToMerge.push(status.name)
+        })
+        finalObject.assignmentMap = this.unitList.map(unit => [unit.name, unit.color])
+        finalObject.sheetSettings["Ad Likes"] = this.adSettings.reduce((final, setting) => {
+          final[this.formatList[setting.name]] = setting.value
+          return final
+        }, {})
+        finalObject.sheetSettings["Page Messages"] = this.messageSettings.reduce((final, setting) => {
+          final[this.formatList[setting.name]] = setting.value
+          return final
+        }, {})
+        this.debug = finalObject
+        return finalObject
+      },
+      callFunc: function (funcName) {
+        google.script.run.withSuccessHandler().executeFunctionByName(funcName);
+      },
+      changeUnit: function (type) {
+        if (type == 'add') {
+          if (this.addUnitName && !this.unitList.find(unit => unit.name == this.addUnitName)) {
+            this.unitList.push({ name: this.addUnitName, color: "#000000" })
+            this.selectedUnit = this.addUnitName
+            this.addUnitName = ''
+          }
+        } else if (type == 'remove') {
+          let index = this.unitList.findIndex(unit => unit.name == this.selectedUnit);
+          if (index !== -1) {
+            this.unitList.splice(index, 1);
+            this.selectedUnit = 'Add a unit'
+          }
         }
+      },
+      statusChange: function () {
+        let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
+        if (currentStatus) {
+          this.statusMerge = currentStatus.merge
+          this.statusHide = currentStatus.hide
+        }
+      },
+      changeColor: function () {
+        const index = this.unitList.findIndex(unit => unit.name == this.selectedUnit)
+        if (index != -1) this.unitList[index].color = this.unitColor
+      },
+      changeStatus: function (type) {
+        if (type == 'add') {
+          if (this.addStatus && !this.statusList.find(status => status.name == this.addStatus)) {
+            this.statusList.push({ name: this.addStatus, merge: this.statusMerge, hide: this.statusHide })
+            this.selectedStatus = this.addStatus
+            this.addStatus = ''
+          }
+        } else if (type == 'remove') {
+          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+          if (index !== -1) {
+            this.statusList.splice(index, 1);
+            this.selectedStatus = 'Add a status'
+          }
+        } else if (type == 'merge') {
+          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+          if (index !== -1) this.statusList[index].merge = this.statusMerge;
+          else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
+        } else if (type == 'hide') {
+          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+          if (index !== -1) this.statusList[index].hide = this.statusHide;
+          else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')
+        }
+      },
+      swap: function (obj) {
+        var ret = {};
+        for (var key in obj) {
+          ret[obj[key]] = key;
+        }
+        return ret;
       }
     },
-    statusChange: function () {
-      let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
-      if(currentStatus){
-        this.statusMerge = currentStatus.merge
-        this.statusHide = currentStatus.hide
-      }
+    created: function () {
+      google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();
+      google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).getFacebookPages();
+      google.script.run.withSuccessHandler(this.updateSelectedPage).getSelectedPages();
+      google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
+      google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
+      google.script.run.withSuccessHandler(this.updateGoogleAuthLink).getGoogleAuthStatus();
     },
-    changeColor: function () {
-      const index = this.unitList.findIndex(unit => unit.name == this.selectedUnit)
-      if (index != -1) this.unitList[index].color = this.unitColor
-    },
-    changeStatus: function (type) {
-      if (type == 'add') {
-        if (this.addStatus && !this.statusList.find(status => status.name == this.addStatus)) {
-          this.statusList.push({ name: this.addStatus, merge: this.statusMerge, hide: this.statusHide })
-          this.selectedStatus = this.addStatus
-          this.addStatus = ''
-        }
-      } else if (type == 'remove') {
-        let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
-        if (index !== -1) {
-          this.statusList.splice(index, 1);
-          this.selectedStatus = 'Add a status'
-        }
-      } else if (type == 'merge') {
-        let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
-        if (index !== -1) this.statusList[index].merge = this.statusMerge;
-        else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
-      } else if (type == 'hide') {
-        let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
-        if (index !== -1) this.statusList[index].hide = this.statusHide;
-        else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')
+    watch: {
+      selectedUnit: function () {
+        const unit = this.unitList.find(s => s.name == this.selectedUnit)
+        this.unitColor = unit ? unit.color : '#000000'
       }
-    },
-    swap: function (obj) {
-      var ret = {};
-      for (var key in obj) {
-        ret[obj[key]] = key;
-      }
-      return ret;
     }
-  },
-  created: function () {
-    google.script.run.withSuccessHandler(this.updateProgramSettings).programSettings();
-    google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).getFacebookPages();
-    google.script.run.withSuccessHandler(this.updateSelectedPage).getSelectedPages();
-    google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
-    google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
-    google.script.run.withSuccessHandler(this.updateGoogleAuthorization).getGoogleAuthStatus();
-  },
-  watch: {
-    selectedUnit: function () {
-      const unit = this.unitList.find(s => s.name == this.selectedUnit)
-      this.unitColor = unit ? unit.color : '#000000'
-    }
-  }
-})
+  })
 </script>
