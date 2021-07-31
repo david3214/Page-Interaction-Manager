@@ -8,12 +8,13 @@ from urllib.parse import quote, urlencode
 from urllib import request, error
 from celery.app import autoretry
 from flask.app import Flask
+from flask import current_app
 from babel.dates import format_date
 
 import gspread
 import pandas as pd
 from celery.signals import worker_process_init, worker_process_shutdown
-from google.oauth2.credentials import Credentials
+from google.oauth2.credentials import Credentials, exceptions
 from oauthlib.oauth1.rfc5849.endpoints import access_token
 
 from .. import celery, create_app, db
@@ -29,8 +30,15 @@ app = Celery()
 
 @worker_process_init.connect
 def init_worker(**kwargs):
-    app = create_app(os.getenv('FLASK_CONFIG') or 'default')
-    app.app_context().push()
+    try:
+        current_app.app_context()
+        # app_context will throw runtime error if not in current_app context
+        app = current_app
+    except RuntimeError:
+        # Runtime Error will be thrown if we are not in current_app context
+        print('current_app Runtime Error')
+        app = create_app(os.getenv('FLASK_CONFIG') or 'default')
+        app.app_context().push()
 
 @worker_process_shutdown.connect
 def shutdown_worker(**kwargs):
@@ -171,16 +179,21 @@ def insert_row_into_sheet(task_info):
         today = format_date(datetime.datetime.now(), 'MM/dd/yyyy', locale='en_US')
         values = [[today, data['name'], '', '', data['psid'], data['facebookClue'], '', '', False, False, data['messageOrReaction'], '', '']]
         
-        # Run the auth for editing the page
-        auth = make_auth(page_id)
-        gc = gspread.authorize(auth)
+        try:
+            # Run the auth for editing the page
+            auth = make_auth(page_id)
+            gc = gspread.authorize(auth)
 
-        # Send the results to the sheet as the user
-        sheetName = eventNameMap[event_type]
-        sh = gc.open_by_key(page_details['google_sheets']['id'])
-        worksheet = sh.worksheet(sheetName)
-        worksheet.append_rows(values, value_input_option='USER_ENTERED')
-
+            # Send the results to the sheet as the user
+            sheetName = eventNameMap[event_type]
+            sh = gc.open_by_key(page_details['google_sheets']['id'])
+            worksheet = sh.worksheet(sheetName)
+            worksheet.append_rows(values, value_input_option='USER_ENTERED')
+        except (exceptions.RefreshError, exceptions.GoogleAuthError, exceptions.UserAccessTokenError) as e:
+            raise Exception(json.dumps({'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
+        except (gspread.exceptions.APIError) as e:
+            raise Exception(json.dumps({'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
+        
         return_value = json.dumps({'status': 'Processed'})
         return return_value
     except KeyError as k:

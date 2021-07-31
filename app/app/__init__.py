@@ -22,6 +22,14 @@ def create_app(config_name="default"):
         config[config_name].init_app(app)
         db.init_app(app)
     
+    @app.teardown_request
+    def clear_db(response_or_exc):
+        try:
+            db.session.remove()
+        except AttributeError:
+            pass
+        return response_or_exc
+
     celery.conf.update(app.config)
     
     from .website import website as website_blueprint
@@ -35,5 +43,5 @@ def create_app(config_name="default"):
 
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
-
+    
     return app

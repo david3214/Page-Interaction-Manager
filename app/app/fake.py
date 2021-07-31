@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from faker import Faker
 from . import db
 from .models import User, Post
-
+from flask import current_app
 
 def users(count=100):
     fake = Faker()

@@ -8,8 +8,8 @@ services:
     command: ./create-app.sh
     env_file: 
       - app.env
-    expose:
-      - 8080
+    ports:
+      - "8080:8080"
     depends_on:
     - db
   db:
@@ -23,7 +23,6 @@ services:
   redis:
     image: redis:latest
     hostname: redis
-
   celery-worker:
     build:
       context: .
