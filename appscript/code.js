@@ -31,11 +31,12 @@ function getEffectiveUserEmail() {
 
 function checkForAddonUpdates() {
   authfixed = PropertiesService.getDocumentProperties().getProperty('AuthFixNotified')
-  if (!authfixed) {
+  isPageInteractionSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Ad Likes')
+  if (!authfixed && isPageInteractionSheet != null) {
     const ui = SpreadsheetApp.getUi()
-    response = ui.prompt(`We resently updated the Page Interaction Manager. 
+    response = ui.alert(`We resently updated the Page Interaction Manager. 
     If your sheet has not been receiving updates please check out the Page Interaction Manager
-    settings to relink your sheet to Google and/or your facebook page`, ui.ButtonSet.YES_NO)
+    settings to relink your sheet to Google and/or your facebook page`)
     if (response == ui.Button.OK)
       PropertiesService.getDocumentProperties().setProperty('AuthFixNotified', true)
   }

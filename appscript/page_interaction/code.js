@@ -869,7 +869,7 @@ function getGoogleAuthStatus() {
 
   var clientId = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_ID")
   var clientSecret = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_SECRET")
-  let valid_status = { user_status, facebook_status }
+  let valid_status = { user_status: true, facebook_status: true }
 
   // Check if a valid token is tied to the page
   const selectedPage = getSelectedPages().data[0]
@@ -891,7 +891,7 @@ function getGoogleAuthStatus() {
   const userId = getEffectiveUserId()
   const user = getUser(userId)
 
-  if (!user.refresh_token || user.refresh_token == fbRefreshToken)
+  if (!user || !user.refresh_token || user.refresh_token == fbRefreshToken)
     valid_status.user_status = false
   else {
     try {
