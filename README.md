@@ -13,10 +13,13 @@ If you are a missionary and you want to make a tool for everyone please make it 
 ### [Google Cloud](https://cloud.google.com/gcp/)
 - Used to host the Google Spreadsheets Add-on via Workspace Marketplace SDK
 - Used for a sql database to house spreadsheet data, user preferences etc
-- Cloud Funtion as a Facebook Webhook
 - Compute Engine was used in the past for running the task_worker, instead of locally
-- Cloud Run to run the authentication service for logging into google
-- Issue #6 will implement housing a Kubernetes Cluster on Google Cloud
+- Kubernetes Cluster
+  - Runs app as a container, for google auth and facebook webhooks to website missionary-tools.com
+    - Redirects IP to missionary-tools via an Ingress Controller and Load Balancer 
+  - Runs app celery worker as the process results queue
+  - Has a Cloud SQL Proxy container for connecting to the sql database
+- Buckets store photos etc.
 - Depending on Issue #7 a redis database may also be hosted on Google Cloud
 
 ### [CloudAMPQ](https://customer.cloudamqp.com/)
@@ -32,3 +35,4 @@ If you are a missionary and you want to make a tool for everyone please make it 
 - Used for requesting data from facebook for our app
   - We have been denied information on page_messaging many times
 - Interacts with a webhook hosted on Google Cloud
+- Webhook endpoint is under the messnger section, not webhook.
