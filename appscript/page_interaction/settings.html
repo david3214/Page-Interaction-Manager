@@ -8,6 +8,7 @@
 </head>
 
 <body>
+  <!-- <div id="app" v-bind:class="{ spinner: !settingsLoaded}"> -->
   <div id="app">
     <h1>Program Settings</h1>
     <h3>Ad Likes</h3>
@@ -55,6 +56,10 @@
         <button v-if="selectedUnit == 'Add a unit'" @click='changeUnit("add")'>Add</button>
         <button v-if="selectedUnit != 'Add a unit' && selectedUnit != ''" @click='changeUnit("remove")'>Remove</button>
       </div>
+      <div>
+        <button style="width: 100px;" v-if="!selectedUnit['default'] && selectedUnit != 'Add a unit'" @click="makeDefault('hmm')">Set Default</button>
+        <button style="width: 100px;" v-if="selectedUnit['default'] && selectedUnit != 'Add a unit'" disabled>Default</button>
+      </div>
 
       <select class="dropdown" v-model="selectedStatus" @change="statusChange">
         <option selected>Add a status</option>
@@ -80,6 +85,10 @@
         <button v-if="selectedStatus == 'Add a status'" @click='changeStatus("add")'>Add</button>
         <button v-if="selectedStatus != 'Add a status' && selectedStatus != ''"
           @click='changeStatus("remove")'>Remove</button>
+      </div>
+      <div>
+        <button style="width: 100px;" v-if="!selectedStatus['default'] && selectedStatus != 'Add a status'" @click="makeDefault('hmm')">Set Default</button>
+        <button style="width: 100px;" v-if="selectedStatus['default'] && selectedStatus != 'Add a status'" disabled>Default</button>
       </div>
     </div>
 

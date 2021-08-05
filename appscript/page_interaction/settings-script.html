@@ -198,6 +198,7 @@
       google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
       google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
       google.script.run.withSuccessHandler(this.updateGoogleAuthLink).getGoogleAuthStatus();
+      
     },
     watch: {
       selectedUnit: function () {
