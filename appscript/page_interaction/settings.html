@@ -57,8 +57,8 @@
         <button v-if="selectedUnit != 'Add a unit' && selectedUnit != ''" @click='changeUnit("remove")'>Remove</button>
       </div>
       <div>
-        <button style="width: 100px;" v-if="!selectedUnit['default'] && selectedUnit != 'Add a unit'" @click="makeDefault('hmm')">Set Default</button>
-        <button style="width: 100px;" v-if="selectedUnit['default'] && selectedUnit != 'Add a unit'" disabled>Default</button>
+        <button style="width: 100px;" v-if="!defaultUnit && selectedUnit != 'Add a unit'" @click="makeDefault('unit')">Set Default</button>
+        <button style="width: 100px;" v-if="defaultUnit" disabled>Default</button>
       </div>
 
       <select class="dropdown" v-model="selectedStatus" @change="statusChange">
@@ -87,8 +87,8 @@
           @click='changeStatus("remove")'>Remove</button>
       </div>
       <div>
-        <button style="width: 100px;" v-if="!selectedStatus['default'] && selectedStatus != 'Add a status'" @click="makeDefault('hmm')">Set Default</button>
-        <button style="width: 100px;" v-if="selectedStatus['default'] && selectedStatus != 'Add a status'" disabled>Default</button>
+        <button style="width: 100px;" v-if="!defaultStatus && selectedStatus != 'Add a status'" @click="makeDefault('status')">Set Default</button>
+        <button style="width: 100px;" v-if="defaultStatus" disabled>Default</button>
       </div>
     </div>
 
