@@ -16,6 +16,7 @@ import pandas as pd
 from celery.signals import worker_process_init, worker_process_shutdown, task_postrun
 from google.oauth2.credentials import Credentials, exceptions
 from oauthlib.oauth1.rfc5849.endpoints import access_token
+from sqlalchemy import or_
 
 from .. import celery, create_app, db
 from ..models import PageDatum, Preference, User
@@ -61,9 +62,15 @@ def test_task(task_info):
 
 
 @celery.task()
-def update_all_profile_links():
+def update_all_profile_links(pages='all'):
     # Run a task on all sheets
-    results = db.session.query(PageDatum).all()
+    results = None
+    if pages == 'all':
+        results = db.session.query(PageDatum).all()
+    elif isinstance(pages, list):
+        # Create a filter condition to look for any of these page names
+        filter_conditions = [PageDatum.page_details.like(f'%{page_name}%') for page_name in pages]
+        results = db.session.query(PageDatum).filter(or_(*filter_conditions))
     for result in results:
         try:
             task_info = {}
@@ -89,8 +96,8 @@ def update_all_profile_links():
                              chain=[celery.signature(
                                  'app.worker.process_results', queue='results')]
                              )
-        except:
-            print(f"error: {result}")
+        except Exception as e:
+            print(f"error: {e}")
     return True
 
 
@@ -112,13 +119,12 @@ def process_result(task_info):
         def f(name, profileLink):
             if profileLink == '' and name in task_info['results']:
                 return task_info['results'][name]
-            # elif profileLink == '' and not task_info['results'][name]:
-            #     return 'Link not found'
             else:
                 return profileLink
         df['Profile Link'] = df.apply(lambda x: f(
             x['Name'], x['Profile Link']), axis=1)
-        worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+        # Skip First row, because some sheets have protected those values and we don't need to reset them
+        worksheet.update('A2:Z', df.values.tolist())
         return True
 
     elif task_info['task_name'] == "test":
@@ -145,6 +151,7 @@ def make_auth(page_id):
 def insert_row_into_sheet(task_info):
     try:
         event_type = None
+        # Identify the type of webhook received
         try:
             if task_info['entry'][0]['messaging']:
                 event_type = 'message'
@@ -171,8 +178,10 @@ def insert_row_into_sheet(task_info):
 
         elif event_type == 'message':
             page_id = task_info['entry'][0]['messaging'][0]['recipient']['id']
+        
         page = PageDatum.query.get(page_id)
         try:
+            # If page_details doesn't exist the query didn't pull anything
             page_details = page.page_details
         except AttributeError:
             raise ValueError(json.dumps(
@@ -197,6 +206,7 @@ def insert_row_into_sheet(task_info):
             try:
                 results = json.loads(request.urlopen(url).read())
             except error.HTTPError as e:
+                # If we can't get the name of the person who messaged us, stop now
                 raise Exception(json.dumps(
                     {'status': 'Error', 'retry': False, 'message': "Failed to get ({}) user's name from facebook: error {}".format(data['psid'], e)}))
             data['name'] = results['first_name'] + ' ' + results['last_name']
@@ -219,18 +229,23 @@ def insert_row_into_sheet(task_info):
             sh = gc.open_by_key(page_details['google_sheets']['id'])
             worksheet = sh.worksheet(sheetName)
             worksheet.append_rows(values, value_input_option='USER_ENTERED')
+
         except (exceptions.RefreshError, exceptions.GoogleAuthError, exceptions.UserAccessTokenError) as e:
+            # These are all errors relating to a bad refresh token
             raise Exception(json.dumps(
                 {'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
         except (gspread.exceptions.APIError) as e:
+            # If the sheet has too many cells it will stop us from inserting into it
             raise Exception(json.dumps(
                 {'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
 
-        return_value = json.dumps({'status': 'Processed'})
+        return_value = json.dumps({'status': 'Processed', 'page_id': page_id})
         return return_value
     except KeyError as k:
+        # Catches when facebook sends us weird objects
         return json.dumps({'status': 'Unprocessed', 'KeyError': str(k), 'task_info': task_info})
     except Exception as e:
+        # Raise an error to retry the task, if not specified otherwise
         if not '\"retry\": false' in str(e):
             raise Exception(json.dumps(
                 {'status': 'Error', 'message': str(e), 'task_info': task_info}))

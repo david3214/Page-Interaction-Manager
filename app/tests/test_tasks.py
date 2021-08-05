@@ -48,7 +48,7 @@ class TaskTestCase(unittest.TestCase):
 
     @patch('app.worker.tasks.celery')
     def test_update_all_profile_links(self, mock_celery):
-        results = worker.tasks.update_all_profile_links()
+        results = worker.tasks.update_all_profile_links([json.loads(page['page_details'])['name'] for page in self.test_data['page_data']])
         calls = mock_celery.send_task.call_args_list
         for call in calls:
             args, kwargs = call
