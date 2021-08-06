@@ -141,7 +141,7 @@ def make_auth(page_id):
     return auth
 
 
-@celery.task(autoretry_for=(Exception,), rety_backoff=True, retry_kwargs={'max_retries': 8})
+@celery.task(autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={'max_retries': 8})
 def insert_row_into_sheet(task_info):
     try:
         event_type = None
