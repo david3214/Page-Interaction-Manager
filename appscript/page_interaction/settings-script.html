@@ -1,4 +1,6 @@
 <script>
+  Vue.config.devtools = true
+
   new Vue({
     el: '#app',
     data: {
@@ -17,7 +19,7 @@
       statusHide: false,
       settingsLoaded: false,
       adSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
-      messageSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
+      messageSettings: [{ "name": "Sorting", "value": true }, { "name": "Merging", "value": true }, { "name": "Highlight", "value": false }],
       formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
       scraperInput: '',
       profileList: '',
@@ -93,14 +95,15 @@
       },
       formatSettings: function (settings) {
         if (settings instanceof Event) settings = this.debug
-        this.statusList = settings.statusList.map(status => {
+        this.statusList = settings.statusList.map((status, i) => {
           return {
             name: status,
             hide: settings.hiddenStatuses.includes(status),
-            merge: settings.statusToMerge.includes(status)
+            merge: settings.statusToMerge.includes(status),
+            default: i == 0
           }
         })
-        this.unitList = settings.assignmentMap.map(unit => { return { name: unit[0], color: unit[1] } })
+        this.unitList = settings.assignmentMap.map((unit, i) => { return { name: unit[0], color: unit[1], default: i == 0 } })
         const formatReverse = this.swap(this.formatList)
         this.adSettings = Object.keys(settings.sheetSettings["Ad Likes"]).map(s => {
           return { name: formatReverse[s], value: settings.sheetSettings["Ad Likes"][s] }
@@ -114,12 +117,25 @@
       },
       formatData: function () {
         const finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }
-        finalObject.statusList.push(...this.statusList.map(status => status.name))
+        const statusNames = this.statusList.reduce((list, status) => {
+          if (status.default) list.unshift(status.name)
+          else list.push(status.name)
+          return list
+        }, [])
+        finalObject.statusList.push(...statusNames)
+        
         this.statusList.forEach((status) => {
           if (status.hide) finalObject.hiddenStatuses.push(status.name)
           if (status.merge) finalObject.statusToMerge.push(status.name)
         })
-        finalObject.assignmentMap = this.unitList.map(unit => [unit.name, unit.color])
+
+        const unitMaps = this.unitList.reduce((list, unit) => {
+          if (unit.default) list.unshift([unit.name, unit.color])
+          else list.push([unit.name, unit.color])
+          return list
+        }, [])
+
+        finalObject.assignmentMap = unitMaps
         finalObject.sheetSettings["Ad Likes"] = this.adSettings.reduce((final, setting) => {
           final[this.formatList[setting.name]] = setting.value
           return final
@@ -137,7 +153,8 @@
       changeUnit: function (type) {
         if (type == 'add') {
           if (this.addUnitName && !this.unitList.find(unit => unit.name == this.addUnitName)) {
-            this.unitList.push({ name: this.addUnitName, color: "#000000" })
+            const isDefault = this.unitList.length < 1 
+            this.unitList.push({ name: this.addUnitName, color: "#000000", default: isDefault })
             this.selectedUnit = this.addUnitName
             this.addUnitName = ''
           }
@@ -163,7 +180,8 @@
       changeStatus: function (type) {
         if (type == 'add') {
           if (this.addStatus && !this.statusList.find(status => status.name == this.addStatus)) {
-            this.statusList.push({ name: this.addStatus, merge: this.statusMerge, hide: this.statusHide })
+            const isDefault = this.statusList.length < 1
+            this.statusList.push({ name: this.addStatus, merge: this.statusMerge, hide: this.statusHide, default: isDefault })
             this.selectedStatus = this.addStatus
             this.addStatus = ''
           }
@@ -183,6 +201,21 @@
           else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')
         }
       },
+      makeDefault: function(type) {
+        if (type == 'status'){
+          for (const status of this.statusList){
+            if (status.name != this.selectedStatus && status.default) status.default = false
+            if (status.name == this.selectedStatus) status.default = true
+          }
+        }
+        else if (type == 'unit'){
+          for (const unit of this.unitList){
+            if (unit.name != this.selectedUnit && unit.default) unit.default = false
+            if (unit.name == this.selectedUnit) unit.default = true
+          }
+        }
+
+      },
       swap: function (obj) {
         var ret = {};
         for (var key in obj) {
@@ -198,11 +231,26 @@
       google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
       google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
       google.script.run.withSuccessHandler(this.updateGoogleAuthLink).getGoogleAuthStatus();
+      
     },
     watch: {
       selectedUnit: function () {
         const unit = this.unitList.find(s => s.name == this.selectedUnit)
         this.unitColor = unit ? unit.color : '#000000'
+      }
+    },
+    computed: {
+      defaultUnit: function () {
+        let isDefault = this.unitList.reduce((isDefault, unit) => {
+          return unit.name == this.selectedUnit && unit.default ? unit.default : isDefault
+        }, false)
+        return isDefault
+      },
+      defaultStatus: function () {
+        let isDefault = this.statusList.reduce((isDefault, status) => {
+          return status.name == this.selectedStatus && status.default ? status.default : isDefault
+        }, false)
+        return isDefault
       }
     }
   })
