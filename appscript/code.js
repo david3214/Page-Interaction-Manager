@@ -12,7 +12,7 @@ function onOpen(e) {
       .addItem('Analytics', 'showAnalytics')
       .addItem('Format', 'formatSheet')
       .addItem('Settings', 'showSettings'))
-      .addItem('Feedback', 'showFeedback')
+    .addItem('Feedback', 'showFeedback')
   menu.addToUi()
 
   checkForAddonUpdates()
@@ -31,14 +31,34 @@ function getEffectiveUserEmail() {
 }
 
 function checkForAddonUpdates() {
-  authfixed = PropertiesService.getDocumentProperties().getProperty('AuthFixNotified')
-  isPageInteractionSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Ad Likes')
-  if (!authfixed && isPageInteractionSheet != null) {
+  let isPageInteractionSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Ad Likes')
+  if (isPageInteractionSheet == null) return
+
+  let versionNotifications = JSON.parse(PropertiesService.getDocumentProperties().getProperty('UpdateNotifications')) || {}
+  let { authFixed, feedbackUpdate } = versionNotifications
+  let updateMessageHTML = ''
+  if (!authFixed) {
+    updateMessageHTML += `
+      Authentication Errors Update
+        ○ Updated Page Interaction Manager settings to now show if you are disconnected from google or facebook
+        ○ Page Interaction Manager Settings now has an option to reauthenticat with google and facebook
+      `
+    versionNotifications.authFixed = true
+  }
+
+  if (!feedbackUpdate) {
+    updateMessageHTML += `
+      Feedback Update
+        ○ Feature: Under Page Interaction Manager Feedback you can now fill out a bug report or feature request
+        ○ Feature: Added the option to select a default status and/or assignment
+      `
+    versionNotifications.feedbackUpdate = true
+  }
+
+  if (updateMessageHTML) {
     const ui = SpreadsheetApp.getUi()
-    response = ui.alert(`We resently updated the Page Interaction Manager. 
-    If your sheet has not been receiving updates please check out the Page Interaction Manager
-    settings to relink your sheet to Google and/or your facebook page`)
+    response = ui.alert('Recent Updates', updateMessageHTML, ui.ButtonSet.OK)
     if (response == ui.Button.OK)
-      PropertiesService.getDocumentProperties().setProperty('AuthFixNotified', true)
+      PropertiesService.getDocumentProperties().setProperty('UpdateNotifications', JSON.stringify(versionNotifications))
   }
 }

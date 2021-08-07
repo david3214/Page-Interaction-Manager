@@ -4,7 +4,7 @@ function showFeedback() {
     .setWidth(600)
     .setHeight(600)
   SpreadsheetApp.getUi()
-    .showModalDialog(html)
+    .showModalDialog(html, ' ')
 }
 
 function createGitHubIssue({title, body, labels}) {
@@ -26,6 +26,10 @@ function createGitHubIssue({title, body, labels}) {
   }
 
   const githubUrl = 'https://api.github.com/repos/walkwithchrist/missionary-tools/issues'
-  
-  return UrlFetchApp.fetch(githubUrl, params)
+  try {
+    return { response: UrlFetchApp.fetch(githubUrl, params) }
+  }
+  catch (error) {
+    return {error: error.message}
+  }
 }
