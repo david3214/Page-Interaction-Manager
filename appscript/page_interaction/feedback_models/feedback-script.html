@@ -1,0 +1,39 @@
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<script>
+
+  new Vue({
+    el: '#app',
+    vuetify: new Vuetify(),
+    data: () => ({
+      form: false,
+      title: '',
+      rules: {
+        title: [v => !!v || 'Title is required'],
+        body: [v => !!v || 'Body is required'],
+      },      
+      body: '',
+      bugOrEnhancement: 'enhancement',
+      isLoading: false,
+      errorText: ''
+  }),
+    methods: {
+      postForm: function () {
+        this.isLoading = true
+        const {title, body, bugOrEnhancement} = this
+        const issueData = {
+          title,
+          body,
+          labels: [bugOrEnhancement]
+        }
+        google.script.run.withSuccessHandler(this.postResponse).createGitHubIssue(issueData);
+      },
+      postResponse: function (response) {
+        if (response.getResponseCode() !== 200)
+          this.errorText = response.getContentText()
+        this.isLoading = false
+      }
+    }
+  })
+
+</script>

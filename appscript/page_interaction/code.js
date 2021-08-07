@@ -12,22 +12,6 @@ var defaultUserSettings = {
   },
 }
 
-var headerColumns = {
-  'Date': 1,
-  'Name': 2,
-  'Gender': 3,
-  'Profile Link': 4,
-  'PSID': 5,
-  'Source': 6,
-  'Assigment': 7,
-  'Status': 8,
-  '@Sac': 9,
-  'On Date': 10,
-  'Data': 11,
-  'Notes': 12,
-  'Counter': 13
-}
-
 var internalVariables = {
   reactionsMap: { "LIKE": '👍', "LOVE": '❤️', "CARE": '❤️', "HAHA": '😆', "WOW": '😮', "SAD": '😥', "ANGRY": '😡' },
   genderMap: { 'male': '#6ca0dc', 'female': '#f8b9d4' },
@@ -453,7 +437,7 @@ function tearDownSheet(context = openContext()) {
 }
 
 function showSettings() {
-  var html = HtmlService.createTemplateFromFile('page_interaction/settings')
+  var html = HtmlService.createTemplateFromFile('page_interaction/settings_models/settings')
   html = html.evaluate()
     .setTitle('Program Settings')
     .setWidth(600)

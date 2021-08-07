@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <script>
+    //host this directory with a service like http-server to preview the scriptlets 
+    //(only works on <?!= include('file.html'); ?> format scriptlets)
+
+    const FOLDER_DEPTH = 1
+    const DEBUG_URL = 'feedback.html'
+
+    //Asynchronous string replace function from https://stackoverflow.com/a/48032528
+    async function replaceAsync(str, regex, asyncFn) {
+      const promises = [];
+      str.replace(regex, (match, ...args) => {
+          const promise = asyncFn(match, ...args);
+          promises.push(promise);
+      });
+      const data = await Promise.all(promises);
+      return str.replace(regex, () => data.shift());
+    }
+
+    //Fetch dependancy files
+    async function fetchOtherFile(match, filename) {
+      return fetch('../'.repeat(FOLDER_DEPTH) + filename)
+               .then( res => res.text() )
+    }
+
+    //Get file, replace scriptlets with html file content, then write the new file to the document
+    fetch(DEBUG_URL)
+      .then( res => res.text() )
+      .then( data => replaceAsync(data, /<\?!= ?include\('(.+)'\);? ?\?>/g, fetchOtherFile) )
+      .then( newstring => {
+        console.log(`Redirecting to file '${DEBUG_URL}' ...`)    
+        document.open()
+        document.write(newstring)
+        document.close()
+      })
+  </script>
+</html>

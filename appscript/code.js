@@ -12,6 +12,7 @@ function onOpen(e) {
       .addItem('Analytics', 'showAnalytics')
       .addItem('Format', 'formatSheet')
       .addItem('Settings', 'showSettings'))
+      .addItem('Feedback', 'showFeedback')
   menu.addToUi()
 
   checkForAddonUpdates()
