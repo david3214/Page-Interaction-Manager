@@ -9,7 +9,7 @@
 <body>
   <div id="app">
     <v-app id="inspire">
-      <v-card class='ma-auto' width='500' elevation='10'>
+      <v-card class='mx-auto' width='500' elevation='10'>
         <v-toolbar color="#04385A" class='white--text'>
           <v-toolbar-title>Feedback Form</v-toolbar-title>
           <v-btn-toggle
@@ -35,7 +35,7 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col class='px-10 mt-n8' cols='12' xs='4'>
+            <v-col class='px-10 mt-n7' cols='12' xs='4'>
               <v-text-field
                 v-model='email'
                 :rules='rules.email'
@@ -48,7 +48,7 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col class='px-10 mt-n8' cols='12' xs='4'>
+            <v-col class='px-10 mt-n7' cols='12' xs='4'>
               <v-text-field
                 v-model='title'
                 :rules='rules.title'
@@ -60,13 +60,13 @@
                 ></v-text-field>
             </v-col>
           </v-row>
-          <v-row class='my-n6 px-10'>
+          <v-row class='my-n3 px-10'>
             <v-col cols='12' xs='6'>
                 <v-textarea
                   label='Body'
                   v-model='body'
                   :rules='rules.body'
-                  rows='4'
+                  rows='10'
                   row-height='20'
                   auto-grow
                   outlined
