@@ -10,3 +10,8 @@ class AuthenticationError(MissionaryBotError):
         super().__init__(*args)
         self.provider = kwargs.get('provider')
         print(f"Failed to authenticate with {self.provider}")
+
+
+class BlockedError(MissionaryBotError):
+  """Raised when Bot gets blocked by Facebook"""
+  pass

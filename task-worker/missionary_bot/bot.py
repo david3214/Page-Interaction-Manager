@@ -29,7 +29,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import urlparse, parse_qs
 import jwt
 
-from .errors import AuthenticationError
+from .errors import AuthenticationError, BlockedError
 
 # Redis
 url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
@@ -264,7 +264,6 @@ class MissionaryBot:
                 return o.scheme + "://" + o.netloc + o.path + "?id=" + parse_qs(o.query)['id'][0]
             elif o.scheme == 'https':
                 return o.scheme + "://" + o.netloc + o.path
-
         results = {}
         if post_url == '' or len(people) == 0:
             self.logger.info(f"Skiping {post_url} of length {len(people)}")
@@ -319,11 +318,31 @@ class MissionaryBot:
                 return self.scrape_post_reactions_for_people(post_url, people)
             elif len(self.wd.find_elements_by_xpath(self.facebook_paths[self.language]["facebook_blocked"])):
                 # If facebook has blocked us because we've been doing too many tasks kill the process
-                self.logger.warning(
-                    "Blocked by facebook, sending SIGTERM signal to parent os {}".format(os.getppid()))
-                os.kill(os.getppid(), signal.SIGTERM)
+                results['BlockedError'] = True
         finally:
             return results
+
+
+    def facebook_blocked(self, post_url):
+        try:
+            self.set_status('Scraping for profile_id')
+            self.wd.get(post_url)
+            # If not foudn in 10 seconds, it will throw an error
+            WebDriverWait(self.wd, 10).until(EC.presence_of_element_located(
+                (By.XPATH, self.facebook_paths[self.language]['reactions_button'])))
+            reaction_button = self.wd.find_elements_by_xpath(
+                self.facebook_paths[self.language]["reactions_button"])[0]
+            reaction_button.click()
+            # If not found in 10 seconds, it will throw an error
+            WebDriverWait(self.wd, 10).until(EC.presence_of_element_located(
+                    (By.XPATH, self.facebook_paths[self.language]['reactions_box']))).find_elements_by_tag_name('a')
+            return False
+        except:
+            # If it couldn't find the element because we were blocked return true
+            if len(self.wd.find_elements_by_xpath(self.facebook_paths[self.language]["facebook_blocked"])):
+                return True
+            return False
+
 
     def scrape_area_book_for_people(self):
         """

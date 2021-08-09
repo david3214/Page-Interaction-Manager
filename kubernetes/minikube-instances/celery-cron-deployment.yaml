@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: celery-cron
+  name: celery-cron
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-cron
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: celery-cron
+    spec:
+      containers:
+        - name: celery-cron
+          env:
+            - name: CELERY_BROKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: CELERY_BROKER_URL
+                  name: env
+            - name: CELERY_RESULT_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  key: CELERY_RESULT_BACKEND
+                  name: env
+            - name: CLIENT_SECRETS_FILE
+              valueFrom:
+                configMapKeyRef:
+                  key: CLIENT_SECRETS_FILE
+                  name: env
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: DATABASE_URL
+                  name: env
+            - name: FLASK_CONFIG
+              valueFrom:
+                configMapKeyRef:
+                  key: FLASK_CONFIG
+                  name: env
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: PORT
+                  name: env
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_URL
+                  name: env
+          image: app:latest
+          imagePullPolicy: "Never"
+          command:
+            - "./celery-cron.sh"
+          resources: {}
+      hostname: celery-cron
+      restartPolicy: Always
+status: {}

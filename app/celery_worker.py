@@ -8,7 +8,7 @@ foo.app_context().push()
 celery.conf.CELERYBEAT_SCHEDULE = {
     "run-every-ten-seconds": {
         "task": "app.worker.tasks.update_all_profile_links",
-        "schedule": crontab(minute=0, hour='*/6'),
+        "schedule": crontab(minute=0, hour=2, day_of_week=4),
         "options": {'queue': 'results'}
     }
 }
