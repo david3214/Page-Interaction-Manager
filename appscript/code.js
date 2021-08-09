@@ -53,7 +53,7 @@ function checkForAddonUpdates() {
         ○ Feature: Added the option to select a default status and/or assignment
       
       Profile Link Update
-        ○ Updated the profile link updates so if it can't find a link it will state Not Found
+        ○ Updated the profile link finder so if it can't find a link it will state Not Found
       `
     versionNotifications.feedbackUpdate = true
   }
