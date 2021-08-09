@@ -1,0 +1,49 @@
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<script>
+
+  new Vue({
+    el: '#app',
+    vuetify: new Vuetify(),
+    data: () => ({
+      form: false,
+      name: '',
+      email: '',
+      title: '',
+      rules: {
+        title: [v => !!v || 'Title is required'],
+        body: [v => !!v || 'Body is required'],
+        email: [
+          v => !!v || 'Required.',
+          v => {
+            const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            return pattern.test(v) || 'Invalid e-mail.'
+          },
+        ]
+      },      
+      body: '',
+      bugOrEnhancement: 'enhancement',
+      isLoading: false,
+      errorText: ''
+  }),
+    methods: {
+      postForm: function () {
+        this.isLoading = true
+        let {title, body, bugOrEnhancement, email, name} = this
+        body += `\nSubmitted By: ${name}\nContact e-mail: ${email}`
+        const issueData = {
+          title,
+          body,
+          labels: [bugOrEnhancement]
+        }
+        google.script.run.withSuccessHandler(this.postResponse).createGitHubIssue(issueData);
+      },
+      postResponse: function (response) {
+        if (response.error) this.errorText = response.error
+        else this.$refs.form.reset()
+        this.isLoading = false
+      }
+    }
+  })
+
+</script>

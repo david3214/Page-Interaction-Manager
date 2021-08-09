@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+    <?!= include('page_interaction/feedback_models/feedback-style.html'); ?>
+</head>
+
+<body>
+  <div id="app">
+    <v-app id="inspire">
+      <v-card class='mx-auto' width='500' elevation='10'>
+        <v-toolbar color="#04385A" class='white--text'>
+          <v-toolbar-title>Feedback Form</v-toolbar-title>
+          <v-btn-toggle
+            class= 'mx-auto'
+            background-color='light-blue'
+            v-model="bugOrEnhancement"
+            tile mandatory group>
+            <v-btn color='white--text' value="enhancement">Feature</v-btn>
+            <v-btn color='white--text' value="bug" >Bug</v-btn>
+          </v-btn-toggle>
+        </v-toolbar>
+        <v-form v-model='form' ref='form' v-on:submit.prevent>
+          <v-row>
+            <v-col class='px-10' cols='12' xs='4'>
+              <v-text-field
+                v-model='name'
+                :rules='rules.title'
+                placeholder='Name'
+                label='Name'
+                v-on:keyup.enter='$refs.email.focus'
+                required
+                ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col class='px-10 mt-n7' cols='12' xs='4'>
+              <v-text-field
+                v-model='email'
+                :rules='rules.email'
+                placeholder='E-mail'
+                label='E-mail'
+                v-on:keyup.enter='$refs.title.focus'
+                required
+                ref='email'
+                ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col class='px-10 mt-n7' cols='12' xs='4'>
+              <v-text-field
+                v-model='title'
+                :rules='rules.title'
+                placeholder='Title'
+                label='Title'
+                v-on:keyup.enter='$refs.body.focus'
+                required
+                ref='title'
+                ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-row class='my-n3 px-10'>
+            <v-col cols='12' xs='6'>
+                <v-textarea
+                  label='Body'
+                  v-model='body'
+                  :rules='rules.body'
+                  rows='10'
+                  row-height='20'
+                  auto-grow
+                  outlined
+                  ref='body'
+                >
+                </v-textarea>
+            </v-col>
+          </v-row>
+        </v-form>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn :disabled='!form'
+            :loading='isLoading'
+            class='white--text'
+            color='blue accent-3'
+            @click='postForm'
+            depressed>
+            Submit
+          </v-btn>
+          <v-spacer></v-spacer>
+        </v-card-actions>
+        <v-alert v-if='errorText' type='error'>{{errorText}}</v-alert>
+      </v-card>
+    </v-app>
+    
+  </div>
+  <?!= include('page_interaction/feedback_models/feedback-script.html'); ?>
+</body>
+
+</html>
