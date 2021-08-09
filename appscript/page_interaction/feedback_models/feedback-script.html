@@ -43,6 +43,9 @@
         else this.$refs.form.reset()
         this.isLoading = false
       }
+    },
+    created: function() {
+      google.script.run.withSuccessHandler((email)=>this.email = email).getEffectiveUserEmail()
     }
   })
 
