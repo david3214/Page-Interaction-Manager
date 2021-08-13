@@ -105,9 +105,8 @@ def get_profile_links(self, task_info):
             while True:
                 item = queue.get()
                 print(f'Working on {item}')
-                for name in item[1]:
-                    if name in results.keys() and results[name] != 'Not Found':
-                        item[1].remove(name)
+                # Filters out all names that have already been done
+                item[1][:] = [name for name in item[1] if (name not in results.keys() or results[name] == 'Not Found')]
                 profile_links = bot.scrape_post_reactions_for_people(
                     item[0], item[1])
                 resultsQ.put(profile_links)
