@@ -29,5 +29,3 @@ private.key
 database_vars.js
 Pipfile
 data-teste.sqlite
-package-lock.json
-node_modules/
