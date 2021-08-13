@@ -77,7 +77,7 @@ def update_all_profile_links(pages='all'):
             task_info['task_name'] = "missionary_bot.tasks.get_profile_links"
             task_info["page_id"] = result.page_id
             task_info["data"] = {}
-            names_with_links = {}
+            psids_with_links = {}
             process_result_info = {}
             
             # Authorize and Access google sheet
@@ -88,23 +88,23 @@ def update_all_profile_links(pages='all'):
             df = pd.DataFrame(worksheet.get_all_records())
             # df = df.loc[df['Profile Link'] == '']
 
-            def create_list_of_names_with_links(name, profile_link): 
+            def create_list_of_psids_with_links(psid, profile_link): 
                 if profile_link != 'Not Found' and profile_link != '':
-                    names_with_links[name] = profile_link
+                    psids_with_links[psid] = profile_link
 
-            def f(name, profile_link, source):
+            def f(name, profile_link, source, psid):
                 if profile_link == '':
-                    if names_with_links.get(name):
-                        process_result_info[name] = names_with_links[name]
+                    if psids_with_links.get(psid):
+                        process_result_info[name] = psids_with_links[psid]
                     else:
                         source_data = task_info['data'].setdefault(source, [])
                         if name not in source_data:
                             source_data.append(name)
                             
-            df.apply(lambda x: create_list_of_names_with_links(
-                x['Name'], x['Profile Link']), axis=1)
+            df.apply(lambda x: create_list_of_psids_with_links(
+                x['PSID'], x['Profile Link']), axis=1)
             df.apply(lambda x: f(
-                x['Name'], x['Profile Link'], x['Source']), axis=1)
+                x['Name'], x['Profile Link'], x['Source'], x['PSID']), axis=1)
             print(task_info)
             celery.send_task(app=celery, name=task_info['task_name'],
                              kwargs={'task_info': task_info},
