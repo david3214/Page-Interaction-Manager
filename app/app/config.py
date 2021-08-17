@@ -4,11 +4,11 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
-    REDIS_URL = os.environ.get("REDIS_URL")
+    REDIS_URL = 'rpc://'
     RABBITMQ_URL = os.environ.get("RABBITMQ_URL")
     DATABASE_URL = os.environ.get("DATABASE_URL")
     CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
-    CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
+    CELERY_RESULT_BACKEND = 'rpc://'
     CELERY_IMPORTS = ('app.worker',)
     CLIENT_SECRETS_FILE = os.environ.get("CLIENT_SECRETS_FILE")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
