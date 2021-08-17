@@ -73,25 +73,46 @@ def update_all_profile_links(pages='all'):
             task_info['task_name'] = "missionary_bot.tasks.get_profile_links"
             task_info["page_id"] = result.page_id
             task_info["data"] = {}
+            psids_with_links = {}
+            process_result_info = {}
+            
+            # Authorize and Access google sheet
             auth = make_auth(result.page_id)
             gc = gspread.authorize(auth)
             sh = gc.open_by_key(result.page_details['google_sheets']['id'])
             worksheet = sh.worksheet("Ad Likes")
             df = pd.DataFrame(worksheet.get_all_records())
-            df = df.loc[df['Profile Link'] == '']
+            # df = df.loc[df['Profile Link'] == '']
 
-            def f(name, profile_link, source):
+            def create_list_of_psids_with_links(psid, profile_link): 
+                if profile_link != 'Not Found' and profile_link != '':
+                    psids_with_links[psid] = profile_link
+
+            def f(name, profile_link, source, psid):
                 if profile_link == '':
-                    task_info['data'].setdefault(source, []).append(name)
-
+                    if psids_with_links.get(psid):
+                        process_result_info[name] = psids_with_links[psid]
+                    else:
+                        source_data = task_info['data'].setdefault(source, [])
+                        if name not in source_data:
+                            source_data.append(name)
+                            
+            df.apply(lambda x: create_list_of_psids_with_links(
+                x['PSID'], x['Profile Link']), axis=1)
             df.apply(lambda x: f(
-                x['Name'], x['Profile Link'], x['Source']), axis=1)
+                x['Name'], x['Profile Link'], x['Source'], x['PSID']), axis=1)
             print(task_info)
             celery.send_task(app=celery, name=task_info['task_name'],
                              kwargs={'task_info': task_info},
                              chain=[celery.signature(
                                  'app.worker.process_results', queue='results')]
                              )
+
+            if len(process_result_info):
+                print('sending process_results task')
+                task_info['results'] = process_result_info
+                celery.send_task(app=celery, name='app.worker.process_results', 
+                                 kwargs={'task_info': task_info}, queue='results')
         except Exception as e:
             print(f"error: {e}")
     return True
