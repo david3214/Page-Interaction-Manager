@@ -1,7 +1,6 @@
 import os
 import threading
 import queue
-import signal
 from multiprocessing import Process, cpu_count
 import logging
 from PIL import Image
