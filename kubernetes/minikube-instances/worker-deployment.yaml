@@ -52,11 +52,6 @@ spec:
             configMapKeyRef:
               key: RABBITMQ_URL
               name: env
-        - name: REDISCLOUD_URL
-          valueFrom:
-            configMapKeyRef:
-              key: REDISCLOUD_URL
-              name: env
         - name: DRIVER_URL
           valueFrom:
             configMapKeyRef:

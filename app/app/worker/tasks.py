@@ -6,8 +6,6 @@ import locale
 from ssl import Options
 from urllib.parse import quote, urlencode
 from urllib import request, error
-from celery.app import autoretry
-from flask.app import Flask
 from flask import current_app
 from babel.dates import format_date
 
@@ -15,7 +13,6 @@ import gspread
 import pandas as pd
 from celery.signals import worker_process_init, worker_process_shutdown, task_postrun
 from google.oauth2.credentials import Credentials, exceptions
-from oauthlib.oauth1.rfc5849.endpoints import access_token
 from sqlalchemy import or_
 
 from .. import celery, create_app, db
@@ -24,7 +21,6 @@ from ..utils import deep_get
 from .task_dicts import internalVariables
 
 from celery import Celery
-from celery.schedules import crontab
 
 # Placeholder, for flask app created on init
 app = Celery()

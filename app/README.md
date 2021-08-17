@@ -15,9 +15,7 @@ File to house all the necessary variables used by the App project. Create the fi
 ```
 FLASK_CONFIG=testing
 TEST_DATABASE_URL=
-REDIS_URL=
 CELERY_BROKER_URL=
-CELERY_RESULT_BACKEND=
 ```
 - **Flask Config** Tells the container the environment to run in. All of these environment variables are for the testing config
 - **Test Database Url** Generally be mysql+pymysql://root:example@mysql:3306/testing based on db under the [docker-compose](/app/docker-compose.yaml) file

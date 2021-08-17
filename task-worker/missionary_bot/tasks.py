@@ -1,7 +1,6 @@
 import os
 import threading
 import queue
-import signal
 from multiprocessing import Process, cpu_count
 import logging
 from PIL import Image
@@ -17,7 +16,7 @@ from .config import config
 from .errors import BlockedError
 
 celery = Celery('tasks', broker=os.getenv("RABBITMQ_URL"),
-                backend=os.getenv("REDISCLOUD_URL"))
+                backend='rpc://')
 # jesus_bg = Image.open(urllib.request.urlopen(
 #    "https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/qr-code/jesus_template.png").read())
 

@@ -32,8 +32,8 @@ import jwt
 from .errors import AuthenticationError, BlockedError
 
 # Redis
-url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
-r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
+# url = urllib.parse.urlparse(os.environ.get('REDISCLOUD_URL'))
+# r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
 context = pa.default_serialization_context()
 
 
@@ -85,15 +85,16 @@ class MissionaryBot:
 
     def do_work(self):
         try:
-            self.set_status('Doing work')
-            r.set(self.church_username + ":alive", 'true')
-            area_book_results = self.scrape_area_book_for_people()
-            r.set(self.church_username+':area_book_results',
-                  context.serialize(area_book_results).to_buffer().to_pybytes())
-            self.authenticate_with_facebook()
-            self.load_facebook_profiles()
-            self.set_status('Done working')
-            r.set(self.church_username + ":alive", 'false')
+            self.set_status('Feature unavailable due to no redis db')
+            # self.set_status('Doing work')
+            # r.set(self.church_username + ":alive", 'true')
+            # area_book_results = self.scrape_area_book_for_people()
+            # r.set(self.church_username+':area_book_results',
+            #       context.serialize(area_book_results).to_buffer().to_pybytes())
+            # self.authenticate_with_facebook()
+            # self.load_facebook_profiles()
+            # self.set_status('Done working')
+            # r.set(self.church_username + ":alive", 'false')
             return True
         except:
             self.delete()
@@ -103,70 +104,71 @@ class MissionaryBot:
   """
 
     def load_facebook_profiles(self):
-        self.set_status("Starting to Load Facebook Profiles")
-        area_book_results = context.deserialize(
-            r.get(self.church_username+':area_book_results'))
-        r.set(self.church_username + ":current_index", -2)
-        count_row = area_book_results.shape[0]
-        blocked_by_facebook = False
-        time_to_wait = 30
-        loop_index = 0
-        for row_number, row in area_book_results.iterrows():
-            loop_index += 1
-            if not r.exists(self.church_username + ":alive"):
-                r.delete(self.church_username + ":facebook_search_results")
-                self.wd.quit()
-                raise KeyboardInterrupt
-            try:
-                row['firstName'] = str(row['firstName'] or '')
-                row['lastName'] = str(row['lastName'] or '')
-                row['gender'] = 'U' if row['gender'] == None else row['gender']
-                if row['ageCategoryId'] != row['ageCategoryId']:
-                    row['ageCategoryId'] = 0
-                combined = {}
-                search_term = row["firstName"] + " " + row["lastName"]
-                if len(search_term.split()) > 2:
-                    first, *middle, last = search_term.split()
-                    search_term = first + " " + last
-                facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(search_term)}'
-                self.wd.get(facebook_search_url)
-                time.sleep(time_to_wait)
-                if len(self.wd.find_elements_by_xpath("""//*[contains(text(), "You Can't Use This Feature Right Now")]""")) != 0:
-                    blocked_by_facebook = True
-                    while blocked_by_facebook:
-                        self.set_status(
-                            "Facebook rate limit active, sleeping for an hour")
-                        self.logger.error("Facebook has detected bot")
-                        time.sleep(3600)
-                        self.wd.get(facebook_search_url)
-                        time.sleep(time_to_wait)
-                        if len(self.wd.find_elements_by_xpath("""//*[contains(text(), "You Can't Use This Feature Right Now")]""")) == 0:
-                            blocked_by_facebook = False
-                    self.set_status("Loading Facebook Profiles")
-                    time_to_wait += 1
-                content = self.parse_facebook_search_page(self.wd.page_source)
-                if content == None or content == "None":
-                    self.logger.warning("Didn't find any search results")
-                    content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{row["firstName"]+ " " +row["lastName"]}</a> on Facebook by hand?<br>'
-                combined['content'] = content
-                combined['about'] = f'Name: {str(row["firstName"]) + " " +str(row["lastName"])}<br>Age: {age_map[row["ageCategoryId"]]}<br>Gender: {gender_map[row["gender"]]}'
-                self.logger.info(
-                    f"{row['firstName']} {row['lastName']} {loop_index} / {count_row} ... {round(((loop_index / count_row) * 100), 2)}% done")
-            except Exception as e:
-                self.logger.debug(row)
-                self.logger.error(e)
-            finally:
-                try:
-                    combined = bytes(json.dumps(combined), 'utf-8')
-                    r.rpush(self.church_username +
-                            ":facebook_search_results", gzip.compress(combined))
-                except:
-                    combined = bytes(json.dumps(
-                        {'about': 'Something Broke', 'content': 'Something Broke'}), 'utf-8')
-                    r.rpush(self.church_username +
-                            ":facebook_search_results", gzip.compress(combined))
+        self.set_status('Feature unavailable due to no redis db')
+        # self.set_status("Starting to Load Facebook Profiles")
+        # area_book_results = context.deserialize(
+        #     r.get(self.church_username+':area_book_results'))
+        # r.set(self.church_username + ":current_index", -2)
+        # count_row = area_book_results.shape[0]
+        # blocked_by_facebook = False
+        # time_to_wait = 30
+        # loop_index = 0
+        # for row_number, row in area_book_results.iterrows():
+        #     loop_index += 1
+        #     if not r.exists(self.church_username + ":alive"):
+        #         r.delete(self.church_username + ":facebook_search_results")
+        #         self.wd.quit()
+        #         raise KeyboardInterrupt
+        #     try:
+        #         row['firstName'] = str(row['firstName'] or '')
+        #         row['lastName'] = str(row['lastName'] or '')
+        #         row['gender'] = 'U' if row['gender'] == None else row['gender']
+        #         if row['ageCategoryId'] != row['ageCategoryId']:
+        #             row['ageCategoryId'] = 0
+        #         combined = {}
+        #         search_term = row["firstName"] + " " + row["lastName"]
+        #         if len(search_term.split()) > 2:
+        #             first, *middle, last = search_term.split()
+        #             search_term = first + " " + last
+        #         facebook_search_url = f'https://www.facebook.com/search/people?q={urllib.parse.quote(search_term)}'
+        #         self.wd.get(facebook_search_url)
+        #         time.sleep(time_to_wait)
+        #         if len(self.wd.find_elements_by_xpath("""//*[contains(text(), "You Can't Use This Feature Right Now")]""")) != 0:
+        #             blocked_by_facebook = True
+        #             while blocked_by_facebook:
+        #                 self.set_status(
+        #                     "Facebook rate limit active, sleeping for an hour")
+        #                 self.logger.error("Facebook has detected bot")
+        #                 time.sleep(3600)
+        #                 self.wd.get(facebook_search_url)
+        #                 time.sleep(time_to_wait)
+        #                 if len(self.wd.find_elements_by_xpath("""//*[contains(text(), "You Can't Use This Feature Right Now")]""")) == 0:
+        #                     blocked_by_facebook = False
+        #             self.set_status("Loading Facebook Profiles")
+        #             time_to_wait += 1
+        #         content = self.parse_facebook_search_page(self.wd.page_source)
+        #         if content == None or content == "None":
+        #             self.logger.warning("Didn't find any search results")
+        #             content = f'<br>Didn\'t Find Any Good Results <br> Maybe search <a href="{facebook_search_url}">{row["firstName"]+ " " +row["lastName"]}</a> on Facebook by hand?<br>'
+        #         combined['content'] = content
+        #         combined['about'] = f'Name: {str(row["firstName"]) + " " +str(row["lastName"])}<br>Age: {age_map[row["ageCategoryId"]]}<br>Gender: {gender_map[row["gender"]]}'
+        #         self.logger.info(
+        #             f"{row['firstName']} {row['lastName']} {loop_index} / {count_row} ... {round(((loop_index / count_row) * 100), 2)}% done")
+        #     except Exception as e:
+        #         self.logger.debug(row)
+        #         self.logger.error(e)
+        #     finally:
+        #         try:
+        #             combined = bytes(json.dumps(combined), 'utf-8')
+        #             r.rpush(self.church_username +
+        #                     ":facebook_search_results", gzip.compress(combined))
+        #         except:
+        #             combined = bytes(json.dumps(
+        #                 {'about': 'Something Broke', 'content': 'Something Broke'}), 'utf-8')
+        #             r.rpush(self.church_username +
+        #                     ":facebook_search_results", gzip.compress(combined))
 
-        self.set_status("Done Loading Facebook Profiles")
+        # self.set_status("Done Loading Facebook Profiles")
 
     def set_status(self, status):
         """
@@ -174,7 +176,7 @@ class MissionaryBot:
         """
         try:
             self.logger.info(f'{self.church_username}: {status}')
-            return r.set(self.church_username + ":status", status)
+            # return r.set(self.church_username + ":status", status)
         except:
             self.logger.info(f'{status}')
 
