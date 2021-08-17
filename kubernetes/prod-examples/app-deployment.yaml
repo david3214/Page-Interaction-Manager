@@ -53,15 +53,6 @@ metadata:
                         .: {}
                         f:key: {}
                         f:name: {}
-                  k:{"name":"CELERY_RESULT_BACKEND"}:
-                    .: {}
-                    f:name: {}
-                    f:valueFrom:
-                      .: {}
-                      f:configMapKeyRef:
-                        .: {}
-                        f:key: {}
-                        f:name: {}
                   k:{"name":"CLIENT_SECRETS_FILE"}:
                     .: {}
                     f:name: {}
@@ -90,15 +81,6 @@ metadata:
                         f:key: {}
                         f:name: {}
                   k:{"name":"PORT"}:
-                    .: {}
-                    f:name: {}
-                    f:valueFrom:
-                      .: {}
-                      f:configMapKeyRef:
-                        .: {}
-                        f:key: {}
-                        f:name: {}
-                  k:{"name":"REDIS_URL"}:
                     .: {}
                     f:name: {}
                     f:valueFrom:
@@ -265,11 +247,6 @@ spec:
             configMapKeyRef:
               key: CELERY_BROKER_URL
               name: env
-        - name: CELERY_RESULT_BACKEND
-          valueFrom:
-            configMapKeyRef:
-              key: CELERY_RESULT_BACKEND
-              name: env
         - name: CLIENT_SECRETS_FILE
           valueFrom:
             configMapKeyRef:
@@ -289,11 +266,6 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: PORT
-              name: env
-        - name: REDIS_URL
-          valueFrom:
-            configMapKeyRef:
-              key: REDIS_URL
               name: env
         image: us-central1-docker.pkg.dev/eighth-vehicle-287322/missionary-tools-docker/app:v2
         imagePullPolicy: IfNotPresent

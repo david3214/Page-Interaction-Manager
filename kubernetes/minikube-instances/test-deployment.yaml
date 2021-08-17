@@ -22,11 +22,6 @@ spec:
             configMapKeyRef:
               key: CELERY_BROKER_URL
               name: env
-        - name: CELERY_RESULT_BACKEND
-          valueFrom:
-            configMapKeyRef:
-              key: CELERY_RESULT_BACKEND
-              name: env
         - name: CLIENT_SECRETS_FILE
           valueFrom:
             configMapKeyRef:
@@ -46,11 +41,6 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: PORT
-              name: env
-        - name: REDIS_URL
-          valueFrom:
-            configMapKeyRef:
-              key: REDIS_URL
               name: env
         image: 9f3fb9e39a72 # Image Name of locally built image
         imagePullPolicy: "Never"

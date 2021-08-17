@@ -3,10 +3,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    REDIS_URL = os.environ.get("REDIS_URL")
+    REDIS_URL = 'rpc://' 
     RABBITMQ_URL = os.environ.get("RABBITMQ_URL")
     CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
-    CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
+    CELERY_RESULT_BACKEND = 'rpc://' 
     CHURCH_USERNAME = os.environ.get('CHURCH_USERNAME')
     CHURCH_PASSWORD = os.environ.get('CHURCH_PASSWORD')
     FACEBOOK_USERNAME = os.environ.get('FACEBOOK_USERNAME')

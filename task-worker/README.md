@@ -13,7 +13,6 @@ Prerequisites to running the task-worker bot:
 ## Worker.env file
 File to house all the necessary variables used by the task-worker bot. Create the file and populate these fields
 ```
-REDISCLOUD_URL=
 BUCKET_NAME=
 RABBITMQ_URL=
 FACEBOOK_USERNAME=
