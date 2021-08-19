@@ -3,8 +3,8 @@
 var defaultUserSettings = {
   // Program variables
   statusList: ["Select", "Left on Read", "Rejected", "Do Not Contact", "Outside Mission", "Member", "Missionary", "Non Member", "Sent Friend Request", "Currently Messaging", "Messaged 1 Time", "Teaching", "Baptized", "Stopped Teaching"],
+  statusToMerge: ["Select", "Left on Read", "Rejected", "Do Not Contact", "Outside Mission", "Member", "Missionary", "Non Member", "Sent Friend Request", "Currently Messaging", "Messaged 1 Time", "Teaching", "Baptized", "Stopped Teaching"],
   hiddenStatuses: ["Member", "Missionary", "Do Not Contact", "Rejected"],
-  statusToMerge: ["Member", "Missionary", "Do Not Contact", "Rejected"],
   assignmentMap: [['Unassigned', '#82C1EC'], ['Ward 1', '#F28530'], ['Ward 2', '#FCFBC2'], ['Ward 3', '#ECE3D4'], ['Ward 4', '#F9F85F']],
   sheetSettings: {
     "Ad Likes": { "highlightEnabled": false, "sortingEnabled": true, "mergingEnabled": true },
@@ -839,9 +839,9 @@ function sortData(context = openContext()) {
   var status = context.header.get('Status')
   var PSID = context.header.get('PSID')
   var date = context.header.get('Date')
-  var memberStatuses = internalVariables.memberStatusList
-  var hidden = _.filter(context.values, function (row) { return _.includes(memberStatuses, row[status]) })
-  var values = _.filter(context.values, function (row) { return !_.includes(memberStatuses, row[status]) })
+  var hiddenStatuses = context.settings.hiddenStatuses || internalVariables.memberStatusList
+  var hidden = _.filter(context.values, function (row) { return _.includes(hiddenStatuses, row[status]) })
+  var values = _.filter(context.values, function (row) { return !_.includes(hiddenStatuses, row[status]) })
   values = _.orderBy(values, [assignment, status, date], ['asc', 'asc', 'desc'])
   hidden = _.orderBy(hidden, [assignment, status, date], ['asc', 'asc', 'desc'])
   var finalResults = _.concat(values, hidden)
