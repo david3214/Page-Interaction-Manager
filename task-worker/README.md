@@ -18,8 +18,6 @@ RABBITMQ_URL=
 FACEBOOK_USERNAME=
 FACEBOOK_PASSWORD=
 FACEBOOK_LANGUAGE=
-CHURCH_USERNAME=
-CHURCH_PASSWORD=
 ```
 
 - **Bucket Name** is the appspot bucket url found on [Google Cloud](https://console.cloud.google.com/storage/browser?project=eighth-vehicle-287322).
