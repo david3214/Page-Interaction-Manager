@@ -22,7 +22,6 @@ CHURCH_USERNAME=
 CHURCH_PASSWORD=
 ```
 
-- **Redis Cloud** url will be the redis database hosted on [Heroku](https://dashboard.heroku.com/apps)
 - **Bucket Name** is the appspot bucket url found on [Google Cloud](https://console.cloud.google.com/storage/browser?project=eighth-vehicle-287322).
 - **RabbitMQ_URL** is the url for the rabbitMQ queue. Found on [CloudAMPQ](https://customer.cloudamqp.com/)
 - **Facebook Username and Password** are for your local facebook account that the bot will run on
