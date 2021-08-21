@@ -18,16 +18,11 @@ RABBITMQ_URL=
 FACEBOOK_USERNAME=
 FACEBOOK_PASSWORD=
 FACEBOOK_LANGUAGE=
-CHURCH_USERNAME=
-CHURCH_PASSWORD=
 ```
 
-- **Redis Cloud** url will be the redis database hosted on [Heroku](https://dashboard.heroku.com/apps)
 - **Bucket Name** is the appspot bucket url found on [Google Cloud](https://console.cloud.google.com/storage/browser?project=eighth-vehicle-287322).
 - **RabbitMQ_URL** is the url for the rabbitMQ queue. Found on [CloudAMPQ](https://customer.cloudamqp.com/)
 - **Facebook Username and Password** are for your local facebook account that the bot will run on
-- **Church Username and Password** are for your personal church account. 
-  - Currently required for the bot to run, but is tied to deprecated code, will be taken out eventually
 
 ## Docker
 Once you have docker installed you may also install the VScode extension called docker. This will make running the worker much easier.

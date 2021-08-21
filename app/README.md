@@ -8,7 +8,7 @@ Prerequisites to running app:
 - [Docker](#user-content-docker) installed on your local machine
 - [Python](https://www.python.org/downloads/) installed on your machine. (Currently Running fine on Python 3.9)
 - [VScode](#user-content-remote-containers-extension) with Remote Containers extension
-  - After Issue #14 this won't be necessary
+  - Not necessary but very convienent
 
 ## App.env file
 File to house all the necessary variables used by the App project. Create the file and populate these fields
@@ -19,8 +19,6 @@ CELERY_BROKER_URL=
 ```
 - **Flask Config** Tells the container the environment to run in. All of these environment variables are for the testing config
 - **Test Database Url** Generally be mysql+pymysql://root:example@mysql:3306/testing based on db under the [docker-compose](/app/docker-compose.yaml) file
-- **Redis Url** url will be the redis database hosted on [Heroku](https://dashboard.heroku.com/apps)
-- **Celery Result Backend** same url as the redis url
 - **Celery Broker URL** is the url for the rabbitMQ queue. Found on [CloudAMPQ](https://customer.cloudamqp.com/) Difference is this one starts with ampq not ampqs
 
 ## Cloud SQL Proxy

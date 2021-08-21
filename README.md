@@ -20,19 +20,13 @@ If you are a missionary and you want to make a tool for everyone please make it 
   - Runs app celery worker as the process results queue
   - Has a Cloud SQL Proxy container for connecting to the sql database
 - Buckets store photos etc.
-- Depending on Issue #7 a redis database may also be hosted on Google Cloud
 
 ### [CloudAMPQ](https://customer.cloudamqp.com/)
 - Used to host a RabbitMQ Server, that task_worker and app use.
 - When Feature #9 is implemented this will no longer be needed
 
-### [Heroku](https://dashboard.heroku.com/apps)
-- Used to house a redis database
-- Mainly used by task_worker [bot](task_worker/missionary_bot/bot.py)
-- When Issue #7 is implemented this will either be gone, or housed on Google Cloud
-
 ### [Facebook API](https://developers.facebook.com/apps/)
 - Used for requesting data from facebook for our app
   - We have been denied information on page_messaging many times
 - Interacts with a webhook hosted on Google Cloud
-- Webhook endpoint is under the messnger section, not webhook.
+- Webhook endpoint is under the messenger section, not webhook.
