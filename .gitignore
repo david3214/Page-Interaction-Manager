@@ -29,3 +29,4 @@ private.key
 database_vars.js
 Pipfile
 data-teste.sqlite
+areabook_dump.py

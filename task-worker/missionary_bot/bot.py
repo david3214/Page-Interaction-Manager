@@ -11,6 +11,7 @@ import time
 import urllib.parse
 import uuid
 from random import randint
+import itertools
 
 import pandas as pd
 import pyarrow as pa
@@ -36,11 +37,13 @@ from .errors import AuthenticationError, BlockedError
 # r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
 context = pa.default_serialization_context()
 
+unique_id = itertools.count()
 
 class MissionaryBot:
     def __init__(self, config):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        self.bot_id = next(unique_id)
         self.church_username = config.CHURCH_USERNAME
         self.church_password = config.CHURCH_PASSWORD
         self.facebook_username = config.FACEBOOK_USERNAME
@@ -175,7 +178,8 @@ class MissionaryBot:
         Set status of the bot
         """
         try:
-            self.logger.info(f'{self.church_username}: {status}')
+            bot_name = self.church_username if self.church_username else f'Bot_{self.bot_id}'
+            self.logger.info(f'{bot_name}: {status}')
             # return r.set(self.church_username + ":status", status)
         except:
             self.logger.info(f'{status}')
