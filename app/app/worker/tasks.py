@@ -255,6 +255,10 @@ def insert_row_into_sheet(task_info):
             # If the sheet has too many cells it will stop us from inserting into it
             raise Exception(json.dumps(
                 {'status': 'Error', 'retry': False, 'message': str(e), 'task_info': task_info}))
+        except (gspread.exceptions.WorksheetNotFound) as e:
+            # sheet name wasn't found
+            raise Exception(json.dumps(
+                {'status': 'Error', 'retry': False, 'message': 'Worksheet not found:' + str(e), 'task_info': task_info}))
 
         return_value = json.dumps({'status': 'Processed', 'page_id': page_id})
         return return_value
