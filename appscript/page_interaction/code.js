@@ -166,18 +166,28 @@ function updateConditionalFormattingRules(context = openContext()) {
 
   var sheet = context.sheet
 
-  // Get 'Name' column
-  var name = sheet.getRange(2, context.header.get('Name') + 1, context.values.length)
+  const nameLetter = context.header.getLetter('Name')
+  const assignmentLetter = context.header.getLetter('Assignment')
+  const statusLetter = context.header.getLetter('Status')
+  const genderLetter = context.header.getLetter('Gender')
 
-  // Get 'Assignment' column
-  var assignment = sheet.getRange(2, context.header.get('Assignment') + 1, context.values.length)
+  // Add all condtional format rules not made by us back to the list
+  // sheet.getConditionalFormatRules().forEach(function(format) {
+  //   const booleanCondition = format.getBooleanCondition();
+  //   if (booleanCondition) {
+  //     const criteria = booleanCondition.getCriteriaType();
+  //     const args = booleanCondition.getCriteriaValues();
+  //     if (criteria != 'CUSTOM_FORMULA' || !args.find(arg=>arg.includes('&T(N("Missionary-Tools-Formula"))')))
+  //       sheetConditionalFormatRules.push(format)
+  //   }
+  // })
 
   // Make conditional formatting rule to give the different genders
   Object.keys(internalVariables.genderMap).forEach(function (key) {
     var genderConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied(`=C2="${key}"`)
+      .whenFormulaSatisfied(`=LOWER($${genderLetter}1)="${key}" &T(N("Missionary-Tools-Formula"))`)
       .setBackground(internalVariables.genderMap[key])
-      .setRanges([name])
+      .setRanges([sheet.getRange(`${nameLetter}:${nameLetter}`)])
       .build()
     sheetConditionalFormatRules.push(genderConditionalFormatRule)
   })
@@ -186,15 +196,48 @@ function updateConditionalFormattingRules(context = openContext()) {
   sheet.hideColumns(context.header.get('Gender') + 1)
   sheet.hideColumns(context.header.get('PSID') + 1)
 
-  // Make conditional formatting rule to give the Assignments different colors
-  context.settings.assignmentMap.forEach(function (assignmentPair) {
-    var assignmentConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo(assignmentPair[0])
-      .setBackground(assignmentPair[1])
-      .setRanges([assignment])
+  if (context.settings.sheetSettings[context.sheetName].highlightEnabled) {
+    const defaultStatus = context.settings.statusList[0]
+    let selectConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied(`=$${statusLetter}1="${defaultStatus}" &T(N("Missionary-Tools-Formula"))`)
+      .setBackground("#EA4335") // soft red
+      .setFontColor('white')
+      .setItalic(true)
+      .setRanges([sheet.getRange(`${statusLetter}:${statusLetter}`)])
       .build()
-    sheetConditionalFormatRules.push(assignmentConditionalFormatRule)
-  })
+    
+    sheetConditionalFormatRules.push(selectConditionalFormatRule)
+
+    // Make conditional formatting rule to give the Assignments different colors
+    context.settings.assignmentMap.forEach(function (assignmentPair) {      
+      const assignmentConditionalFormatRule1 = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied(`=AND($${assignmentLetter}1="${assignmentPair[0]}" &T(N("Missionary-Tools-Formula")), ISEVEN(ROW()))`)
+        .setBackground(assignmentPair[1])
+        .setRanges([context.range])
+        .build()
+        
+      const assignmentConditionalFormatRule2 = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied(`=AND($${assignmentLetter}1="${assignmentPair[0]}" &T(N("Missionary-Tools-Formula")), ISODD(ROW()))`)
+        .setBackground(LightenColor(assignmentPair[1], 5))
+        .setRanges([context.range])
+        .build()
+      
+      sheetConditionalFormatRules.push(...[assignmentConditionalFormatRule1, assignmentConditionalFormatRule2])
+    })
+  }
+  else {
+    // If they don't want sheet highlighting just highlight the assignment 
+
+    // Make conditional formatting rule to give the Assignments different colors
+    context.settings.assignmentMap.forEach(function (assignmentPair) {
+      const assignmentConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied(`=$${assignmentLetter}1="${assignmentPair[0]}" &T(N("Missionary-Tools-Formula"))`)
+        .setBackground(assignmentPair[1])
+        .setRanges([sheet.getRange(`${assignmentLetter}:${assignmentLetter}`)])
+        .build()
+      sheetConditionalFormatRules.push(assignmentConditionalFormatRule)
+    })
+  }
 
   // Apply conditional formatting rule to sheet
   sheet.setConditionalFormatRules(sheetConditionalFormatRules)
@@ -457,7 +500,11 @@ function openContext(spreadSheet = SpreadsheetApp.getActiveSpreadsheet(), sheetN
   var range = sheet.getDataRange()
   var values = range.getValues()
   var headerArray = values.shift()
-  var header = { headerData: headerArray, get(columnName) { return this.headerData.indexOf(columnName) } }
+  var header = {
+    headerData: headerArray,
+    get(columnName) { return this.headerData.indexOf(columnName) },
+    getLetter(columnName) { return columnToLetter(this.get(columnName) + 1)}
+  }
   var lastRow = sheet.getLastRow()
   var maxColumns = sheet.getMaxColumns()
   return {
@@ -508,8 +555,8 @@ function removeBadRows(context = openContext()) {
 function formatSheet(context = openContext()) {
   updateConditionalFormattingRules(context)
   updateDataValidationRules(context)
-  highlightSheet(context)
   trimSheet(context)
+  // highlightSheet(context)
 
   // =$H2="Select"
   // =AND($H2="Select",$G2="Unassigned")
@@ -1036,6 +1083,39 @@ function toastSheetInfo(context = openContext()) {
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename)
     .getContent()
+}
+
+// Helper function to for column indexing will return values of A, B, AA, BB for respective Columns
+function columnToLetter(column)
+{
+  let temp, letter = '';
+  while (column > 0)
+  {
+    temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
+}
+
+// Helper Function to the Condtional formatting for lighter assignment rows
+function LightenColor(hex, strength=5) {
+
+	// validate hex string
+	hex = String(hex).replace(/[^0-9a-f]/gi, '');
+	if (hex.length < 6) {
+		hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+	}
+
+	// convert to decimal and change luminosity
+	var rgb = "#", c, i;
+	for (i = 0; i < 3; i++) {
+		c = parseInt(hex.substr(i*2,2), 16);
+		c = Math.round(Math.min(Math.max(0, c + (255-c) / strength), 255)).toString(16);
+		rgb += ("00"+c).substr(c.length);
+	}
+
+	return rgb;
 }
 
 // fix the every hour issue not being able to get settings or do any update
