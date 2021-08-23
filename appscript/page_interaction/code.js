@@ -171,7 +171,6 @@ function updateConditionalFormattingRules(context = openContext()) {
   const statusLetter = context.header.getLetter('Status')
   const genderLetter = context.header.getLetter('Gender')
 
-
   // Add all condtional format rules not made by us back to the list
   // sheet.getConditionalFormatRules().forEach(function(format) {
   //   const booleanCondition = format.getBooleanCondition();
@@ -198,7 +197,7 @@ function updateConditionalFormattingRules(context = openContext()) {
   sheet.hideColumns(context.header.get('PSID') + 1)
 
   if (context.settings.sheetSettings[context.sheetName].highlightEnabled) {
-    const defaultStatus = context.settings.sheetSettings.statusList[0]
+    const defaultStatus = context.settings.statusList[0]
     let selectConditionalFormatRule = SpreadsheetApp.newConditionalFormatRule()
       .whenFormulaSatisfied(`=$${statusLetter}1="${defaultStatus}" &T(N("Missionary-Tools-Formula"))`)
       .setBackground("#EA4335") // soft red
@@ -214,13 +213,13 @@ function updateConditionalFormattingRules(context = openContext()) {
       const assignmentConditionalFormatRule1 = SpreadsheetApp.newConditionalFormatRule()
         .whenFormulaSatisfied(`=AND($${assignmentLetter}1="${assignmentPair[0]}" &T(N("Missionary-Tools-Formula")), ISEVEN(ROW()))`)
         .setBackground(assignmentPair[1])
-        .setRanges([assignment])
+        .setRanges([context.range])
         .build()
         
       const assignmentConditionalFormatRule2 = SpreadsheetApp.newConditionalFormatRule()
         .whenFormulaSatisfied(`=AND($${assignmentLetter}1="${assignmentPair[0]}" &T(N("Missionary-Tools-Formula")), ISODD(ROW()))`)
         .setBackground(LightenColor(assignmentPair[1], 5))
-        .setRanges([assignment])
+        .setRanges([context.range])
         .build()
       
       sheetConditionalFormatRules.push(...[assignmentConditionalFormatRule1, assignmentConditionalFormatRule2])
