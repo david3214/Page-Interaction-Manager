@@ -35,7 +35,7 @@ function checkForAddonUpdates() {
   if (isPageInteractionSheet == null) return
 
   let versionNotifications = JSON.parse(PropertiesService.getDocumentProperties().getProperty('UpdateNotifications')) || {}
-  let { authFixed, feedbackUpdate } = versionNotifications
+  let { authFixed, feedbackUpdate, highlightUpdate } = versionNotifications
   let updateMessageHTML = ''
   if (!authFixed) {
     updateMessageHTML += `
@@ -56,6 +56,15 @@ function checkForAddonUpdates() {
         ○ Updated the profile link finder so if it can't find a link it will state Not Found
       `
     versionNotifications.feedbackUpdate = true
+  }
+
+  if (!highlightUpdate) {
+    updateMessageHTML += `
+      Highlight Update - Check out the Highlight setting, give us your feedback
+        ○ Feature: Page highlighting now will highlight the entire row, and do alternating colors for assignment
+        ○ Feature: Select will no longer highlight the whole row red, but just the select status
+      `
+    versionNotifications.highlightUpdate = true
   }
 
   if (updateMessageHTML) {
