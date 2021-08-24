@@ -172,15 +172,15 @@ function updateConditionalFormattingRules(context = openContext()) {
   const genderLetter = context.header.getLetter('Gender')
 
   // Add all condtional format rules not made by us back to the list
-  // sheet.getConditionalFormatRules().forEach(function(format) {
-  //   const booleanCondition = format.getBooleanCondition();
-  //   if (booleanCondition) {
-  //     const criteria = booleanCondition.getCriteriaType();
-  //     const args = booleanCondition.getCriteriaValues();
-  //     if (criteria != 'CUSTOM_FORMULA' || !args.find(arg=>arg.includes('&T(N("Missionary-Tools-Formula"))')))
-  //       sheetConditionalFormatRules.push(format)
-  //   }
-  // })
+  sheet.getConditionalFormatRules().forEach(function(format) {
+    const booleanCondition = format.getBooleanCondition();
+    if (booleanCondition) {
+      const criteria = booleanCondition.getCriteriaType();
+      const args = booleanCondition.getCriteriaValues();
+      if (criteria != 'CUSTOM_FORMULA' || !args.find(arg=>arg.includes('&T(N("Missionary-Tools-Formula"))')))
+        sheetConditionalFormatRules.push(format)
+    }
+  })
 
   // Make conditional formatting rule to give the different genders
   Object.keys(internalVariables.genderMap).forEach(function (key) {
