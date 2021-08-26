@@ -1,4 +1,5 @@
 import os
+from celery.schedules import crontab
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -7,11 +8,22 @@ class Config:
     REDIS_URL = 'rpc://'
     RABBITMQ_URL = os.environ.get("RABBITMQ_URL")
     DATABASE_URL = os.environ.get("DATABASE_URL")
-    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
-    CELERY_RESULT_BACKEND = 'rpc://'
-    CELERY_IMPORTS = ('app.worker',)
     CLIENT_SECRETS_FILE = os.environ.get("CLIENT_SECRETS_FILE")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Celery configurations
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+    CELERY_RESULT_BACKEND = 'rpc://'
+    CELERY_IGNORE_RESULT = true
+    CELERY_IMPORTS = ('app.worker',)
+    if (os.environ.get("CELERY_BEAT")):
+        CELERYBEAT_SCHEDULE = {
+            "run-every-ten-seconds": {
+                "task": "app.worker.tasks.update_all_profile_links",
+                "schedule": crontab(minute=0, hour=2, day_of_week=4),
+                "options": {'queue': 'results'}
+            }
+        }
 
     @staticmethod
     def init_app(app):
