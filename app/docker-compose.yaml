@@ -20,9 +20,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: example
       MYSQL_DATABASE: testing
-  redis:
-    image: redis:latest
-    hostname: redis
   celery-worker:
     build:
       context: .
@@ -33,7 +30,6 @@ services:
       - app.env
     depends_on:
     - db
-    - redis
   
   # celery-cron:
   #   build:
@@ -45,8 +41,10 @@ services:
   #     - app.env
   #   depends_on:
   #   - db
-  #   - redis
 
+  # redis:
+  #   image: redis:latest
+  #   hostname: redis
   # rabbit:
   #   hostname: rabbit
   #   image: rabbitmq:latest
