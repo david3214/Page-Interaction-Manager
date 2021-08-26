@@ -184,6 +184,8 @@ def create_tables():
             'PRIMARY KEY (user_id));'
         )
 
+import celery
+from app.app import create_app
 import sqlalchemy as db
 
 # specify database configurations
@@ -281,4 +283,7 @@ with open("/workspaces/missionary-tools/appscript/page_interaction/mock_data.jso
       - 9090:9090
 
 
-
+from app import create_app, celery
+myapp = create_app('production')
+myapp.app_context().push()
+celery.send_task(app=celery, name='app.worker.tasks.test_task', args=[{'text':'TESTING TEXT, DID IT RUN?'}], queue='results')
