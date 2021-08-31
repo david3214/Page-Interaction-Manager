@@ -32,6 +32,8 @@ RESTORATION_PROCLAMATION = 'https://www.facebook.com/18523396549/videos/15948976
 def check_bots_health():
     global bots
     try:
+        if len(bots) < NUMBER_OF_BOTS:
+            raise Exception()
         for bot in bots:
             bot.wd.title
         return True

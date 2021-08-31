@@ -16,21 +16,21 @@ spec:
         app: worker
     spec:
       containers:
+      - image: selenium/standalone-chrome-debug:latest
+        imagePullPolicy: "IfNotPresent"
+        name: standalone-chrome
+        ports:
+        - containerPort: 4444
+        - containerPort: 5900
+        resources: {}
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: standalone-chrome-claim
       - env:
         - name: BUCKET_NAME
           valueFrom:
             configMapKeyRef:
               key: BUCKET_NAME
-              name: env
-        - name: CHURCH_PASSWORD
-          valueFrom:
-            configMapKeyRef:
-              key: CHURCH_PASSWORD
-              name: env
-        - name: CHURCH_USERNAME
-          valueFrom:
-            configMapKeyRef:
-              key: CHURCH_USERNAME
               name: env
         - name: FACEBOOK_LANGUAGE
           valueFrom:
@@ -61,19 +61,24 @@ spec:
         imagePullPolicy: "Never"
         name: worker
         resources: {}
-      - image: selenium/standalone-chrome-debug:latest
-        imagePullPolicy: "IfNotPresent"
-        name: standalone-chrome
-        ports:
-        - containerPort: 4444
-        - containerPort: 5900
-        resources: {}
-        volumeMounts:
-        - mountPath: /dev/shm
-          name: standalone-chrome-claim
       volumes:
       - name: standalone-chrome-claim
         persistentVolumeClaim:
           claimName: standalone-chrome-claim
       restartPolicy: Always
+status: {}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: standalone-chrome-claim
+  name: standalone-chrome-claim
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
 status: {}
