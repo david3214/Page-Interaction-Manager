@@ -14,7 +14,7 @@ class Config:
     # Celery configurations
     CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
     CELERY_RESULT_BACKEND = 'rpc://'
-    CELERY_IGNORE_RESULT = true
+    CELERY_IGNORE_RESULT = True
     CELERY_IMPORTS = ('app.worker',)
     if (os.environ.get("CELERY_BEAT")):
         CELERYBEAT_SCHEDULE = {

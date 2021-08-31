@@ -14,6 +14,7 @@ class Config:
     LANGUAGE = os.environ.get('FACEBOOK_LANGUAGE')
     DRIVER_URL = os.environ.get('DRIVER_URL') if os.environ.get(
         'DRIVER_URL') else "http://selenium:4444/wd/hub"
+    CELERY_IGNORE_RESULT = True
 
     @staticmethod
     def init_app(app):

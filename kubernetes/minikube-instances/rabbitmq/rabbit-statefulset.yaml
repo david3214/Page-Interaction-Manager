@@ -57,6 +57,16 @@ spec:
               key: RABBITMQ_ERLANG_COOKIE
         - name: K8S_HOSTNAME_SUFFIX
           value: .rabbitmq.$(RABBIT_POD_NAMESPACE).svc.cluster.local
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-admin
+              key: pass
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-admin
+              key: user
         volumeMounts:
         - name: data
           mountPath: /var/lib/rabbitmq
