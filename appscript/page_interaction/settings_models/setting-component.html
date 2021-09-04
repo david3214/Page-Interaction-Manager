@@ -9,7 +9,7 @@
         <!-- Sheet Settings Row -->
 
         <v-row>
-          <v-col cols='4' xs='4' class='mt-3 ml-16'>
+          <v-col cols=3 xs=3 class='mt-3 ml-16'>
             <h3 class='mb-n4'>Ad Likes</h3>
             <v-checkbox
               v-for="setting in adSettings"
@@ -28,7 +28,7 @@
           <v-col cols=1 class='mt-3 mx-3'>
             <v-btn 
               v-if='selectedUnit == "Add a unit"' 
-              :disabled='addUnitName == ""'
+              :disabled='enableAddUnit'
               @click='changeUnit("add")'
               fab small
               color="primary">
@@ -56,24 +56,30 @@
           <v-col cols=4 v-if="selectedUnit == 'Add a unit'" class='ml-n4'>
             <v-text-field
               v-model='addUnitName'
-              :rules='rules.unitName'
+              :rules='rules.unit'
               placeholder='Type Unit name here...'
               label='Unit'
               v-on:keyup.enter="changeUnit('add')"
               ></v-text-field>
           </v-col>
           <v-col 
-            cols=2 
-            class='mt-6 ml-n4'
+            cols=1 
+            class='mt-6 mr-5 ml-2 '
             v-if="selectedUnit != '' && selectedUnit != 'Add a unit'"
-            >
-            <div 
-              class="colorWrapper" 
-              id="unitWrapper"
-              v-bind:style="{ backgroundColor: unitColor }">
-              <input type='color' id="unitColor" v-model='unitColor' @blur='changeColor'>
-              <span>Select a color...</span>
-            </div>
+          >
+						<v-menu v-model="colorMenu" top nudge-bottom="15" nudge-left="15" :close-on-content-click="false">
+							<template v-slot:activator="{ on }">
+								<div :style="swatchStyle" v-on="on"></div>
+							</template>
+							<v-card>
+								<v-card-text class="pa-0">
+									<v-color-picker 
+                    v-model="unitColor"
+                    hide-inputs
+                    flat />
+								</v-card-text>
+							</v-card>
+						</v-menu>
           </v-col>
           <v-col cols=2 class='mt-6 ml-n1' v-if='selectedUnit != "Add a unit"'>
             <v-btn 
@@ -100,7 +106,7 @@
           <v-col cols=1 class='mt-3 mx-3'>
             <v-btn
               v-if='selectedStatus == "Add a status"' 
-              :disabled='addStatus == ""'
+              :disabled='enableAddStatus'
               @click='changeStatus("add")'
               fab small
               color="primary">
@@ -128,7 +134,7 @@
           <v-col cols=4 v-if="selectedStatus == 'Add a status'" class='ml-n4'>
             <v-text-field
               v-model='addStatus'
-              :rules='rules.unitName'
+              :rules='rules.status'
               placeholder='Type Status name here...'
               label='Status'
               v-on:keyup.enter="changeStatus('add')"
@@ -199,11 +205,11 @@
           label='Settings'
           v-model='programSettings'
           :rules='rules.settingsBlock'
-          rows='10'
+          rows='15'
           spellcheck='false'
           @keydown.tab.exact.prevent="tabber($event)"
           ref='advancedSettingBox'
-          auto-grow outlined>
+          outlined>
         </v-textarea>
         <v-row class="pb-7 mt-n2">
           <v-spacer></v-spacer>
@@ -219,7 +225,7 @@
           <v-spacer></v-spacer>
         </v-row>
       </v-form>
-      
+
     </div>
     `,
     props: ['sstyle'],
@@ -228,65 +234,28 @@
         form: false,
         programSettings: '{}',
         rules: {
-          unitName: [v => !!v || 'Unit Name is required'],
-          settingsBlock: [v=>{
-            let errorMsg = ''
-            let requiredAttrs = ['statusList', 'statusToMerge', 'hiddenStatuses', 'assignmentMap', 'sheetSettings']
-            try {
-              let settings = JSON.parse(v)
-              let attrErrors = requiredAttrs.reduce((attrErr, attr)=>{                
-                if (!settings[attr]) return attrErr.concat(attr)
-                switch (attr){
-                  case 'assignmentMap':
-                    settings[attr].forEach(aMap=> {
-                      if (aMap.length != 2 || !aMap[1].match(/#[0-9A-Fa-f]{6}/g))
-                        errorMsg += `assignmentMap Configured Incorrectly. Configure as [["name", "#xxxxxx"]].`
-                    })
-                    break
-                  case 'sheetSettings':
-                    if (Object.keys(settings[attr]).length != 2)
-                      errorMsg += 'sheetSettings Configured incorrectly. Do you have Ad Likes and Page Messages settings? '
-                    else {
-                      const settingTypes = ['Ad Likes', 'Page Messages']
-                      errorMsg += settingTypes.reduce((err, type)=>{
-                        if(!err){
-                          const sheetSetting = settings[attr][type]
-                          if (!sheetSetting || 
-                              !sheetSetting.hasOwnProperty('highlightEnabled') || 
-                              !sheetSetting.hasOwnProperty('sortingEnabled') || 
-                              !sheetSetting.hasOwnProperty('mergingEnabled'))
-                            err += 'sheetSettings Configured incorrectly. Do you have Ad Likes and Page Messages settings? '
-                        }
-                        return err
-                      }, '')
-                    }
-                    break
-                }
-                return attrErr
-              }, [])
-              if (attrErrors.length)
-                errorMsg += `Missing attribute(s): ${attrErrors.join(', ')}.`
-            }
-            catch(e) {
-              errorMsg += JSON.stringify(e.message)
-            }
-            if (errorMsg)
-              return errorMsg
-            else
-            return true;
-          }]
+          unit: [
+            v => !!v || 'Unit name is required',
+            v=> !this.unitList.find((unit)=>v == unit.name) || 'Unit name already in use'
+          ],
+          settingsBlock: [this.advancedSettingsValidator],
+          status: [
+            v=> !!v || 'Status name is required', 
+            v=> !this.statusList.find((status)=>v == status.name) || 'Status name already in use'
+          ]
         },
         selectedUnit: 'Add a unit',
         unitList: [],
         addUnitName: '',
         unitColor: '#ffffff',
-        settingsLoaded: true,
+        colorMenu: false,
+        settingsLoaded: false,
         selectedStatus: 'Add a status',
         statusList: [],
         addStatus: '',
         statusMerge: true,
         statusHide: false,
-        adSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
+        adSettings: [{ "name": "Sorting", "value": true }, { "name": "Merging", "value": true }, { "name": "Highlight", "value": true }],
         messageSettings: [{ "name": "Sorting", "value": true }, { "name": "Merging", "value": true }, { "name": "Highlight", "value": false }],
         formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
       }
@@ -298,11 +267,11 @@
         let settings = JSON.parse(this.programSettings)
         google.script.run
           .withSuccessHandler(()=>google.script.run.withSuccessHandler().formatSheet())
-          .withErrorHandler(this.errorHandler)
+          .withFailureHandler(this.errorHandler)
           .saveProgramSettings(settings);
         google.script.run
           .withSuccessHandler()
-          .withErrorHandler(this.errorHandler)
+          .withFailureHandler(this.errorHandler)
           .updateSheet();
       },
       updateProgramSettings: function (settings) {
@@ -387,10 +356,6 @@
           this.statusHide = currentStatus.hide
         }
       },
-      changeColor: function () {
-        const index = this.unitList.findIndex(unit => unit.name == this.selectedUnit)
-        if (index != -1) this.unitList[index].color = this.unitColor
-      },
       changeStatus: function (type) {
         if (type == 'add') {
           if (this.addStatus && !this.statusList.find(status => status.name == this.addStatus)) {
@@ -431,7 +396,9 @@
 
       },
       errorHandler: function(error) {
-        this.$emit('error-thrown', e.message + " If this is unexpected please report it via the feedback form as a bug")
+        console.log(error.message)
+        this.$emit('error-thrown', error.message + " If this is unexpected please report it via the feedback form as a bug")
+        this.settingsLoaded = true
       },
       swap: function (obj) {
         var ret = {};
@@ -449,12 +416,58 @@
         this.programSettings = `${textStart}\t${textEnd}`
         event.target.value = this.programSettings
         event.target.selectionEnd = event.target.selectionStart = originalSelectionStart + 1
+      },
+      advancedSettingsValidator: function(v) {
+        let errorMsg = ''
+        let requiredAttrs = ['statusList', 'statusToMerge', 'hiddenStatuses', 'assignmentMap', 'sheetSettings']
+        try {
+          let settings = JSON.parse(v)
+          let attrErrors = requiredAttrs.reduce((attrErr, attr)=>{                
+            if (!settings[attr]) return attrErr.concat(attr)
+            switch (attr){
+              case 'assignmentMap':
+                settings[attr].forEach(aMap=> {
+                  if (aMap.length != 2 || !aMap[1].match(/#[0-9A-Fa-f]{6}/g))
+                    errorMsg += `assignmentMap Configured Incorrectly. Configure as [["name", "#xxxxxx"]].`
+                })
+                break
+              case 'sheetSettings':
+                if (Object.keys(settings[attr]).length != 2)
+                  errorMsg += 'sheetSettings Configured incorrectly. Do you have Ad Likes and Page Messages settings? '
+                else {
+                  const settingTypes = ['Ad Likes', 'Page Messages']
+                  errorMsg += settingTypes.reduce((err, type)=>{
+                    if(!err){
+                      const sheetSetting = settings[attr][type]
+                      if (!sheetSetting || 
+                          !sheetSetting.hasOwnProperty('highlightEnabled') || 
+                          !sheetSetting.hasOwnProperty('sortingEnabled') || 
+                          !sheetSetting.hasOwnProperty('mergingEnabled'))
+                        err += 'sheetSettings Configured incorrectly. Do you have Ad Likes and Page Messages settings? '
+                    }
+                    return err
+                  }, '')
+                }
+                break
+            }
+            return attrErr
+          }, [])
+          if (attrErrors.length)
+            errorMsg += `Missing attribute(s): ${attrErrors.join(', ')}.`
+        }
+        catch(e) {
+          errorMsg += JSON.stringify(e.message)
+        }
+        if (errorMsg)
+          return errorMsg
+        else
+        return true;
       }
     },
     created: function() {
       google.script.run
         .withSuccessHandler(this.updateProgramSettings)
-        .withErrorHandler(this.errorHandler)
+        .withFailureHandler(this.errorHandler)
         .programSettings()
     },
     watch: {
@@ -463,10 +476,17 @@
         this.unitColor = unit ? unit.color : '#000000'
       },
       sstyle: function(newVal, oldVal){
-        if (newVal == 'regular' && !this.$refs.advancedSettingBox.hasError)
+        if (newVal == 'regular' && !(this.$refs.advancedSettingBox && this.$refs.advancedSettingBox.hasError))
           this.formatSettings(JSON.parse(this.programSettings))
         else if (newVal == 'advanced')
           this.formatData()
+      },
+      settingsLoaded: function(newVal) {
+        this.$emit('settings-loaded', newVal)
+      },
+      unitColor: function(){
+        const index = this.unitList.findIndex(unit => unit.name == this.selectedUnit)
+        if (index != -1) this.unitList[index].color = this.unitColor
       }
     },
     computed: {
@@ -481,6 +501,23 @@
           return status.name == this.selectedStatus && status.default ? status.default : isDefault
         }, false)
         return isDefault
+      },
+      swatchStyle() {
+        const { unitColor, menu } = this
+        return {
+          backgroundColor: unitColor,
+          cursor: 'pointer',
+          height: '30px',
+          width: '30px',
+          borderRadius: menu ? '50%' : '4px',
+          transition: 'border-radius 200ms ease-in-out'
+        }
+      },
+      enableAddUnit() {
+        return this.addUnitName && this.unitList.findIndex(unit=>unit.name==this.addUnitName) > -1
+      },
+      enableAddStatus() {
+        return this.addStatus && this.statusList.findIndex(status=>status.name==this.addStatus) > -1
       }
     }
   })

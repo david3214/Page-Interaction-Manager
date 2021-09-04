@@ -1,7 +1,7 @@
 <script>
   Vue.component('auth-component', {
     template: /*html*/`
-    <v-container v-if='sstyle == "auth"'>
+    <v-container v-if='sstyle == "auth"' class='mb-4'>
       <v-row>
         <v-col cols='10'>
           <h2>Facebook Settings</h2>
@@ -65,19 +65,26 @@
             @click="submitFacebookPageSelection">Link to Google</v-btn>
         </v-col>
       </v-row>
-      <v-alert color='info' outlined style='padding: 6px;' class='mt-3'>It is highly recommended you only edit the google settings using your office account. It is the only missionary account that will stay long term</v-alert>
+      <v-alert 
+        type='warning' 
+        text 
+        style='padding: 6px;' 
+        class='mt-6 mb-n1'
+        v-if='Object.keys(selected).length && (showConnectPageToGoogle || showGoogleSignin)'
+      >
+        It is highly recommended you only sign into or link to google using your mission office missionary.org account. It is the only missionary account that will stay long term.
+      </v-alert>
     </v-container>
     `,
     props: ['sstyle'],
     data: function () {
       return {
-        facebookPages: [{name: "test", something:"more"}],
-        selected: {name: "test", something:"more"},
-        scraperInput: '',
+        facebookPages: [],
+        selected: {name: "Select a page", disabled: true},
         profileList: '',
-        facebookAuthLink: " ",
-        showGoogleSignin: true,
-        showConnectPageToGoogle: true,
+        facebookAuthLink: "",
+        showGoogleSignin: false,
+        showConnectPageToGoogle: false,
         authLoading: true
       }
     },
@@ -85,11 +92,11 @@
       refreshAuthStatus: function(){
         this.authLoading = true
         google.script.run
-          .withErrorHandler(this.errorHandler)
+          .withFailureHandler(this.errorHandler)
           .withSuccessHandler(this.updateGoogleAuthLink)
           .getGoogleAuthStatus();
         google.script.run
-          .withErrorHandler(this.errorHandler)
+          .withFailureHandler(this.errorHandler)
           .withSuccessHandler(this.updateFacebookAuthLink)
           .getAuthorizationUrl();
       },
@@ -97,10 +104,10 @@
         this.authLoading = true
         var pageResults = { 'data': this.selected };
         google.script.run
-          .withErrorHandler(this.errorHandler)
+          .withFailureHandler(this.errorHandler)
           .withSuccessHandler(() => {
             google.script.run
-              .withErrorHandler(this.errorHandler)
+              .withFailureHandler(this.errorHandler)
               .withSuccessHandler(this.updateGoogleAuthorization)
               .getGoogleAuthStatus();
           }).saveFacebookPagesDetails(pageResults);
@@ -108,7 +115,7 @@
       removeFacebookPageSelection: function () {
         var pageResults = { 'data': this.selected };
         google.script.run
-          .withErrorHandler(this.errorHandler)
+          .withFailureHandler(this.errorHandler)
           .deleteFacebookPagesDetails(pageResults);
         this.selected = {};
       },
@@ -127,18 +134,21 @@
         google.script.run.withSuccessHandler(this.updateGoogleAuthLink).updatePageRefreshToken()
       },
       updateGoogleAuthLink: function (googleAuthorized) {
-        const { user_status, facebook_status } = googleAuthorized
-        if (facebook_status) {
+        const { user_status, page_status } = googleAuthorized
+        console.log({user_status, page_status})
+        if (page_status) {
           this.showConnectPageToGoogle = false
           this.showGoogleSignin = false
           this.$emit('auth-needed', false)
         }
         else {
-          if (user_status)
+          if (user_status){
             this.showConnectPageToGoogle = true
+            this.showGoogleSignin = false
+          }
           else {
             this.showGoogleSignin = true
-            this.showConnectPageToGoogle = true
+            this.showConnectPageToGoogle = false
           }
           this.$emit('auth-needed', true)
         }
@@ -149,31 +159,42 @@
         if(this.facebookAuthLink)
           this.$emit('auth-needed', true)
       },
-      updateScraperInput: function (scraperInput) {
-        this.scraperInput = JSON.stringify(scraperInput);
-      },
       errorHandler: function(error) {
-        this.$emit('error-thrown', e.message + " If this is unexpected please report it via the feedback form as a bug")
+        console.log('Error Hit: ' + error.message)
+        this.authLoading = false
+
+        if (error.message.includes('Access not granted or expired')){
+          google.script.run.withSuccessHandler(this.updateFacebookAuthLink).withFailureHandler(this.errorHandler)
+            .getAuthorizationUrl();
+          return
+        }
+        this.$emit('error-thrown', error.message + " If this is unexpected please report it via the feedback form as a bug")
       },
       callFunc: function (successHandler, funcName, parameters) {
         if (parameters.length)
           google.script.run
-            .withErrorHandler(this.errorHandler)
+            .withFailureHandler(this.errorHandler)
             .withSuccessHandler(successHandler)
             [funcName](...parameters);
         else
           google.script.run
-            .withErrorHandler(this.errorHandler)
+            .withFailureHandler(this.errorHandler)
             .withSuccessHandler(successHandler)
             [funcName]();
       }
     },
     created: function() {
-      google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).getFacebookPages();
-      google.script.run.withSuccessHandler(this.updateSelectedPage).getSelectedPages();
-      google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
-      google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
-      google.script.run.withSuccessHandler(this.updateGoogleAuthLink).getGoogleAuthStatus();
+      google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).withFailureHandler(this.errorHandler)
+        .getFacebookPages();
+      google.script.run.withSuccessHandler(this.updateSelectedPage).withFailureHandler(this.errorHandler)
+        .getSelectedPages();
+      google.script.run.withSuccessHandler(this.updateGoogleAuthLink).withFailureHandler(this.errorHandler)
+        .getGoogleAuthStatus();
+    },
+    watch: {
+      authLoading: function(newVal){
+        this.$emit('auth-loaded', newVal)
+      }
     },
     computed: {
       PageSelections(){
@@ -186,8 +207,10 @@
             disabled: true
           })
         }
-        if (!this.facebookPages.length)
-          selections.push({name: "Select a page", value: {}, disabled: true})
+        if (!this.facebookPages.length){
+          selections.push({name: "Select a page", disabled: true})
+          console.log('Pushed Default')
+        }
         
         return selections.concat(this.facebookPages)
       }

@@ -17,9 +17,9 @@
             background-color="primary"
             dark right
           >
-            <v-tab href="#regular">Regular</v-tab>
-            <v-tab href="#advanced" >Advanced</v-tab>
-            <v-tab href="#auth" >
+            <v-tab href="#regular" :disabled="!settingsLoaded">Regular</v-tab>
+            <v-tab href="#advanced" :disabled="!settingsLoaded">Advanced</v-tab>
+            <v-tab href="#auth" :disabled="authLoading">
               <v-badge
                 color='error'
                 dot
@@ -32,11 +32,13 @@
         </v-toolbar>
         <setting-component 
           :sstyle='settingStyle'
-          v-on:error-thrown='errorText = $event'></setting-component>
+          @error-thrown='errorText = $event'
+          @settings-loaded='settingsLoaded=$event'></setting-component>
         <auth-component 
           :sstyle='settingStyle'
-          v-on:error-thrown='errorText=$event'
+          @error-thrown='errorText=$event'
           @auth-needed='authNeeded=$event'
+          @auth-loaded='authLoading=$event'
           ></auth-component>
         <v-alert v-if='errorText' type='error'>{{errorText}}</v-alert>
       </v-card>
