@@ -1,0 +1,196 @@
+<script>
+  Vue.component('auth-component', {
+    template: /*html*/`
+    <v-container v-if='sstyle == "auth"'>
+      <v-row>
+        <v-col cols='10'>
+          <h2>Facebook Settings</h2>
+        </v-col>
+        <v-col>
+          <v-btn fab color='primary' 
+            @click='refreshAuthStatus'
+            :loading='authLoading'
+          >
+            <v-icon>
+              mdi-refresh
+            </v-icon>
+          </v-btn>
+        </v-col>
+      </v-row>
+      <v-row class='mt-n6'>
+        <v-col cols=6 xs=4>
+          <v-select 
+            :items="PageSelections"
+            item-text='name'
+            return-object
+            v-model="selected">
+           </v-select>
+        </v-col>
+        <v-col cols=3 class='ml-n1 mt-3'>
+          <v-btn 
+            :disabled='!Object.keys(selected).length'
+            @click="submitFacebookPageSelection"
+            color='primary'>
+            Update
+          </v-btn>
+        </v-col>
+        <v-col cols=3 class='ml-n3 mt-3'>
+          <v-btn
+            :disabled='!Object.keys(selected).length'
+            @click="removeFacebookPageSelection"
+            color='primary'>
+            Delete
+          </v-btn>
+        </v-col>
+      </v-row>
+      <v-row v-if="facebookAuthLink" class="mt-n10">
+        <v-col>
+          <a target="_blank" id="facebook-auth-link" v-bind:href="facebookAuthLink">
+            <img id="facebook-sign-in-button" style="padding-top:10px; width: 241px; display:inline-block; margin: auto;"
+              src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/continue-with-facebook.png"></img>
+          </a>
+        </v-col>
+      </v-row>
+      <v-row class="mt-n5">
+        <v-col cols=4 v-if="showGoogleSignin && !showConnectPageToGoogle" class="auth-container-google">
+          <a target="_blank" id="google-auth-link" href="https://missionary-tools.com/auth/authorize">
+            <img id="google-sign-in-button" style="width: 250px; margin: -5px;"
+              src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/btn_google_signin_dark_normal_web.png"></img>
+          </a>
+        </v-col>
+        <v-col v-if='showConnectPageToGoogle && Object.keys(selected).length'>
+          <v-btn 
+            width='241px' 
+            color='primary' 
+            @click="submitFacebookPageSelection">Link to Google</v-btn>
+        </v-col>
+      </v-row>
+      <v-alert color='info' outlined style='padding: 6px;' class='mt-3'>It is highly recommended you only edit the google settings using your office account. It is the only missionary account that will stay long term</v-alert>
+    </v-container>
+    `,
+    props: ['sstyle'],
+    data: function () {
+      return {
+        facebookPages: [{name: "test", something:"more"}],
+        selected: {name: "test", something:"more"},
+        scraperInput: '',
+        profileList: '',
+        facebookAuthLink: " ",
+        showGoogleSignin: true,
+        showConnectPageToGoogle: true,
+        authLoading: true
+      }
+    },
+    methods: {
+      refreshAuthStatus: function(){
+        this.authLoading = true
+        google.script.run
+          .withErrorHandler(this.errorHandler)
+          .withSuccessHandler(this.updateGoogleAuthLink)
+          .getGoogleAuthStatus();
+        google.script.run
+          .withErrorHandler(this.errorHandler)
+          .withSuccessHandler(this.updateFacebookAuthLink)
+          .getAuthorizationUrl();
+      },
+      submitFacebookPageSelection: function () {
+        this.authLoading = true
+        var pageResults = { 'data': this.selected };
+        google.script.run
+          .withErrorHandler(this.errorHandler)
+          .withSuccessHandler(() => {
+            google.script.run
+              .withErrorHandler(this.errorHandler)
+              .withSuccessHandler(this.updateGoogleAuthorization)
+              .getGoogleAuthStatus();
+          }).saveFacebookPagesDetails(pageResults);
+      },
+      removeFacebookPageSelection: function () {
+        var pageResults = { 'data': this.selected };
+        google.script.run
+          .withErrorHandler(this.errorHandler)
+          .deleteFacebookPagesDetails(pageResults);
+        this.selected = {};
+      },
+      updateAvailibleFacebookPages: function (pageResults) {
+        this.facebookPages = pageResults.data;
+      },
+      updateSelectedPage: function (selectedPages) {
+        this.selected = selectedPages.data;
+      },
+      updateSheetProfileLinks: function () {
+        var profileList = JSON.parse(this.profileList);
+        google.script.run.withSuccessHandler().updateProfiles(profileList);
+        this.profileList = '';
+      },
+      updateRefreshToken: function () {
+        google.script.run.withSuccessHandler(this.updateGoogleAuthLink).updatePageRefreshToken()
+      },
+      updateGoogleAuthLink: function (googleAuthorized) {
+        const { user_status, facebook_status } = googleAuthorized
+        if (facebook_status) {
+          this.showConnectPageToGoogle = false
+          this.showGoogleSignin = false
+          this.$emit('auth-needed', false)
+        }
+        else {
+          if (user_status)
+            this.showConnectPageToGoogle = true
+          else {
+            this.showGoogleSignin = true
+            this.showConnectPageToGoogle = true
+          }
+          this.$emit('auth-needed', true)
+        }
+        this.authLoading = false
+      },
+      updateFacebookAuthLink: function (facebookAuthLink) {
+        this.facebookAuthLink = facebookAuthLink;
+        if(this.facebookAuthLink)
+          this.$emit('auth-needed', true)
+      },
+      updateScraperInput: function (scraperInput) {
+        this.scraperInput = JSON.stringify(scraperInput);
+      },
+      errorHandler: function(error) {
+        this.$emit('error-thrown', e.message + " If this is unexpected please report it via the feedback form as a bug")
+      },
+      callFunc: function (successHandler, funcName, parameters) {
+        if (parameters.length)
+          google.script.run
+            .withErrorHandler(this.errorHandler)
+            .withSuccessHandler(successHandler)
+            [funcName](...parameters);
+        else
+          google.script.run
+            .withErrorHandler(this.errorHandler)
+            .withSuccessHandler(successHandler)
+            [funcName]();
+      }
+    },
+    created: function() {
+      google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).getFacebookPages();
+      google.script.run.withSuccessHandler(this.updateSelectedPage).getSelectedPages();
+      google.script.run.withSuccessHandler(this.updateScraperInput).getScraperInput();
+      google.script.run.withSuccessHandler(this.updateFacebookAuthLink).getAuthorizationUrl();
+      google.script.run.withSuccessHandler(this.updateGoogleAuthLink).getGoogleAuthStatus();
+    },
+    computed: {
+      PageSelections(){
+        let selections = []
+        if (Object.keys(this.selected).length){
+          let page = this.selected
+          selections.push({
+            name: `Selected: ${page.name}`,
+            value: page,
+            disabled: true
+          })
+        }
+        if (!this.facebookPages.length)
+          selections.push({name: "Select a page", value: {}, disabled: true})
+        
+        return selections.concat(this.facebookPages)
+      }
+    }
+  })
+</script>

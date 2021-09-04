@@ -1,0 +1,487 @@
+<script>
+  Vue.component('setting-component', {
+    template: /*html*/`
+    <div>  
+      <v-form
+        v-if='sstyle == "regular"' 
+        :disabled='!settingsLoaded' 
+        v-on:submit.prevent>      
+        <!-- Sheet Settings Row -->
+
+        <v-row>
+          <v-col cols='4' xs='4' class='mt-3 ml-16'>
+            <h3 class='mb-n4'>Ad Likes</h3>
+            <v-checkbox
+              v-for="setting in adSettings"
+              :key='setting.name'
+              :label='setting.name'
+              v-model='setting.value'
+              class='mb-n9'
+              color='primary'
+              ></v-checkbox>
+          </v-col>
+        </v-row>
+
+        <!-- Unit Row -->
+        
+        <v-row cols=24>
+          <v-col cols=1 class='mt-3 mx-3'>
+            <v-btn 
+              v-if='selectedUnit == "Add a unit"' 
+              :disabled='addUnitName == ""'
+              @click='changeUnit("add")'
+              fab small
+              color="primary">
+              <v-icon color='white'>
+                mdi-plus
+              </v-icon>
+            </v-btn>
+            <v-btn 
+              v-if='selectedUnit != "Add a unit" && selectedUnit != ""'
+              @click='changeUnit("remove")'
+              fab small
+              color="error">
+              <v-icon color='white'>
+                mdi-delete-circle
+              </v-icon>
+            </v-btn>
+          </v-col>
+          <v-col cols=6 xs=4>
+            <v-select 
+            :items='[{name: "Add a unit"}].concat(unitList)'
+            item-text='name'
+            v-model='selectedUnit'>
+            </v-select>
+          </v-col>
+          <v-col cols=4 v-if="selectedUnit == 'Add a unit'" class='ml-n4'>
+            <v-text-field
+              v-model='addUnitName'
+              :rules='rules.unitName'
+              placeholder='Type Unit name here...'
+              label='Unit'
+              v-on:keyup.enter="changeUnit('add')"
+              ></v-text-field>
+          </v-col>
+          <v-col 
+            cols=2 
+            class='mt-6 ml-n4'
+            v-if="selectedUnit != '' && selectedUnit != 'Add a unit'"
+            >
+            <div 
+              class="colorWrapper" 
+              id="unitWrapper"
+              v-bind:style="{ backgroundColor: unitColor }">
+              <input type='color' id="unitColor" v-model='unitColor' @blur='changeColor'>
+              <span>Select a color...</span>
+            </div>
+          </v-col>
+          <v-col cols=2 class='mt-6 ml-n1' v-if='selectedUnit != "Add a unit"'>
+            <v-btn 
+              disabled 
+              x-small 
+              v-if="defaultUnit">
+              Default
+            </v-btn>
+            <v-btn
+              x-small 
+              color='primary' 
+              class='white--text'
+              v-if="!defaultUnit && selectedUnit != 'Add a unit'"
+              @click="makeDefault('unit')">
+              Set Default
+            </v-btn>
+          </v-col>
+        </v-row>
+
+        <!-- End Unit Row -->
+        <!-- Status Row -->
+        
+        <v-row cols=24 class='mt-n7'>
+          <v-col cols=1 class='mt-3 mx-3'>
+            <v-btn
+              v-if='selectedStatus == "Add a status"' 
+              :disabled='addStatus == ""'
+              @click='changeStatus("add")'
+              fab small
+              color="primary">
+              <v-icon color='white'>
+                mdi-plus
+              </v-icon>
+            </v-btn>
+            <v-btn 
+              v-if='selectedStatus != "Add a status" && selectedStatus != ""'
+              @click='changeStatus("remove")'
+              fab small
+              color="error">
+              <v-icon color='white'>
+                mdi-delete-circle
+              </v-icon>
+            </v-btn>
+          </v-col>
+          <v-col cols=6 xs=4>
+            <v-select  
+            :items='[{name: "Add a status"}].concat(statusList)'
+            item-text='name'
+            v-model='selectedStatus'>
+            </v-select>
+          </v-col>
+          <v-col cols=4 v-if="selectedStatus == 'Add a status'" class='ml-n4'>
+            <v-text-field
+              v-model='addStatus'
+              :rules='rules.unitName'
+              placeholder='Type Status name here...'
+              label='Status'
+              v-on:keyup.enter="changeStatus('add')"
+              ></v-text-field>
+          </v-col>
+          <v-col cols=2 class='mt-6 mr-n10 ml-n4' v-if='selectedStatus != "Add a status"'>
+            <v-checkbox class='mt-n1'
+              hint='Merge'
+              persistent-hint
+              v-model='statusMerge'
+              color='primary'
+              ></v-checkbox>
+          </v-col>
+          <v-col cols=2 class='mt-6 mr-n10' v-if='selectedStatus != "Add a status"'>
+            <v-checkbox class='mt-n1'
+              hint='Hide'
+              persistent-hint
+              v-model='statusHide'
+              color='primary'
+              ></v-checkbox>
+          </v-col>
+          <v-col cols=2 class='mt-6 ml-n3' v-if='selectedStatus != "Add a status"'>
+            <v-btn 
+              disabled 
+              x-small 
+              v-if="defaultStatus">
+              Default
+            </v-btn>
+            <v-btn
+              x-small 
+              color='primary' 
+              class='white--text'
+              v-if="!defaultStatus && selectedStatus != 'Add a status'"
+              @click="makeDefault('status')">
+              Set Default
+            </v-btn>
+          </v-col>
+        </v-row>
+        
+        <!-- End Status Row -->
+        <!-- Save Button -->
+
+        <v-row class="pb-7 mt-n2">
+          <v-spacer></v-spacer>
+          <v-btn
+            :loading='!settingsLoaded'
+            :disabled='!settingsLoaded'
+            class='white--text'
+            color='primary'
+            @click='saveProgramSettings'
+            depressed>
+            Save Settings
+          </v-btn>
+          <v-spacer></v-spacer>
+        </v-row>
+      </v-form>
+
+      <!-- Advanced Settings Form-->
+
+      <v-form 
+        v-model='form'
+        :disabled='!settingsLoaded' 
+        v-if='sstyle == "advanced"'
+        v-on:submit.prevent>
+
+        <v-textarea
+          class='mt-3 setting-textarea'
+          label='Settings'
+          v-model='programSettings'
+          :rules='rules.settingsBlock'
+          rows='10'
+          spellcheck='false'
+          @keydown.tab.exact.prevent="tabber($event)"
+          ref='advancedSettingBox'
+          auto-grow outlined>
+        </v-textarea>
+        <v-row class="pb-7 mt-n2">
+          <v-spacer></v-spacer>
+          <v-btn
+            :loading='!settingsLoaded'
+            :disabled='!settingsLoaded || !form'
+            class='white--text'
+            color='primary'
+            @click='saveProgramSettings'
+            depressed>
+            Save Settings
+          </v-btn>
+          <v-spacer></v-spacer>
+        </v-row>
+      </v-form>
+      
+    </div>
+    `,
+    props: ['sstyle'],
+    data: function () {
+      return {
+        form: false,
+        programSettings: '{}',
+        rules: {
+          unitName: [v => !!v || 'Unit Name is required'],
+          settingsBlock: [v=>{
+            let errorMsg = ''
+            let requiredAttrs = ['statusList', 'statusToMerge', 'hiddenStatuses', 'assignmentMap', 'sheetSettings']
+            try {
+              let settings = JSON.parse(v)
+              let attrErrors = requiredAttrs.reduce((attrErr, attr)=>{                
+                if (!settings[attr]) return attrErr.concat(attr)
+                switch (attr){
+                  case 'assignmentMap':
+                    settings[attr].forEach(aMap=> {
+                      if (aMap.length != 2 || !aMap[1].match(/#[0-9A-Fa-f]{6}/g))
+                        errorMsg += `assignmentMap Configured Incorrectly. Configure as [["name", "#xxxxxx"]].`
+                    })
+                    break
+                  case 'sheetSettings':
+                    if (Object.keys(settings[attr]).length != 2)
+                      errorMsg += 'sheetSettings Configured incorrectly. Do you have Ad Likes and Page Messages settings? '
+                    else {
+                      const settingTypes = ['Ad Likes', 'Page Messages']
+                      errorMsg += settingTypes.reduce((err, type)=>{
+                        if(!err){
+                          const sheetSetting = settings[attr][type]
+                          if (!sheetSetting || 
+                              !sheetSetting.hasOwnProperty('highlightEnabled') || 
+                              !sheetSetting.hasOwnProperty('sortingEnabled') || 
+                              !sheetSetting.hasOwnProperty('mergingEnabled'))
+                            err += 'sheetSettings Configured incorrectly. Do you have Ad Likes and Page Messages settings? '
+                        }
+                        return err
+                      }, '')
+                    }
+                    break
+                }
+                return attrErr
+              }, [])
+              if (attrErrors.length)
+                errorMsg += `Missing attribute(s): ${attrErrors.join(', ')}.`
+            }
+            catch(e) {
+              errorMsg += JSON.stringify(e.message)
+            }
+            if (errorMsg)
+              return errorMsg
+            else
+            return true;
+          }]
+        },
+        selectedUnit: 'Add a unit',
+        unitList: [],
+        addUnitName: '',
+        unitColor: '#ffffff',
+        settingsLoaded: true,
+        selectedStatus: 'Add a status',
+        statusList: [],
+        addStatus: '',
+        statusMerge: true,
+        statusHide: false,
+        adSettings: [{ "name": "Highlight", "value": false }, { "name": "Sorting", "value": true }, { "name": "Merging", "value": true }],
+        messageSettings: [{ "name": "Sorting", "value": true }, { "name": "Merging", "value": true }, { "name": "Highlight", "value": false }],
+        formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
+      }
+    },
+    methods: {
+      saveProgramSettings: function () {
+        if(this.sstyle == 'regular')
+          this.formatData()
+        let settings = JSON.parse(this.programSettings)
+        google.script.run
+          .withSuccessHandler(()=>google.script.run.withSuccessHandler().formatSheet())
+          .withErrorHandler(this.errorHandler)
+          .saveProgramSettings(settings);
+        google.script.run
+          .withSuccessHandler()
+          .withErrorHandler(this.errorHandler)
+          .updateSheet();
+      },
+      updateProgramSettings: function (settings) {
+        // Request settings from Google
+        this.programSettings = JSON.stringify(settings, null, 4)
+        this.formatSettings(settings)
+      },
+      formatSettings: function (settings) {
+        if (settings instanceof Event) settings = this.debug
+        this.statusList = settings.statusList.map((status, i) => {
+          return {
+            name: status,
+            hide: settings.hiddenStatuses.includes(status),
+            merge: settings.statusToMerge.includes(status),
+            default: i == 0
+          }
+        })
+        this.unitList = settings.assignmentMap.map((unit, i) => { return { name: unit[0], color: unit[1], default: i == 0 } })
+        const formatReverse = this.swap(this.formatList)
+        this.adSettings = Object.keys(settings.sheetSettings["Ad Likes"]).map(s => {
+          return { name: formatReverse[s], value: settings.sheetSettings["Ad Likes"][s] }
+        })
+        this.messageSettings = Object.keys(settings.sheetSettings["Page Messages"]).map(s => {
+          return { name: formatReverse[s], value: settings.sheetSettings["Page Messages"][s] }
+        })
+        this.selectedUnit = 'Add a unit'
+        this.selectedStatus = 'Add a status'
+        this.settingsLoaded = true
+      },
+      formatData: function () {
+        const finalObject = { statusList: [], hiddenStatuses: [], statusToMerge: [], assignmentMap: [], sheetSettings: { "Ad Likes": {}, "Page Messages": {} } }
+        const statusNames = this.statusList.reduce((list, status) => {
+          if (status.default) list.unshift(status.name)
+          else list.push(status.name)
+          return list
+        }, [])
+        finalObject.statusList.push(...statusNames)
+        
+        this.statusList.forEach((status) => {
+          if (status.hide) finalObject.hiddenStatuses.push(status.name)
+          if (status.merge) finalObject.statusToMerge.push(status.name)
+        })
+
+        const unitMaps = this.unitList.reduce((list, unit) => {
+          if (unit.default) list.unshift([unit.name, unit.color])
+          else list.push([unit.name, unit.color])
+          return list
+        }, [])
+
+        finalObject.assignmentMap = unitMaps
+        finalObject.sheetSettings["Ad Likes"] = this.adSettings.reduce((final, setting) => {
+          final[this.formatList[setting.name]] = setting.value
+          return final
+        }, {})
+        finalObject.sheetSettings["Page Messages"] = this.messageSettings.reduce((final, setting) => {
+          final[this.formatList[setting.name]] = setting.value
+          return final
+        }, {})
+        this.programSettings = JSON.stringify(finalObject, null, 4)
+        return finalObject
+      },
+      changeUnit: function (type) {
+        if (type == 'add') {
+          if (this.addUnitName && !this.unitList.find(unit => unit.name == this.addUnitName)) {
+            const isDefault = this.unitList.length < 1 
+            this.unitList.push({ name: this.addUnitName, color: "#000000", default: isDefault })
+            this.selectedUnit = this.addUnitName
+            this.addUnitName = ''
+          }
+        } else if (type == 'remove') {
+          let index = this.unitList.findIndex(unit => unit.name == this.selectedUnit);
+          if (index !== -1) {
+            this.unitList.splice(index, 1);
+            this.selectedUnit = 'Add a unit'
+          }
+        }
+      },
+      statusChange: function () {
+        let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
+        if (currentStatus) {
+          this.statusMerge = currentStatus.merge
+          this.statusHide = currentStatus.hide
+        }
+      },
+      changeColor: function () {
+        const index = this.unitList.findIndex(unit => unit.name == this.selectedUnit)
+        if (index != -1) this.unitList[index].color = this.unitColor
+      },
+      changeStatus: function (type) {
+        if (type == 'add') {
+          if (this.addStatus && !this.statusList.find(status => status.name == this.addStatus)) {
+            const isDefault = this.statusList.length < 1
+            this.statusList.push({ name: this.addStatus, merge: this.statusMerge, hide: this.statusHide, default: isDefault })
+            this.selectedStatus = this.addStatus
+            this.addStatus = ''
+          }
+        } else if (type == 'remove') {
+          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+          if (index !== -1) {
+            this.statusList.splice(index, 1);
+            this.selectedStatus = 'Add a status'
+          }
+        } else if (type == 'merge') {
+          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+          if (index !== -1) this.statusList[index].merge = this.statusMerge;
+          else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
+        } else if (type == 'hide') {
+          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+          if (index !== -1) this.statusList[index].hide = this.statusHide;
+          else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')
+        }
+      },
+      makeDefault: function(type) {
+        if (type == 'status'){
+          for (const status of this.statusList){
+            if (status.name != this.selectedStatus && status.default) status.default = false
+            if (status.name == this.selectedStatus) status.default = true
+          }
+        }
+        else if (type == 'unit'){
+          for (const unit of this.unitList){
+            if (unit.name != this.selectedUnit && unit.default) unit.default = false
+            if (unit.name == this.selectedUnit) unit.default = true
+          }
+        }
+
+      },
+      errorHandler: function(error) {
+        this.$emit('error-thrown', e.message + " If this is unexpected please report it via the feedback form as a bug")
+      },
+      swap: function (obj) {
+        var ret = {};
+        for (var key in obj) {
+          ret[obj[key]] = key;
+        }
+        return ret;
+      },
+      tabber: function(event){
+        let text = this.programSettings,
+            originalSelectionStart = event.target.selectionStart,
+            textStart = text.slice(0, originalSelectionStart),
+            textEnd =  text.slice(originalSelectionStart);
+
+        this.programSettings = `${textStart}\t${textEnd}`
+        event.target.value = this.programSettings
+        event.target.selectionEnd = event.target.selectionStart = originalSelectionStart + 1
+      }
+    },
+    created: function() {
+      google.script.run
+        .withSuccessHandler(this.updateProgramSettings)
+        .withErrorHandler(this.errorHandler)
+        .programSettings()
+    },
+    watch: {
+      selectedUnit: function () {
+        const unit = this.unitList.find(s => s.name == this.selectedUnit)
+        this.unitColor = unit ? unit.color : '#000000'
+      },
+      sstyle: function(newVal, oldVal){
+        if (newVal == 'regular' && !this.$refs.advancedSettingBox.hasError)
+          this.formatSettings(JSON.parse(this.programSettings))
+        else if (newVal == 'advanced')
+          this.formatData()
+      }
+    },
+    computed: {
+      defaultUnit: function () {
+        let isDefault = this.unitList.reduce((isDefault, unit) => {
+          return unit.name == this.selectedUnit && unit.default ? unit.default : isDefault
+        }, false)
+        return isDefault
+      },
+      defaultStatus: function () {
+        let isDefault = this.statusList.reduce((isDefault, status) => {
+          return status.name == this.selectedStatus && status.default ? status.default : isDefault
+        }, false)
+        return isDefault
+      }
+    }
+  })
+</script>

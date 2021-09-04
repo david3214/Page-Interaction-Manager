@@ -7,26 +7,49 @@
 </head>
 
 <body>
-  <div id="app" v-bind:class="{ spinner: !settingsLoaded}">
-  <!-- <div id="app"> -->
-    <h1>Program Settings</h1>
-    <h3>Ad Likes</h3>
-    <div class="sheet-grid-container">
-      <div class="sheetSettings">
-        <ul>
-          <li v-for="setting in adSettings">
-            <label class="checkbox">
-              <input type="checkbox" v-model="setting.value">
-              <span></span>
-              {{setting.name}}:
-            </label>
-          </li>
-        </ul>
-      </div>
-      <!-- <div class="sheetSettings">
-          <h3>Page Messages</h3>
+  <div id="app">
+    <v-app id="inspire">
+      <v-card class='mx-auto' width='500' elevation='10'>
+        <v-toolbar color='primary' class='white--text'>
+          <v-toolbar-title style='overflow:visible'>Program Settings</v-toolbar-title>
+          <v-tabs
+            v-model="settingStyle"
+            background-color="primary"
+            dark right
+          >
+            <v-tab href="#regular">Regular</v-tab>
+            <v-tab href="#advanced" >Advanced</v-tab>
+            <v-tab href="#auth" >
+              <v-badge
+                color='error'
+                dot
+                :value='authNeeded'
+              >
+                Auth
+              </v-badge>
+            </v-tab>
+          </v-tabs>
+        </v-toolbar>
+        <setting-component 
+          :sstyle='settingStyle'
+          v-on:error-thrown='errorText = $event'></setting-component>
+        <auth-component 
+          :sstyle='settingStyle'
+          v-on:error-thrown='errorText=$event'
+          @auth-needed='authNeeded=$event'
+          ></auth-component>
+        <v-alert v-if='errorText' type='error'>{{errorText}}</v-alert>
+      </v-card>
+    </v-app>
+
+
+    <!-- <div>
+      <h1>Program Settings</h1>
+      <h3>Ad Likes</h3>
+      <div class="sheet-grid-container">
+        <div class="sheetSettings">
           <ul>
-            <li v-for="setting in messageSettings">
+            <li v-for="setting in adSettings">
               <label class="checkbox">
                 <input type="checkbox" v-model="setting.value">
                 <span></span>
@@ -35,7 +58,21 @@
             </li>
           </ul>
         </div> -->
-    </div>
+
+
+        <!-- <div class="sheetSettings">
+            <h3>Page Messages</h3>
+            <ul>
+              <li v-for="setting in messageSettings">
+                <label class="checkbox">
+                  <input type="checkbox" v-model="setting.value">
+                  <span></span>
+                  {{setting.name}}:
+                </label>
+              </li>
+            </ul>
+          </div> -->
+      <!-- </div>
     <h3>Classifications</h3>
     <div class="classify-grid-container">
       <select class="dropdown" v-model="selectedUnit">
@@ -132,7 +169,17 @@
       <p>Copy the program output text file here</p>
       <textarea style="display: block; margin-bottom:10px;" v-model="profileList"></textarea>
       <button class="btn btn-primary" @click="updateSheetProfileLinks">Submit</button>
-    </div>
+    </div> -->
+
+    
+    <!-- <div v-if="JSON.parse(programSettings).hasOwnProperty('experimental')">
+      <h1>Profile Link Tool</h1>
+      <p>Copy the program input to input file</p>
+      <textarea style="display: block; margin-bottom:10px;" v-model="scraperInput"></textarea>
+      <p>Copy the program output text file here</p>
+      <textarea style="display: block; margin-bottom:10px;" v-model="profileList"></textarea>
+      <button class="btn btn-primary" @click="updateSheetProfileLinks">Submit</button>
+    </div> -->
     <!-- <br>
     <button @click="formatData">Format</button>
     <button @click="formatSettings">Format Back</button>
@@ -144,7 +191,12 @@
         </button>
       </p>
     </div> -->
+    </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <?!= include('page_interaction/settings_models/setting-component.html'); ?>
+  <?!= include('page_interaction/settings_models/auth-component.html'); ?>
   <?!= include('page_interaction/settings_models/settings-script.html'); ?>
 </body>
 
