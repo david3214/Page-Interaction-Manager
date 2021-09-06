@@ -179,17 +179,6 @@ function test_analyzeSheet(){
     Logger.log(results);
 }
 
-function test_getScraperInput(){
-    var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");
-    spreadSheet.setActiveSheet(spreadSheet.getSheetByName("Ad Likes"));
-    var context = openContext(spreadSheet);
-    const t0 = Date.now();
-    var results = getScraperInput(context);
-    const t1 = Date.now();
-    console.log(`var results = getScraperInput(context); ${t1-t0}`);
-    Logger.log(results)
-}
-
 function test_updateProfiles(){
     var test_data = {"Echo Booth": "https://www.facebook.com/echo.booth.5", "Bird Torres": "https://www.facebook.com/covidtbird", "Amy Allen Anderson": "https://www.facebook.com/amy.a.anderson.9", "Sandy Sage Carr": "https://www.facebook.com/sandy.s.carr.9", "Robin Newton": "https://www.facebook.com/robin.newton.3152", "Brian Pulliam": "https://www.facebook.com/brian.pulliam.965", "Morgan Julie": "https://www.facebook.com/morgan.julie.92754", "Melodie Ann": "https://www.facebook.com/melodieannie628", "Mele Mounga Lose Kauvaka": "https://www.facebook.com/moungakauvaka", "Joann Donley": "https://www.facebook.com/joann.donley.1"}
     var spreadSheet = SpreadsheetApp.openById("1bKbHJAUn6E41E6H-_ZdmsFViXctchO_w6SzrIaAMmas");

@@ -800,22 +800,6 @@ function showAnalytics(context = openContext()) {
   SpreadsheetApp.getUi().showSidebar(page)
 }
 
-function getScraperInput(context = openContext()) {
-  // Creat a dict of posts and the names of the missing links
-  const profileLink = context.header.get('Profile Link')
-  const name = context.header.get('Name')
-  const source = context.header.get('Source')
-
-  var programInput = {}
-  context.values.forEach(function (row) {
-    if (row[profileLink] == "") {
-      programInput[row[source]] = programInput[row[source]] == null ? [] : programInput[row[source]]
-      programInput[row[source]].push(row[name])
-    }
-  })
-  return programInput
-}
-
 function updateProfiles(profileList, context = openContext()) {
   // Add in the profile list into the sheet
   const profileLink = context.header.get('Profile Link')
@@ -900,21 +884,21 @@ function getGoogleAuthStatus() {
 
   var clientId = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_ID")
   var clientSecret = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_SECRET")
-  let valid_status = { user_status: true, facebook_status: true }
+  let valid_status = { user_status: true, page_status: true }
 
   // Check if a valid token is tied to the page
   const selectedPage = getSelectedPages().data[0]
   let fbRefreshToken = selectedPage ? selectedPage.google_sheets.refresh_token : undefined
   if (!fbRefreshToken) {
-    valid_status.facebook_status = false
+    valid_status.page_status = false
   } else {
     try {
       refreshAccessToken(clientId, clientSecret, fbRefreshToken)
-      valid_status.facebook_status = true
+      valid_status.page_status = true
       return valid_status
     } catch (err) {
       if (!err.message || (!err.message.includes('Bad Request') && !err.message.includes('Token has been expired or revoked'))) throw err
-      valid_status.facebook_status = false
+      valid_status.page_status = false
     }
   }
 
