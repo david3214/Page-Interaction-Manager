@@ -288,11 +288,14 @@
     },
     methods: {
       saveProgramSettings: function () {
+        this.settingsLoaded = false
         if(this.sstyle == 'regular')
           this.formatData()
         let settings = JSON.parse(this.programSettings)
         google.script.run
-          .withSuccessHandler(()=>google.script.run.withSuccessHandler().formatSheet())
+          .withSuccessHandler(()=>{
+            google.script.run.withSuccessHandler(()=>this.settingsLoaded = true).formatSheet()
+          })
           .withFailureHandler(this.errorHandler)
           .saveProgramSettings(settings);
         google.script.run

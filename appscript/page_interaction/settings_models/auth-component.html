@@ -28,7 +28,7 @@
         </v-col>
         <v-col cols=3 class='ml-n1 mt-3'>
           <v-btn 
-            :disabled='!Object.keys(selected).length'
+            :disabled='!notDefaultSelection'
             @click="submitFacebookPageSelection"
             color='primary'>
             Update
@@ -36,7 +36,7 @@
         </v-col>
         <v-col cols=3 class='ml-n3 mt-3'>
           <v-btn
-            :disabled='!Object.keys(selected).length'
+            :disabled='!notDefaultSelection'
             @click="removeFacebookPageSelection"
             color='primary'>
             Delete
@@ -58,7 +58,7 @@
               src="https://storage.googleapis.com/eighth-vehicle-287322.appspot.com/page_interaction_manager/btn_google_signin_dark_normal_web.png"></img>
           </a>
         </v-col>
-        <v-col v-if='showConnectPageToGoogle && Object.keys(selected).length'>
+        <v-col v-if='showConnectPageToGoogle && notDefaultSelection'>
           <v-btn 
             width='241px' 
             color='primary' 
@@ -70,7 +70,7 @@
         text 
         style='padding: 6px;' 
         class='mt-6 mb-n1'
-        v-if='Object.keys(selected).length && (showConnectPageToGoogle || showGoogleSignin)'
+        v-if='notDefaultSelection && (showConnectPageToGoogle || showGoogleSignin)'
       >
         It is highly recommended you only sign into or link to google using your mission office missionary.org account. It is the only missionary account that will stay long term.
       </v-alert>
@@ -102,7 +102,7 @@
       },
       submitFacebookPageSelection: function () {
         this.authLoading = true
-        var pageResults = { 'data': this.selected };
+        var pageResults = { 'data': [this.selected] };
         google.script.run
           .withFailureHandler(this.errorHandler)
           .withSuccessHandler(() => {
@@ -113,7 +113,7 @@
           }).saveFacebookPagesDetails(pageResults);
       },
       removeFacebookPageSelection: function () {
-        var pageResults = { 'data': this.selected };
+        var pageResults = { 'data': [this.selected] };
         google.script.run
           .withFailureHandler(this.errorHandler)
           .deleteFacebookPagesDetails(pageResults);
@@ -123,7 +123,7 @@
         this.facebookPages = pageResults.data;
       },
       updateSelectedPage: function (selectedPages) {
-        this.selected = selectedPages.data;
+        [this.selected] = selectedPages.data;
       },
       updateSheetProfileLinks: function () {
         var profileList = JSON.parse(this.profileList);
@@ -171,10 +171,13 @@
       }
     },
     created: function() {
-      google.script.run.withSuccessHandler(this.updateAvailibleFacebookPages).withFailureHandler(this.errorHandler)
+      google.script.run.withSuccessHandler((pages)=>{
+            this.updateAvailibleFacebookPages(pages)
+            google.script.run.withSuccessHandler(this.updateSelectedPage).withFailureHandler(this.errorHandler)
+              .getSelectedPages();
+          })
+        .withFailureHandler(this.errorHandler)
         .getFacebookPages();
-      google.script.run.withSuccessHandler(this.updateSelectedPage).withFailureHandler(this.errorHandler)
-        .getSelectedPages();
       google.script.run.withSuccessHandler(this.updateGoogleAuthLink).withFailureHandler(this.errorHandler)
         .getGoogleAuthStatus();
     },
@@ -186,8 +189,9 @@
     computed: {
       pageSelections(){
         let selections = []
-        if (Object.keys(this.selected).length){
+        if (this.notDefaultSelection){
           let page = this.selected
+          console.log({selected: this.selected, page: page, pageName: page.name})
           selections.push({
             name: `Selected: ${page.name}`,
             value: page,
@@ -198,6 +202,9 @@
           selections.push({name: "Select a page", disabled: true})
         
         return selections.concat(this.facebookPages)
+      },
+      notDefaultSelection(){
+        return this.selected.name != 'Select a page' && Object.keys(this.selected).length
       }
     }
   })
