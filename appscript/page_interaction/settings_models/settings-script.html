@@ -11,7 +11,7 @@
             // accent: '#82B1FF',
             // info: '#2196F3',
             // success: '#4CAF50',
-            // warning: '#FFC107',
+            // warning: '#FFC107'
           },
         },
       },
@@ -23,20 +23,7 @@
       authLoading: true,
       settingsLoaded: false,
       selectedTab: 0,
-      tabs: ['Regular', 'Advanced', 'Auth'],
-      debug_functions: ["showDebugSidebar", "tearDownSheet", "deactivateTriggers", "toastSheetInfo", "trimSheet", "test_updateSheetNoEvent", "shuffle", "healSheet",
-        "sortData", "test_doLogicPageMessages", "formatSheet",
-        "setUpSheet", "updateNewRow", "test_analyzeSheet", "getScraperInput",
-        "updateProfiles", "getRefreshToken", "updateExistingRows", "mergeData",
-        "healSheet", "updateConditionalFormattingRules", "updateDataValidationRules"],
-    },
-    methods: {
-      callFunc: function (funcName) {
-        google.script.run.withSuccessHandler().executeFunctionByName(funcName);
-      },
-    },
-    created: function () {
-      
+      tabs: ['Regular', 'Advanced', 'Auth']
     }
   })
 </script>

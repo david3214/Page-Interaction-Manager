@@ -20,7 +20,7 @@
       <v-row class='mt-n6'>
         <v-col cols=6 xs=4>
           <v-select 
-            :items="PageSelections"
+            :items="pageSelections"
             item-text='name'
             return-object
             v-model="selected">
@@ -131,11 +131,11 @@
         this.profileList = '';
       },
       updateRefreshToken: function () {
-        google.script.run.withSuccessHandler(this.updateGoogleAuthLink).updatePageRefreshToken()
+        google.script.run.withSuccessHandler(this.updateGoogleAuthLink).withFailureHandler(this.errorHandler)
+          .updatePageRefreshToken()
       },
       updateGoogleAuthLink: function (googleAuthorized) {
         const { user_status, page_status } = googleAuthorized
-        console.log({user_status, page_status})
         if (page_status) {
           this.showConnectPageToGoogle = false
           this.showGoogleSignin = false
@@ -160,7 +160,6 @@
           this.$emit('auth-needed', true)
       },
       errorHandler: function(error) {
-        console.log('Error Hit: ' + error.message)
         this.authLoading = false
 
         if (error.message.includes('Access not granted or expired')){
@@ -169,18 +168,6 @@
           return
         }
         this.$emit('error-thrown', error.message + " If this is unexpected please report it via the feedback form as a bug")
-      },
-      callFunc: function (successHandler, funcName, parameters) {
-        if (parameters.length)
-          google.script.run
-            .withFailureHandler(this.errorHandler)
-            .withSuccessHandler(successHandler)
-            [funcName](...parameters);
-        else
-          google.script.run
-            .withFailureHandler(this.errorHandler)
-            .withSuccessHandler(successHandler)
-            [funcName]();
       }
     },
     created: function() {
@@ -197,7 +184,7 @@
       }
     },
     computed: {
-      PageSelections(){
+      pageSelections(){
         let selections = []
         if (Object.keys(this.selected).length){
           let page = this.selected
@@ -207,10 +194,8 @@
             disabled: true
           })
         }
-        if (!this.facebookPages.length){
+        if (!this.facebookPages.length)
           selections.push({name: "Select a page", disabled: true})
-          console.log('Pushed Default')
-        }
         
         return selections.concat(this.facebookPages)
       }

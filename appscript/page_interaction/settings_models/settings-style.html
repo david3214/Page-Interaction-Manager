@@ -16,41 +16,5 @@ html {
 
 .v-color-picker {
   max-width: 200px !important;
-
 }
-
-.colorWrapper {  /* Style div like color picker */
-  background-color: #000;
-  border-radius: 8px;
-  border: 2px solid grey;
-  display: block;
-  float: left;
-  height: 24px; 
-  margin: 0;
-  width: 75px;
-}
-
-.colorWrapper span {  /* Style color picker label; automatically switch between black and white */
-  background: inherit;
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-  font-size: 13px;
-  left: 5px;
-  pointer-events: none;
-  position: relative;
-  top: -22px;
-  user-select: none;
-  filter: invert(1) grayscale(1) contrast(1000);
-}
-
-input[type=color] {
-  border: none;
-  cursor: pointer;
-  display: block;
-  height: 22px;
-  opacity: 0;
-  width: 73px;
-}
-
 </style>

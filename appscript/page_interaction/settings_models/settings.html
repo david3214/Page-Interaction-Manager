@@ -20,11 +20,7 @@
             <v-tab href="#regular" :disabled="!settingsLoaded">Regular</v-tab>
             <v-tab href="#advanced" :disabled="!settingsLoaded">Advanced</v-tab>
             <v-tab href="#auth" :disabled="authLoading">
-              <v-badge
-                color='error'
-                dot
-                :value='authNeeded'
-              >
+              <v-badge color='error' dot :value='authNeeded'>
                 Auth
               </v-badge>
             </v-tab>
@@ -33,24 +29,17 @@
         <setting-component 
           :sstyle='settingStyle'
           @error-thrown='errorText = $event'
-          @settings-loaded='settingsLoaded=$event'></setting-component>
+          @settings-loaded='settingsLoaded=$event'
+        ></setting-component>
         <auth-component 
           :sstyle='settingStyle'
           @error-thrown='errorText=$event'
           @auth-needed='authNeeded=$event'
           @auth-loaded='authLoading=$event'
-          ></auth-component>
+        ></auth-component>
         <v-alert v-if='errorText' type='error'>{{errorText}}</v-alert>
       </v-card>
     </v-app>
-
-    <div v-if="JSON.parse(programSettings).hasOwnProperty('debug')">
-      <p v-for="(val, key) in debug_functions">
-        <button v-on:click="callFunc(val)">
-          {{ val }}
-        </button>
-      </p>
-    </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
