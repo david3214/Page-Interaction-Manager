@@ -44,9 +44,7 @@ function checkForAddonUpdates() {
   } catch {}
   
   const finalMessage = updateMessages.reduce((message, update) => {
-    let userHasUpdate = versionNotifications[update.name]
-
-    if (!userHasUpdate){
+    if (!versionNotifications[update.name]){
       message += `\n${update.name}\n${update.message}\n`
       versionNotifications[update.name] = true
     }
