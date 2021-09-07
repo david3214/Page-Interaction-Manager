@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <style>
+    pre {
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <v-app id="inspire">
+      <v-card class='mx-auto pb-10' width='500' elevation='10'>
+        <v-toolbar color='primary' class='white--text pb-5'>
+          <v-toolbar-title>Program Updates</v-toolbar-title>
+        </v-toolbar>
+        <v-row class='mb-n6 mt-3' v-for='update in updateList'>
+          <v-col>
+            <v-card class='ml-3 mr-3 pa-5' shaped color=secondary>
+                  <h4>
+                    {{update.date}} - {{update.name}}
+                  </h4>            
+                  <pre>{{dontIndent(update.message)}}</pre>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-card>
+    </v-app>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify({
+      theme: {
+        themes: {
+          light: {
+            primary: '#04385A',
+            error: '#FF5252',
+            secondary: '#FFF59D'
+          },
+        },
+      },
+    }),
+      data: {
+        updateList: []
+      },
+      methods: {
+        updateTheList: function(newList){
+          this.updateList = newList.sort((a,b)=>new Date(b.date) - new Date(a.date))
+        },
+        dontIndent: function(callSite, ...args) {
+
+          function format(str) {
+
+              let size = -1;
+
+              return str.replace(/\n(\s+)/g, (m, m1) => {
+
+                  if (size < 0)
+                      size = m1.replace(/\t/g, "    ").length;
+
+                  return "\n" + m1.slice(Math.min(m1.length, size));
+              });
+          }
+
+          if (typeof callSite === "string")
+              return format(callSite);
+
+          if (typeof callSite === "function")
+              return (...args) => format(callSite(...args));
+
+          let output = callSite
+              .slice(0, args.length + 1)
+              .map((text, i) => (i === 0 ? "" : args[i - 1]) + text)
+              .join("");
+
+          return format(output);
+        }
+      },
+      created(){
+        this.updateTheList([{
+          name: 'Authentication Errors Update',
+          message: `○ Updated Page Interaction Manager settings to now show if you are disconnected from google or facebook
+          ○ Page Interaction Manager Settings now has an option to reauthenticat with google and facebook`,
+          date: '8/7/21'
+        },
+        {
+          name: 'Feedback Update',
+          message: `○ Feature: Under Page Interaction Manager Feedback you can now fill out a bug report or feature request
+          ○ Feature: Added the option to select a default status and/or assignment`,
+          date: '8/8/21'
+        },
+        {
+          name: 'Profile Link Update',
+          message: `○ Updated the profile link finder so if it can't find a link it will state Not Found`,
+          date: '8/8/21'
+        },
+        {
+          name: 'Highlight Update',
+          message: `Check out the Highlight setting, give us your feedback
+          ○ Feature: Page highlighting now will highlight the entire row, and do alternating colors for assignment
+          ○ Feature: Select will no longer highlight the whole row red, but just the select status.`,
+          date: '8/21/21'
+        },
+        {
+          name: 'Settings Overhaul Update',
+          message: `○ Feature: Updated the look of the settings page
+          ○ Feature: Updated settings to now have three tabs regular, advanced, and Auth
+            ○ Regular - Normal settings page with drop down menus, color pickers, etc
+            ○ Advanced - Settings in a text format, usefull for duplicating settings across sheets
+            ○ Auth - Section for connecting to Facebook, Google, etc. The section will have a red notification dot if something is no longer authorized`,
+          date: '9/5/21'
+        },
+        {
+          name: 'Update View Feature',
+          message: `○ Feature: Added menu item under the add on Missionary Tools called Updates
+          ○ Feature: Update view which allows you to view all previous updates since recorded.`,
+          date: '9/7/21'
+        }])
+        google.script.run.withSuccessHandler(this.updateTheList).getAllUpdates()
+      }
+    })
+  </script>
+</body>
+
+</html>

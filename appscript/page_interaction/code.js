@@ -1102,8 +1102,17 @@ function LightenColor(hex, strength=5) {
 	return rgb;
 }
 
+function showUpdatesModel() {
+  var html = HtmlService.createTemplateFromFile('page_interaction/updates.html')
+  html = html.evaluate()
+    .setTitle('Program Updates')
+    .setWidth(600)
+    .setHeight(600)
+  SpreadsheetApp.getUi()
+    .showModalDialog(html, 'Program Updates')
+}
+
 // fix the every hour issue not being able to get settings or do any update
-// set highlighting to false in every ones settings?
 // add a forward and back button to the find member profiles
 // store the member profile data locally instead of on redis, just pull from redis, check if can store in rows 50k character limit
 // get profiles to load automattically - put job in queue for automatic execution

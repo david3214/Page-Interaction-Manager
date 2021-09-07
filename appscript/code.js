@@ -12,6 +12,8 @@ function onOpen(e) {
       .addItem('Analytics', 'showAnalytics')
       .addItem('Format', 'formatSheet')
       .addItem('Settings', 'showSettings'))
+    .addSeparator()
+    .addItem('Updates', 'showUpdatesModel')
     .addItem('Feedback', 'showFeedback')
   menu.addToUi()
 
@@ -34,43 +36,28 @@ function checkForAddonUpdates() {
   let isPageInteractionSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Ad Likes')
   if (isPageInteractionSheet == null) return
 
-  let versionNotifications = JSON.parse(PropertiesService.getDocumentProperties().getProperty('UpdateNotifications')) || {}
-  let { authFixed, feedbackUpdate, highlightUpdate } = versionNotifications
-  let updateMessageHTML = ''
-  if (!authFixed) {
-    updateMessageHTML += `
-      Authentication Errors Update
-        ○ Updated Page Interaction Manager settings to now show if you are disconnected from google or facebook
-        ○ Page Interaction Manager Settings now has an option to reauthenticat with google and facebook
-      `
-    versionNotifications.authFixed = true
-  }
+  let updateMessages = getAllUpdates()
 
-  if (!feedbackUpdate) {
-    updateMessageHTML += `
-      Feedback Update
-        ○ Feature: Under Page Interaction Manager Feedback you can now fill out a bug report or feature request
-        ○ Feature: Added the option to select a default status and/or assignment
-      
-      Profile Link Update
-        ○ Updated the profile link finder so if it can't find a link it will state Not Found
-      `
-    versionNotifications.feedbackUpdate = true
-  }
+  let versionNotifications = {}
+  try {
+    versionNotifications = JSON.parse(PropertiesService.getUserProperties().getProperty('UpdateNotifications')) || {}
+  } catch {}
+  
+  const finalMessage = updateMessages.reduce((message, update) => {
+    let userHasUpdate = versionNotifications[update.name]
 
-  if (!highlightUpdate) {
-    updateMessageHTML += `
-      Highlight Update - Check out the Highlight setting, give us your feedback
-        ○ Feature: Page highlighting now will highlight the entire row, and do alternating colors for assignment
-        ○ Feature: Select will no longer highlight the whole row red, but just the select status
-      `
-    versionNotifications.highlightUpdate = true
-  }
+    if (!userHasUpdate){
+      message += `\n${update.name}\n${update.message}\n`
+      versionNotifications[update.name] = true
+    }
 
-  if (updateMessageHTML) {
+    return message
+  }, ``)
+
+  if (finalMessage) {
     const ui = SpreadsheetApp.getUi()
-    response = ui.alert('Recent Updates', updateMessageHTML, ui.ButtonSet.OK)
+    response = ui.alert('Recent Updates', finalMessage, ui.ButtonSet.OK)
     if (response == ui.Button.OK)
-      PropertiesService.getDocumentProperties().setProperty('UpdateNotifications', JSON.stringify(versionNotifications))
+      PropertiesService.getUserProperties().setProperty('UpdateNotifications', JSON.stringify(versionNotifications))
   }
 }
