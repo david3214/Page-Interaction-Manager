@@ -14,6 +14,7 @@ click-didyoumean==0.0.3
 click-plugins==1.1.1
 click-repl==0.1.6
 colorama==0.4.3
+coverage==5.5
 Flask==1.1.2
 Flask-SQLAlchemy==2.4.4
 google==3.0.0

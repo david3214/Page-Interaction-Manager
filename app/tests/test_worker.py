@@ -43,8 +43,10 @@ class TaskTestCase(unittest.TestCase):
         results = worker.process_result(self.test_data['valid_process_result'])
         self.assertTrue(results)
 
+    @patch('app.worker.tasks.gspread')
     @patch('app.worker.tasks.celery')
-    def test_update_all_profile_links(self, mock_celery):
+    def test_update_all_profile_links(self, mock_celery, mock_gspread):
+        mock_gspread.authorize.return_value.open_by_key.return_value.worksheet.return_value.get_all_records.return_value = self.test_data["sample_worksheet_data"]
         results = worker.tasks.update_all_profile_links([json.loads(page['page_details'])['name'] for page in self.test_data['page_data']])
         calls = mock_celery.send_task.call_args_list
         for call in calls:
@@ -60,7 +62,17 @@ class TaskTestCase(unittest.TestCase):
             self.assertEquals(args, ('app.worker.process_results',))
             self.assertEquals(kwargs, {'queue': 'results'})
 
-        self.assertEquals(len(calls) * 2, len(self.test_data['page_data']))
+        self.assertEquals(len(calls), len(self.test_data['page_data']))
+        self.assertTrue(results)
+
+    @patch('app.worker.tasks.gspread')
+    @patch('app.worker.tasks.celery')
+    def test_update_all_profile_links_with_links(self, mock_celery, mock_gspread):
+        mock_gspread.authorize.return_value.open_by_key.return_value.worksheet.return_value.get_all_records.return_value = self.test_data["sample_worksheet_links_in_sheet"]
+        results = worker.tasks.update_all_profile_links([json.loads(page['page_details'])['name'] for page in self.test_data['page_data']])
+        calls = mock_celery.send_task.call_args_list
+
+        self.assertEquals(len(calls), len(self.test_data['page_data']) * 2)
         self.assertTrue(results)
 
     def test_insert_row_into_sheet_processed_messaging(self):
