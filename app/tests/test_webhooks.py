@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from flask import current_app
 from app import create_app, db
 
@@ -28,7 +29,8 @@ class WebhookTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    def test_facebook_webhook_post(self):
+    @patch('app.webhooks.views.celery')
+    def test_facebook_webhook_post(self, mock_celery):
         test_event = {"object": "page", "entry": [{"id": "103149398319188", "time": 1609656118325, "messaging": [{"sender": {"id": "3424692677644577"}, "recipient": {
             "id": "103149398319188"}, "timestamp": 1609656118099, "message": {"mid": "m_ABt4i4wZIOP21KTsxMwTaHlgf8qsN5F1_pYhFwXvsac2EfSPOAzvt8s8WqxZHjsJUT4OHm8W49PFJtBJ3ITjIg", "text": "aa"}}]}]}
         response = self.client.post(
@@ -37,3 +39,5 @@ class WebhookTestCase(unittest.TestCase):
             json=test_event
         )
         self.assertEqual(response.status_code, 200)
+        mock_celery.send_task.assert_called_with(app=mock_celery, name="app.worker.tasks.insert_row_into_sheet",
+                             kwargs={'task_info': test_event}, queue='webhook')

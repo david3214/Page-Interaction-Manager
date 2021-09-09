@@ -2,6 +2,8 @@
 .venv
 venv/
 venv/*
+htmlcov/
+htmlcov*
 bots.pickle
 *.pyc
 /test_data
@@ -18,6 +20,7 @@ app/keys/*
 */keys/
 .pytest_cache
 app/.noseids
+app/.coverage
 app/nosetests.xml
 kubectl.*
 *.env
