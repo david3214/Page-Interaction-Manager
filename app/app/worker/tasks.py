@@ -2,9 +2,7 @@ import io
 import json
 import os
 import datetime
-import locale
-from ssl import Options
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
 from urllib import request, error
 from flask import current_app
 from babel.dates import format_date
@@ -16,8 +14,7 @@ from google.oauth2.credentials import Credentials, exceptions
 from sqlalchemy import or_
 
 from .. import celery, create_app, db
-from ..models import PageDatum, Preference, User
-from ..utils import deep_get
+from ..models import PageDatum
 from .task_dicts import internalVariables
 
 from celery import Celery
@@ -82,6 +79,7 @@ def update_all_profile_links(pages='all'):
             sh = gc.open_by_key(result.page_details['google_sheets']['id'])
             worksheet = sh.worksheet("Ad Likes")
             df = pd.DataFrame(worksheet.get_all_records())
+
             # df = df.loc[df['Profile Link'] == '']
 
             def create_list_of_psids_with_links(psid, profile_link): 
