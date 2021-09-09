@@ -1,0 +1,188 @@
+<script>
+new Vue({
+el: '#app',
+vuetify: new Vuetify({
+  theme: {
+    themes: {
+      light: {
+        primary: '#04385A',
+        error: '#FF5252',
+      }
+    }
+  }
+}),
+data: function() {
+  return {
+    isLoaded: false,
+    qrUrls: {},
+    file_type: 0,
+    tab: 0,
+    example_images,
+    errorText: "",
+  }
+},
+methods: {
+  /**
+   * Loads the urls into Vue data, putting in placeholders for data that will load after
+   * @param {Object} urls Object of urls from the getQRCodeUrls() function
+   */
+  loadQrUrls: function(urls) {
+    // Iterate through urls object and add placeholders for the image blobs
+    Object.keys(urls).forEach(name => {
+      urls[name].img = undefined
+      urls[name].svg = undefined
+      urls[name].fn = name.replace(/[^A-Z0-9]+/ig, "_")
+    })
+    this.qrUrls = urls
+    // Load the images
+    this.loadQrImgs()
+    this.loadQrSvgs()
+  },
+  /**
+   * Iterate over this.qrUrls and load PNG blobs into Vue data
+   */
+  loadQrImgs: async function() {
+    // Get page names
+    const names = Object.keys(this.qrUrls)
+    // Get an arr of promises that resolve to PNG blobs
+    const imgPromises = names.map(this.url2ImgBlobUrl)
+    // When all promises resolve
+    Promise.all(imgPromises)
+    // Iterate through images and put them into this.qrUrls
+    .then(imgArr => names.forEach((n, i) => this.qrUrls[n].img = imgArr[i]))
+  },
+  /**
+   * Iterate over this.qrUrls and load SVG blobs into Vue data
+   */
+  loadQrSvgs: function() {
+    // Get page names
+    const names = Object.keys(this.qrUrls)
+    // Get arr of SVG blobs
+    const svgArr = names.map(this.url2Svg)
+    // Iterate through SVGs and put them into this.qrUrls
+    names.forEach((n, i) => this.qrUrls[n].svg = svgArr[i])
+  },
+  /**
+   * Use qrcode.js to create an SVG file
+   * @param {String} name the page name, key for this.qrUrls
+   * @returns {String} object URL pointing to SVG file as a blob
+   */
+  url2Svg: function(name) {
+    // Create SVG element
+    const qrGeneratorEl = document.createElement('div')
+    new QRCode(qrGeneratorEl, {
+      text: this.qrUrls[name].url,
+      width: 512,
+      height: 512,
+      correctLevel: QRCode.CorrectLevel.L,
+      useSVG: true
+    })
+    
+    // Insert SVG attribute to allow offline viewing
+    let svgText = qrGeneratorEl.innerHTML
+    svgText = svgText.slice(0, 5) + 'xmlns="http://www.w3.org/2000/svg" ' + svgText.slice(5)
+    // Convert to blob
+    const svgBlob = new Blob([svgText], {type: 'image/svg+xml'})
+    
+    // Return as object URL
+    return URL.createObjectURL(svgBlob)
+  },
+  /**
+   * Use qrcode.js to create a PNG file
+   * @param {String} name the page name, key for this.qrUrls
+   * @returns {String} object URL pointing to PNG file as a blob
+   */
+  url2ImgBlobUrl: function(name) {
+    // Create img element w/ PNG
+    const qrGeneratorEl = document.createElement('div')
+    new QRCode(qrGeneratorEl, {
+      text: this.qrUrls[name].url,
+      width: 512,
+      height: 512,
+      correctLevel: QRCode.CorrectLevel.L
+    })
+    const imgEl = qrGeneratorEl.querySelector('img')
+
+    // Get promise that resolves when image loads
+    return this.getPendingImgSrc(imgEl)
+    // Get the img src as a blob
+    .then(imgB64Src => fetch(imgB64Src))
+    .then(res => res.blob())
+    // Return as object URL
+    .then(blob => URL.createObjectURL(blob))
+  },
+  /**
+   * @param {Img} imgEl img DOM element
+   * @returns {Promise} this resolves when an img src loads
+   */
+  getPendingImgSrc: function(imgEl) {
+    return new Promise((resolve, reject) => {
+      imgEl.addEventListener('load', () => resolve(imgEl.src))
+      imgEl.addEventListener('error', (err) => {
+        this.errorHandler(err)
+        reject(err)
+      })
+    })
+  },
+  /**
+   * Download a file to the computer
+   * @param {ObjectURL} data file to download as blob referenced by object URL
+   * @param {String} filename
+   */
+  download: function(data, filename) {
+    // Create downloader element
+    const downloader = document.createElement('a')
+    downloader.setAttribute('href', data)
+    downloader.setAttribute('download', filename)
+    downloader.style.display = 'none'
+    document.body.appendChild(downloader)
+
+    // Download the file and remove the downloader
+    downloader.click()
+    document.body.removeChild(downloader)
+  },
+  /**
+   * Zips together all the files of a certan type, then downloads them
+   * @param {boolean} fileType true -> svg, false -> png 
+   */
+  downloadSet: function(fileType) {
+    // Get array of promises that resolve to all the needed files
+    const promiseArr = Object.values(this.qrUrls).map(u => 
+      fetch(u[fileType ? "svg" : "img"])
+      .then(data => ({
+        name: u.fn + (fileType ? ".svg" : ".png"),
+        input: data
+      }))
+    )
+    
+    // When all promises resolve
+    Promise.all(promiseArr)
+    // use downloadZip to zip the files and convert to object URL
+    .then(data => exported.downloadZip(data).blob())
+    .then(blob => URL.createObjectURL(blob))
+    // download the zip file
+    .then(url => {
+      this.download(url, `facebook-qr-codes_${fileType ? "svg" : "png"}.zip`)
+      URL.revokeObjectURL(url)
+    })
+  },
+  /**
+   * Alert user when things error
+   * @param {Error} err
+   */
+  errorHandler: function(err) {
+    // If it's a Facebook error
+    if (err.message.includes('Access not granted or expired'))
+      this.errorText = "You need to re-authorize with Facebook. Please go to the Page Interaction Manager settings to re-authorize"
+    else
+      this.errorText = "Error: " + err.message + " If this is unexpected please report it via the feedback form as a bug"
+  }
+},
+created: function() {
+  google.script.run
+    .withSuccessHandler(this.loadQrUrls)
+    .withFailureHandler(this.errorHandler)
+    .getQrCodeUrls()
+}
+})
+</script>
