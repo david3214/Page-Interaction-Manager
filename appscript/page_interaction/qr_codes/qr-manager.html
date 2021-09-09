@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('page_interaction/qr_codes/qrcode.min.js.html'); ?>
+  <?!= include('page_interaction/qr_codes/client-zip.js.html'); ?>
+  <?!= include('page_interaction/qr_codes/example_images.html'); ?>
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <style scoped>
+    .v-card .on-hover {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <v-app id="inspire">
+      <template>
+      <v-card 
+        class="mx-auto" 
+        width="500" 
+        elevation="10" 
+        style="overflow: hidden;"
+      >
+      <v-toolbar color='primary' dark>
+        <v-toolbar-title style='overflow: visible; font-weight: bold;'>QR Manager</v-toolbar-title>
+        <v-tabs
+        v-model="tab"
+        background-color="primary"
+        right
+        >
+          <v-tab>QR Codes</v-tab>
+          <v-tab>About</v-tab>
+        </v-tabs>
+      </v-toolbar>
+      <v-alert type="error" v-if="!!errorText.length">{{ errorText }}</v-alert>
+        <v-tabs-items v-model="tab">
+          <v-tab-item>
+            <v-row>
+              <v-col class="my-3 ml-3" :elevation="1" style="white-space: nowrap;">
+                <strong>Download as &nbsp;</strong>
+                <v-btn-toggle v-model="file_type" mandatory dense color="primary">
+                  <v-btn>PNG</v-btn>
+                  <v-btn>SVG</v-btn>
+                </v-btn-toggle>
+              </v-col>
+              <v-spacer></v-spacer>
+              <v-col class="mr-3">
+                <v-btn class="my-3" 
+                color="primary" 
+                :elevation="1" 
+                @click="downloadSet(file_type)"
+                right 
+                >
+                Download All
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-container>
+            <v-row class="m-3">
+              <v-col v-for="(url, name) in qrUrls" :key="name">
+                <v-tooltip bottom>
+                  <template v-slot:activator="{on}">
+                    <v-hover v-slot="{hover}">
+                      <v-card outlined :elevation="hover ? 5 : 1" v-on="on" :class="{ 'on-hover': 'hover' }">
+                        <v-card-title style="font-size: 1em; line-height: 0.9em; word-wrap: break-word; word-break: normal;">{{ name }}</v-card-title>
+                        <v-img class="mx-auto mb-3" 
+                        :src="url.img" 
+                        width="128" height="128" 
+                        @click="download(url[file_type ? 'svg' : 'img'], url.fn + (file_type ? '.svg' : '.png'))">
+                      </v-img>
+                    </v-card>
+                  </v-hover>
+                </template>
+                <span>Click to download</span>
+              </v-tooltip>
+            </v-col>
+          </v-row>
+        </v-tab-item>
+        <v-tab-item>
+          <v-row dense class="mx-3 mt-3">
+            <v-col>
+              These QR Codes will deep link directly into the Facebook app on Android or iOS devices 
+              (not just take you to the website), assuming that the app is installed. We have found 
+              these to be more reliable then the QR Codes provided by Facebook.
+              <br><br>
+              To ensure that the greatest number of phones will be able to scan your QR Code, give it
+              a white border, and don't change the color scheme from black-on-white.
+              <br><br>
+              We like to frame our QR Codes in 1920x1080 images for missionaries to keep on their home
+              or lock screens. That way they can have them handy to quickly share with someone. 
+            </v-col>
+          </v-row>
+          <v-row dense class="mx-3 mb-3">
+            <v-col v-for="img in example_images" :key="img">
+              <v-img :src="img" width="146" class="mx-auto"></v-img>
+            </v-col>
+          </v-row>
+        </v-tab-item>
+        </v-tabs-items>
+        </v-container>
+      </v-card>
+      </template>
+    </v-app>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <?!= include('page_interaction/qr_codes/qr-manager.js.html'); ?>
+</body>
+</html>

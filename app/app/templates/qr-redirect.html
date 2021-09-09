@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting to Facebook...</title>
+</head>
+<body>
+  <h1>If you are not automatically redirected, click <a href="https://www.facebook.com/{{ page_id }}">here</a></h1>
+  <script type="text/javascript">
+    var fallback = "https://www.facebook.com/{{ page_id }}";
+    var url = "https://www.facebook.com/{{ page_id }}";
+
+    window.onload = function() {
+      setTimeout(function() {
+        window.location = fallback;
+      }, 100);
+      window.location = url;
+    }
+
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) 
+      url = "fb://profile/{{ page_id }}";
+    if (/android/i.test(userAgent)) 
+      url = "intent://page/{{ page_id }}#Intent;package=com.facebook.katana;scheme=fb;end";
+  </script>
+</body>
+</html>
