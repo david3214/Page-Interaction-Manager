@@ -2,8 +2,8 @@ var mode = "PRODUCTION";
 
 QUnit.helpers( this );
 function testFunctions() {
-   testFacebookWebhookUpdate();
-   testSheetFunctions();
+    testSheetFunctions();
+    
 }
 
 function doGet( e ) {
@@ -33,6 +33,15 @@ function testSheetFunctions(){
         assert.ok(test_updateConditionalFormattingRules, "Should be ok");
 
     });
+}
+
+function testSettingFunctions() {
+    QUnit.test("Test Settings", function (assert) {
+        assert.ok(test_getGoogleAuthStatus_userFalse, "Should be ok")
+        assert.ok(test_getGoogleAuthStatus_pageFalse, "Should be ok")
+        assert.ok(test_getGoogleAuthStatus_bothFalse, "Should be ok")
+        assert.ok(test_getGoogleAuthStatus_bothTrue, "Should be ok")
+    })
 }
 
 function testDatabase(){
@@ -235,5 +244,25 @@ function time_functions() {
 }
 
 function test_getGoogleAuthStatus() {
-    
+    test('user status False', function () {
+      // Mock these functions so we can test all the paths
+        let selectedPagesCalled = false
+        let getSelectedPages = function () {
+            selectedPagesCalled = true
+            return {
+                data: [{google_sheets: {refresh_token: "Some Token"}}]
+            }
+        }
+
+        let refreshAccessToken = function (id, secret, refresh_token) {
+            isEqual(refresh_token, "Some Token")
+        }
+
+        let getUser = function (id) {
+            return {}
+        }
+        
+        let status = getGoogleAuthStatus()  
+        isEqual({ user_status: false, page_status: true }, status)
+    })    
 }
