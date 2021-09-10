@@ -38,6 +38,12 @@ function getAllUpdates() {
       message: `○ Feature: Added menu item under the add on Missionary Tools called Updates
       ○ Feature: Update view which allows you to view all previous updates since recorded.`,
       date: '9/7/21'
+    },
+    {
+      name: 'QR Code Manager Feature',
+      message: `○ Feature: Added Page Interaction Manager > QR Code Manager that generates into-app deep-linking QR codes for Facebook pages, more reliable than Facebooks' codes
+      ○ Feature: QR codes can be downloaded in PNG or SVG`,
+      date: '9/10/21'
     }
   ]
 }
