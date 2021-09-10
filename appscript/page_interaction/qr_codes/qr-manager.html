@@ -24,7 +24,7 @@
         style="overflow: hidden;"
       >
       <v-toolbar color='primary' dark>
-        <v-toolbar-title style='overflow: visible; font-weight: bold;'>QR Manager</v-toolbar-title>
+        <v-toolbar-title style='overflow: visible; font-weight: bold;'>QR Codes</v-toolbar-title>
         <v-tabs
         v-model="tab"
         background-color="primary"
@@ -33,6 +33,13 @@
           <v-tab>QR Codes</v-tab>
           <v-tab>About</v-tab>
         </v-tabs>
+        <v-progress-linear
+          :active="!isLoaded"
+          :indeterminate="!isLoaded"
+          absolute
+          bottom
+          color="blue accent-3"
+        ></v-progress-linear>
       </v-toolbar>
       <v-alert type="error" v-if="!!errorText.length">{{ errorText }}</v-alert>
         <v-tabs-items v-model="tab">
@@ -51,7 +58,8 @@
                 color="primary" 
                 :elevation="1" 
                 @click="downloadSet(file_type)"
-                right 
+                right
+                :disabled="!isLoaded"
                 >
                 Download All
               </v-btn>
