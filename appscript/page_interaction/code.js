@@ -485,7 +485,7 @@ function showSettings() {
     .setWidth(600)
     .setHeight(600)
   SpreadsheetApp.getUi()
-    .showModalDialog(html, '')
+    .showModalDialog(html, ' ')
 }
 
 function openContext(spreadSheet = SpreadsheetApp.getActiveSpreadsheet(), sheetName = undefined) {

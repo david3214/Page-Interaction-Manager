@@ -2,11 +2,11 @@
  * Displays the QR Code manager in a modal dialog
  */
 function showQRManager() {
-  const html =  HtmlService.createTemplateFromFile("page_interaction/qr_codes/qr-manager.html")
-    .evaluate()
+  let html =  HtmlService.createTemplateFromFile("page_interaction/qr_codes/qr-manager.html")
+  html = html.evaluate()
     .setWidth(600)
     .setHeight(600)
-  SpreadsheetApp.getUi().showModalDialog(html, "")
+  SpreadsheetApp.getUi().showModalDialog(html, " ")
 }
 
 /**
