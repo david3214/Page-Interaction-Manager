@@ -12,7 +12,7 @@ function onOpen(e) {
       .addItem('Analytics', 'showAnalytics')
       .addItem('Format', 'formatSheet')
       .addItem('Settings', 'showSettings')
-      .addItem('Manage QR Codes', 'showQRManager'))
+      .addItem('QR Codes', 'showQRCodes'))
     .addSeparator()
     .addItem('Updates', 'showUpdatesModel')
     .addItem('Feedback', 'showFeedback')

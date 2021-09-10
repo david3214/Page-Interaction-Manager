@@ -41,7 +41,7 @@ function getAllUpdates() {
     },
     {
       name: 'QR Code Manager Feature',
-      message: `○ Feature: Added Page Interaction Manager > QR Code Manager that generates into-app deep-linking QR codes for Facebook pages, more reliable than Facebooks' codes
+      message: `○ Feature: Added Page Interaction Manager > QR Codes, which generates FB app deep-linking QR codes for Facebook pages, more reliable than Facebooks' codes
       ○ Feature: QR codes can be downloaded in PNG or SVG`,
       date: '9/10/21'
     }
