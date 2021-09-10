@@ -37,6 +37,7 @@ methods: {
     // Load the images
     this.loadQrImgs()
     this.loadQrSvgs()
+    this.isLoaded = true
   },
   /**
    * Iterate over this.qrUrls and load PNG blobs into Vue data
@@ -172,6 +173,7 @@ methods: {
    */
   errorHandler: function(err) {
     // If it's a Facebook error
+    this.isLoaded = true
     if (err.message.includes('Access not granted or expired'))
       this.errorText = "You need to re-authorize with Facebook. Please go to the Page Interaction Manager settings to re-authorize"
     else
