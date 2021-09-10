@@ -3,10 +3,10 @@
  */
 function showQRManager() {
   const html =  HtmlService.createTemplateFromFile("qr-manager.html")
+    .evaluate()
     .setWidth(600)
     .setHeight(600)
-    .evaluate()
-  SpreadsheetApp.getUi().showModalDialog(html, "QR Manager")
+  SpreadsheetApp.getUi().showModalDialog(html, "")
 }
 
 /**
