@@ -244,25 +244,100 @@ function time_functions() {
 }
 
 function test_getGoogleAuthStatus() {
-    test('user status False', function () {
-      // Mock these functions so we can test all the paths
-        let selectedPagesCalled = false
+    test('both_status_false_bad_user_token', function () {
+        // Mock these functions so we can test all the paths
+        let functions_called = {getSelectedPages: 0, refreshAccessToken: 0, getUser: 0}
         let getSelectedPages = function () {
-            selectedPagesCalled = true
-            return {
-                data: [{google_sheets: {refresh_token: "Some Token"}}]
-            }
+            functions_called.getSelectedPages++
+            return { data: [{google_sheets: {refresh_token: "Some Token"}}] }
         }
 
         let refreshAccessToken = function (id, secret, refresh_token) {
-            isEqual(refresh_token, "Some Token")
+            functions_called.refreshAccessToken++
+            if (refresh_token == "Some Token" || refresh_token == "Bad Token")
+                throw new Error("Bad Request")
+            throw new Error('Test Failed')
         }
 
         let getUser = function (id) {
-            return {}
+            functions_called.getUser++
+            return test_data['sample_users'].find(user=>user.id_token.name == 'bad_token')
         }
         
-        let status = getGoogleAuthStatus()  
-        isEqual({ user_status: false, page_status: true }, status)
-    })    
+        let status = getGoogleAuthStatus()
+        isEqual({ user_status: false, page_status: false }, status)
+        isEqual({getSelectedPages: 1, refreshAccessToken: 2, getUser: 1}, functions_called)
+    })
+
+    test('both_status_false_no_user_token', function () {
+        // Mock these functions so we can test all the paths
+        let functions_called = {getSelectedPages: 0, refreshAccessToken: 0, getUser: 0}
+        let getSelectedPages = function () {
+            functions_called.getSelectedPages++
+            return { data: [{google_sheets: {refresh_token: "Some Token"}}] }
+        }
+
+        let refreshAccessToken = function (id, secret, refresh_token) {
+            functions_called.refreshAccessToken++
+            if (refresh_token == "Some Token")
+                throw new Error("Bad Request")
+            throw new Error("Test Failed")
+        }
+
+        let getUser = function (id) {
+            functions_called.getUser++
+            return test_data['sample_users'].find(user=>user.id_token.name == 'no_token')
+        }
+        
+        let status = getGoogleAuthStatus()
+        isEqual({ user_status: false, page_status: false }, status)
+        isEqual({getSelectedPages: 1, refreshAccessToken: 1, getUser: 1}, functions_called)
+    })
+
+    test('user_status_true', function () {
+        // Mock these functions so we can test all the paths
+        let functions_called = {getSelectedPages: 0, refreshAccessToken: 0, getUser: 0}
+        let getSelectedPages = function () {
+            functions_called.getSelectedPages++
+            return { data: [{google_sheets: {refresh_token: "Some Token"}}] }
+        }
+
+        let refreshAccessToken = function (id, secret, refresh_token) {
+            functions_called.refreshAccessToken++
+            if (refresh_token == "Good Token")
+                return
+            else if (refresh_token == "Some Token")
+                throw new Error("Bad Request")
+            throw new Error("Test Failed")
+        }
+
+        let getUser = function (id) {
+            functions_called.getUser++
+            return test_data['sample_users'].find(user=>user.id_token.name == 'good_user')
+        }
+        
+        let status = getGoogleAuthStatus()
+        isEqual({ user_status: true, page_status: false }, status)
+        isEqual({getSelectedPages: 1, refreshAccessToken: 2, getUser: 1}, functions_called)
+    })
+
+    test('page_status_true', function () {
+        // Mock these functions so we can test all the paths
+        let functions_called = {getSelectedPages: 0, refreshAccessToken: 0}
+        let getSelectedPages = function () {
+            functions_called.getSelectedPages++
+            return { data: [{google_sheets: {refresh_token: "Good Token"}}] }
+        }
+
+        let refreshAccessToken = function (id, secret, refresh_token) {
+            functions_called.refreshAccessToken++
+            if (refresh_token == "Good Token")
+                return
+            throw new Error("Test Failed")
+        }
+        
+        let status = getGoogleAuthStatus()
+        isEqual({ user_status: true, page_status: false }, status)
+        isEqual({getSelectedPages: 1, refreshAccessToken: 1}, functions_called)
+    })
 }
