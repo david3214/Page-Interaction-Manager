@@ -16,55 +16,6 @@ function doGet( e ) {
      return QUnit.getHtml();
 };
 
-
-function testFacebookWebhookUpdate(){
-    var web_app_url = "https://script.google.com/macros/s/AKfycbyntJvxGIZalY9QGLCv89H_OBSFdSJARHyhpWxJo4II_SpgSIxW/dev?access_token=ya29.a0AfH6SMCMEiS8qfomf-WIWEtedCHW1m5VuY1_XpRXKNcHENHaWbPOy1DmZ1OQH0qTt8PufVElKJub3ZLvarl12bd-lZLwqatpJU3zDSgIE7yOWCY-7r6vkUArOBbbweydx1hZH9B0Pw5Y1PzyYVMVyr4sZPAVDe5uyPWE0VOJHs7cr4eAh6JYzJ_FORA5qkc";
-    QUnit.test("Facebook post interaction testing", function(assert) {
-        test_data.sample_page_notifications_accept.forEach(function(data){
-            var options = {
-                'method' : 'post',
-                'contentType': 'application/json',
-                'payload' : JSON.stringify(data)
-            };
-            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
-            assert.ok(results, `Should say Processed: ${JSON.parse(results).status}`)
-        })
-        
-        test_data.sample_page_notifications_reject.forEach(function(data){
-            var options = {
-                'method' : 'post',
-                'contentType': 'application/json',
-                'payload' : JSON.stringify(data)
-            };
-            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
-            assert.ok(results, `Should say Unprocessed: ${JSON.parse(results).status}`)
-        })
-
-        test_data.sample_page_notifications_error.forEach(function(data){
-            var options = {
-                'method' : 'post',
-                'contentType': 'application/json',
-                'payload' : JSON.stringify(data)
-            };
-            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
-            assert.ok(results, `Should say Error: ${JSON.parse(results).status}`)
-        })
-    });
-    
-   QUnit.test("Facebook messenger test", function(assert){
-    test_data.sample_page_message_accept.forEach(function(data){
-        var options = {
-            'method' : 'post',
-            'contentType': 'application/json',
-            'payload' : JSON.stringify(data)
-        };
-        var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
-        assert.equal("Processed", JSON.parse(results).status, `Should say Processed: ${JSON.parse(results).status}`)
-    })
-   });
-    
-}
-
 function testSheetFunctions(){
     QUnit.test("Test sheet", function(assert){
         assert.ok(test_doLogicPageMessages, "Should see a new line get inserted");
@@ -281,4 +232,8 @@ function time_functions() {
         const t1 = Date.now();
         console.log(`${testFunc.name}: ${t1 - t0}`);
     })
+}
+
+function test_getGoogleAuthStatus() {
+    
 }
