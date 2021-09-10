@@ -482,11 +482,10 @@ function tearDownSheet(context = openContext()) {
 function showSettings() {
   var html = HtmlService.createTemplateFromFile('page_interaction/settings_models/settings')
   html = html.evaluate()
-    .setTitle('Program Settings')
     .setWidth(600)
     .setHeight(600)
   SpreadsheetApp.getUi()
-    .showModalDialog(html, 'Program Settings')
+    .showModalDialog(html, ' ')
 }
 
 function openContext(spreadSheet = SpreadsheetApp.getActiveSpreadsheet(), sheetName = undefined) {
