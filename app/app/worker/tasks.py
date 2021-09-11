@@ -185,10 +185,10 @@ def insert_row_into_sheet(task_info):
         if event_type == 'reaction':
             # Classify the incoming event
             # Reject stuff we aren't interested in
-            if (task_info['entry'][0]['changes'][0]['value']['item'] == 'video' or
-                task_info['entry'][0]['changes'][0]['value']['item'] == 'comment' or
-                    task_info['entry'][0]['changes'][0]['value']['verb'] != 'add'):
-                return json.dumps({'status': 'Unprocessed', 'message': 'Reaction was a comment, video, or edited reaction'})
+            reaction_value = task_info['entry'][0]['changes'][0]['value']['item']
+            reaction_verb = task_info['entry'][0]['changes'][0]['value']['verb']
+            if (reaction_value == 'video' or reaction_value == 'comment' or reaction_verb != 'add'):
+                return json.dumps({'status': 'Unprocessed', 'message': f'Reaction was a comment, video, or edited reaction.', 'data': task_info})
             page_id = task_info['entry'][0]['id']
 
         elif event_type == 'message':
