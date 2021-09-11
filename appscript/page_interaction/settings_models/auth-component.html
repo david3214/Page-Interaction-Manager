@@ -169,6 +169,11 @@
             .getAuthorizationUrl();
           return
         }
+        else if (error.message.includes(`This endpoint requires the 'pages_read_user_content' permission`)){
+          // This error occurs, but the submit still goes through, not sure why it's popping up
+          return
+        }
+
         this.$emit('error-thrown', error.message + " If this is unexpected please report it via the feedback form as a bug")
       }
     },
