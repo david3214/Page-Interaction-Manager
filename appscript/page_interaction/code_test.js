@@ -2,7 +2,7 @@ var mode = "PRODUCTION";
 
 QUnit.helpers( this );
 function testFunctions() {
-    // testSheetFunctions();
+    testSheetFunctions();
     testSettingFunctions()
 }
 
@@ -240,6 +240,9 @@ function time_functions() {
 
 function test_getGoogleAuthStatus() {
     module("GoogleAuthStatus")
+    getSelectedPages = this.getSelectedPages
+    refreshAccessToken = this.refreshAccessToken
+    getUser = this.getUser
     this.getSelectedPages = function () {
         ok(true, "Insided getSelected Pages")
         return { data: [{google_sheets: {refresh_token: "Some Token"}}] }
@@ -323,4 +326,7 @@ function test_getGoogleAuthStatus() {
         equal(status.user_status, true, "User Status")
         equal(status.page_status, true, "Page Status")
     })
+    this.getSelectedPages = getSelectedPages
+    this.refreshAccessToken = refreshAccessToken
+    this.getUser = getUser
 }
