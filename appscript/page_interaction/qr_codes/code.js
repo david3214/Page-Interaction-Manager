@@ -1,7 +1,7 @@
 /**
  * Displays the QR Code manager in a modal dialog
  */
-function showQrCodes() {
+function showQRCodes() {
   let html =  HtmlService.createTemplateFromFile("page_interaction/qr_codes/qr-manager.html")
   html = html.evaluate()
     .setWidth(600)
