@@ -2,8 +2,8 @@ var mode = "PRODUCTION";
 
 QUnit.helpers( this );
 function testFunctions() {
-   testFacebookWebhookUpdate();
-   testSheetFunctions();
+    testSheetFunctions();
+    testSettingFunctions()
 }
 
 function doGet( e ) {
@@ -15,55 +15,6 @@ function doGet( e ) {
  
      return QUnit.getHtml();
 };
-
-
-function testFacebookWebhookUpdate(){
-    var web_app_url = "https://script.google.com/macros/s/AKfycbyntJvxGIZalY9QGLCv89H_OBSFdSJARHyhpWxJo4II_SpgSIxW/dev?access_token=ya29.a0AfH6SMCMEiS8qfomf-WIWEtedCHW1m5VuY1_XpRXKNcHENHaWbPOy1DmZ1OQH0qTt8PufVElKJub3ZLvarl12bd-lZLwqatpJU3zDSgIE7yOWCY-7r6vkUArOBbbweydx1hZH9B0Pw5Y1PzyYVMVyr4sZPAVDe5uyPWE0VOJHs7cr4eAh6JYzJ_FORA5qkc";
-    QUnit.test("Facebook post interaction testing", function(assert) {
-        test_data.sample_page_notifications_accept.forEach(function(data){
-            var options = {
-                'method' : 'post',
-                'contentType': 'application/json',
-                'payload' : JSON.stringify(data)
-            };
-            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
-            assert.ok(results, `Should say Processed: ${JSON.parse(results).status}`)
-        })
-        
-        test_data.sample_page_notifications_reject.forEach(function(data){
-            var options = {
-                'method' : 'post',
-                'contentType': 'application/json',
-                'payload' : JSON.stringify(data)
-            };
-            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
-            assert.ok(results, `Should say Unprocessed: ${JSON.parse(results).status}`)
-        })
-
-        test_data.sample_page_notifications_error.forEach(function(data){
-            var options = {
-                'method' : 'post',
-                'contentType': 'application/json',
-                'payload' : JSON.stringify(data)
-            };
-            var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
-            assert.ok(results, `Should say Error: ${JSON.parse(results).status}`)
-        })
-    });
-    
-   QUnit.test("Facebook messenger test", function(assert){
-    test_data.sample_page_message_accept.forEach(function(data){
-        var options = {
-            'method' : 'post',
-            'contentType': 'application/json',
-            'payload' : JSON.stringify(data)
-        };
-        var results = UrlFetchApp.fetch(web_app_url, options).getContentText();
-        assert.equal("Processed", JSON.parse(results).status, `Should say Processed: ${JSON.parse(results).status}`)
-    })
-   });
-    
-}
 
 function testSheetFunctions(){
     QUnit.test("Test sheet", function(assert){
@@ -82,6 +33,10 @@ function testSheetFunctions(){
         assert.ok(test_updateConditionalFormattingRules, "Should be ok");
 
     });
+}
+
+function testSettingFunctions() {
+    test_getGoogleAuthStatus()
 }
 
 function testDatabase(){
@@ -281,4 +236,97 @@ function time_functions() {
         const t1 = Date.now();
         console.log(`${testFunc.name}: ${t1 - t0}`);
     })
+}
+
+function test_getGoogleAuthStatus() {
+    module("GoogleAuthStatus")
+    getSelectedPages = this.getSelectedPages
+    refreshAccessToken = this.refreshAccessToken
+    getUser = this.getUser
+    this.getSelectedPages = function () {
+        ok(true, "Insided getSelected Pages")
+        return { data: [{google_sheets: {refresh_token: "Some Token"}}] }
+    }
+    test('both_status_false_bad_user_token', () => {
+        expect(6)
+        // Mock these functions so we can test all the paths
+        this.refreshAccessToken = function (id, secret, refresh_token) {
+            // Should be called twice
+            ok(true, `Inside refreshAccessToken`)
+            if (refresh_token == "Some Token" || refresh_token == "Bad Token")
+                throw new Error("Bad Request")
+            throw new Error('Test Failed')
+        }
+
+        this.getUser = function (id) {
+            ok(true, `Inside getUser`)
+            return test_data['sample_users'].find(user=>user.id_token.name == 'bad_token').id_token
+        }
+        
+        let status = getGoogleAuthStatus()
+        equal(status.user_status, false, "User Status")
+        equal(status.page_status, false, "Page Status")
+    })
+
+    test('both_status_false_no_user_token', ()=>{
+        expect(5)
+        // Mock these functions so we can test all the paths
+        this.refreshAccessToken = function (id, secret, refresh_token) {
+            ok(true, "Insided refreshAccessToken")
+            if (refresh_token == "Some Token")
+                throw new Error("Bad Request")
+            throw new Error("Test Failed")
+        }
+
+        this.getUser = function (id) {
+            ok(true, "Insided getUser")
+            return test_data['sample_users'].find(user=>user.id_token.name == 'no_token').id_token
+        }
+        
+        let status = getGoogleAuthStatus()
+        equal(status.user_status, false, "User Status")
+        equal(status.page_status, false, "Page Status")
+    })
+
+    test('user_status_true', ()=>{
+        expect(6)
+        // Mock these functions so we can test all the paths
+
+        this.refreshAccessToken = function (id, secret, refresh_token) {
+            // Should be called twice
+            ok(true, "Insided refreshAccessToken")
+            if (refresh_token == "Good Token")
+                return
+            else if (refresh_token == "Some Token")
+                throw new Error("Bad Request")
+            throw new Error("Test Failed")
+        }
+
+        this.getUser = function (id) {
+            ok(true, "Insided getUser")
+            return test_data['sample_users'].find(user=>user.id_token.name == 'good_user').id_token
+        }
+        
+        let status = getGoogleAuthStatus()
+        equal(status.user_status, true, "User Status")
+        equal(status.page_status, false, "Page Status")
+    })
+
+    test('page_status_true', ()=>{
+        expect(4)
+        // Mock these functions so we can test all the paths
+        this.refreshAccessToken = function (id, secret, refresh_token) {
+            ok(true, "Insided refreshAccessToken")
+            if (refresh_token == "Some Token")
+                return
+            throw new Error("Test Failed")
+        }
+        
+        let status = getGoogleAuthStatus()
+        equal(status.user_status, true, "User Status")
+        equal(status.page_status, true, "Page Status")
+    })
+    this.getSelectedPages = getSelectedPages
+    this.refreshAccessToken = refreshAccessToken
+    this.getUser = getUser
 }

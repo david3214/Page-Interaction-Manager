@@ -123,7 +123,8 @@
         this.facebookPages = pageResults.data;
       },
       updateSelectedPage: function (selectedPages) {
-        [this.selected] = selectedPages.data;
+        if (selectedPages.data.length)
+          [this.selected] = selectedPages.data;
       },
       updateSheetProfileLinks: function () {
         var profileList = JSON.parse(this.profileList);
@@ -158,6 +159,7 @@
         this.facebookAuthLink = facebookAuthLink;
         if(this.facebookAuthLink)
           this.$emit('auth-needed', true)
+        this.authLoading = false
       },
       errorHandler: function(error) {
         this.authLoading = false
@@ -191,7 +193,6 @@
         let selections = []
         if (this.notDefaultSelection){
           let page = this.selected
-          console.log({selected: this.selected, page: page, pageName: page.name})
           selections.push({
             name: `Selected: ${page.name}`,
             value: page,
@@ -204,6 +205,8 @@
         return selections.concat(this.facebookPages)
       },
       notDefaultSelection(){
+        if (!this.selected)
+          return false
         return this.selected.name != 'Select a page' && Object.keys(this.selected).length
       }
     }

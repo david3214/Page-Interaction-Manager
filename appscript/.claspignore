@@ -3,3 +3,4 @@ connection_tracker/*
 .mileage_tracker
 .connection_tracker
 *-debug.html
+old_code.js
