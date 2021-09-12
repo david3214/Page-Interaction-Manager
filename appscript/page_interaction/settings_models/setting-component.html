@@ -378,18 +378,11 @@
           }
         }
       },
-      statusChange: function () {
-        let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
-        if (currentStatus) {
-          this.statusMerge = currentStatus.merge
-          this.statusHide = currentStatus.hide
-        }
-      },
       changeStatus: function (type) {
         if (type == 'add') {
           if (this.addStatus && !this.statusList.find(status => status.name == this.addStatus)) {
             const isDefault = this.statusList.length < 1
-            this.statusList.push({ name: this.addStatus, merge: this.statusMerge, hide: this.statusHide, default: isDefault })
+            this.statusList.push({ name: this.addStatus, merge: true, hide: false, default: isDefault })
             this.selectedStatus = this.addStatus
             this.addStatus = ''
           }
@@ -399,14 +392,6 @@
             this.statusList.splice(index, 1);
             this.selectedStatus = 'Add a status'
           }
-        } else if (type == 'merge') {
-          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
-          if (index !== -1) this.statusList[index].merge = this.statusMerge;
-          else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
-        } else if (type == 'hide') {
-          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
-          if (index !== -1) this.statusList[index].hide = this.statusHide;
-          else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')
         }
       },
       makeDefault: function(type) {
@@ -521,13 +506,13 @@
       }
     },
     computed: {
-      defaultUnit: function () {
+      defaultUnit() {
         let isDefault = this.unitList.reduce((isDefault, unit) => {
           return unit.name == this.selectedUnit && unit.default ? unit.default : isDefault
         }, false)
         return isDefault
       },
-      defaultStatus: function () {
+      defaultStatus() {
         let isDefault = this.statusList.reduce((isDefault, status) => {
           return status.name == this.selectedStatus && status.default ? status.default : isDefault
         }, false)
@@ -549,6 +534,28 @@
       },
       enableAddStatus() {
         return this.addStatus && this.statusList.findIndex(status=>status.name==this.addStatus) > -1
+      },
+      statusHide:{
+        get: function() {
+          let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
+            return this.currentStatus.hide;
+        },
+        set: function(val) {
+          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+          if (index !== -1) this.statusList[index].hide = val;
+          else console.log('Tried to update hide for "' + this.selectedStatus + '" but couldn\'t find it')
+        },
+      },
+      statusMerge:{
+        get: function() {
+          let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
+            return this.currentStatus.merge;
+        },
+        set: function(val) {
+          let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
+          if (index !== -1) this.statusList[index].merge = val;
+          else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
+        },
       }
     }
   })
