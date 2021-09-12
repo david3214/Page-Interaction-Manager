@@ -274,8 +274,6 @@
         selectedStatus: 'Add a status',
         statusList: [],
         addStatus: '',
-        statusMerge: true,
-        statusHide: false,
         adSettings: [{ "name": "Sorting", "value": true }, { "name": "Merging", "value": true }, { "name": "Highlight", "value": true }],
         messageSettings: [{ "name": "Sorting", "value": true }, { "name": "Merging", "value": true }, { "name": "Highlight", "value": false }],
         formatList: { "Highlight": "highlightEnabled", "Sorting": "sortingEnabled", "Merging": "mergingEnabled" },
@@ -503,6 +501,14 @@
       unitColor: function(){
         const index = this.unitList.findIndex(unit => unit.name == this.selectedUnit)
         if (index != -1) this.unitList[index].color = this.unitColor
+      },
+      selectedStatus: function(newVal, oldVal){
+        if (newVal != "Add a status"){
+          let newStatus = this.statusList.find(status => status.name == newVal);
+          console.log(newStatus)
+          this.statusHide = newStatus.hide;
+          this.statusMerge = newStatus.merge;
+        }
       }
     },
     computed: {
@@ -538,7 +544,7 @@
       statusHide:{
         get: function() {
           let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
-            return this.currentStatus.hide;
+          return currentStatus.hide;
         },
         set: function(val) {
           let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
@@ -549,9 +555,10 @@
       statusMerge:{
         get: function() {
           let currentStatus = this.statusList.find(status => status.name == this.selectedStatus);
-            return this.currentStatus.merge;
+          return currentStatus.merge;
         },
         set: function(val) {
+          console.log('called with val ' + val)
           let index = this.statusList.findIndex(status => status.name == this.selectedStatus);
           if (index !== -1) this.statusList[index].merge = val;
           else console.log('Tried to update merge for "' + this.selectedStatus + '" but couldn\'t find it')
