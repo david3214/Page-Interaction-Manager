@@ -800,9 +800,13 @@ function getGoogleAuthStatus() {
   var clientSecret = PropertiesService.getScriptProperties().getProperty("MT_CLIENT_SECRET")
   let valid_status = { user_status: true, page_status: true }
 
-  // Check if a valid token is tied to the page
+  // Check if there is a selected page, for new sheets there won't be, so don't show errors
   const selectedPage = getSelectedPages().data[0]
-  let fbRefreshToken = selectedPage ? selectedPage.google_sheets.refresh_token : undefined
+  if (selectedPage == undefined)
+    return valid_status
+  
+  // Check if a valid token is tied to the page
+  let fbRefreshToken = selectedPage.google_sheets.refresh_token  
   if (!fbRefreshToken) {
     valid_status.page_status = false
   } else {
