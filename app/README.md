@@ -5,6 +5,7 @@ Prerequisites to running app:
 - [app.env](#user-content-appenv) file with all your environment variables in the app directory
 - [Cloud SQL Proxy](#user-content-cloud-sql-proxy) used for generating the page_data.json
 - [page_data.json](#user-content-page_datajson) file with all the data from the cloud sql database/page_interaction_manager
+- [cloud_sql_proxy_key.json](#user-content-cloud_sql_proxy_keyjson) file with credentials tied to the google cloud project
 - [Docker](#user-content-docker) installed on your local machine
 - [Python](https://www.python.org/downloads/) installed on your machine. (Currently Running fine on Python 3.9)
 - [VScode](#user-content-remote-containers-extension) with Remote Containers extension
@@ -38,8 +39,26 @@ Once cloud_sql_proxy is running you can connect to your database via localhost:3
 
 Once you have [Cloud SQL Proxy](#user-content-cloud-sql-proxy) up and running use your favorite database tool to access the database.
 
-I have used [DBeaver](https://dbeaver.io/) to view my database with a decent experience. 
-Once you have the database open you will want to export the page_data table as a json object. Then save it in app/tests/page_data.json
+I have used [DBeaver](https://dbeaver.io/) to view my database with a decent experience.
+For most testing you will want just one page saved. Once you have the database open you will want to save your testing pages data in app/tests/page_data.json
+Format should be:
+
+```
+{
+	"page_data": [
+		{
+			"page_id": 12345....,
+			"page_details": "{...}"
+		}
+	]
+}
+```
+
+## cloud_sql_proxy_key.json
+
+Create a new key [here](https://console.cloud.google.com/iam-admin/serviceaccounts/details/109372204229314385514/keys?project=eighth-vehicle-287322). Save it as a json file and be sure not to lose it otherwise you'll need to create a new one and delete the old.
+
+Save the file in app/keys/cloud_sql_proxy_key.json (not app/app/keys/cloud_sql_proxy.json)
 
 ## Docker
 
