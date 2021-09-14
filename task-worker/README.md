@@ -39,7 +39,7 @@ Once the Docker Container is composed up you can view the logs to make sure your
 ## VNC Viewer
 Before you can view the worker working make sure this line is commented out in task-worker/bot.py
 
-`self.chrome_options.add_argument("--headless")`
+`# self.chrome_options.add_argument("--headless")`
 - That line will help the bot run faster, but it means we can't see whats going on with VNC Viewer
 
 Once your ready start your docker container, then open up VNC Viewer
