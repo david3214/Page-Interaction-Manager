@@ -8,6 +8,8 @@ If you are a missionary and you want to make a tool for everyone please make it 
 
 [**task-worker**](task-worker/) is the missionary bot module
 
+[**kubernetes**](kuebernetes/) is different kubernetes deployment examples, for minikube and google cloud
+
 ## External Resources used in this project.
 
 ### [Google Cloud](https://cloud.google.com/gcp/)
@@ -19,6 +21,7 @@ If you are a missionary and you want to make a tool for everyone please make it 
     - Redirects IP to missionary-tools via an Ingress Controller and Load Balancer 
   - Runs app celery worker as the process results queue
   - Has a Cloud SQL Proxy container for connecting to the sql database
+  - Has a Rabbitmq deployment ready to go as well, that we can connect up
 - Buckets store photos etc.
 
 ### [CloudAMPQ](https://customer.cloudamqp.com/)
