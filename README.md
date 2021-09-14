@@ -32,4 +32,4 @@ If you are a missionary and you want to make a tool for everyone please make it 
 - Used for requesting data from facebook for our app
   - We have been denied information on page_messaging many times
 - Interacts with a webhook hosted on Google Cloud
-- Webhook endpoint is under the messenger section, not webhook.
+- Webhook endpoint in facebook developer console is under the messenger section, not webhook.
