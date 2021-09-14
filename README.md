@@ -8,7 +8,7 @@ If you are a missionary and you want to make a tool for everyone please make it 
 
 [**task-worker**](task-worker/) is the missionary bot module
 
-[**kubernetes**](kuebernetes/) is different kubernetes deployment examples, for minikube and google cloud
+[**kubernetes**](kubernetes/) is different kubernetes deployment examples, for minikube and google cloud
 
 ## External Resources used in this project.
 
