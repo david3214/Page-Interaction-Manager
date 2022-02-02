@@ -24,7 +24,7 @@ If you are a missionary and you want to make a tool for everyone please make it 
   - Has a Rabbitmq deployment ready to go as well, that we can connect up
 - Buckets store photos etc.
 
-### [CloudAMPQ](https://customer.cloudamqp.com/)
+### [CloudAMQP](https://customer.cloudamqp.com/)
 - Used to host a RabbitMQ Server, that task_worker and app use.
 - When Feature #9 is implemented this will no longer be needed
 
